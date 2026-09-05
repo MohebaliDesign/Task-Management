@@ -1,0 +1,339 @@
+/**
+ * Domain model for the Project Governance & Meeting Accountability System.
+ * Derived from Sources/INFORMATION_ARCHITECTURE.md (source of truth).
+ *
+ * Enum *values* are stable English keys (safe for storage/URLs); user-facing
+ * Persian labels live in labels.ts so the data layer never mixes copy with data.
+ */
+
+// ── Enumerations ────────────────────────────────────────────────────────────
+export const PROJECT_HEALTH = ["on_track", "at_risk", "off_track"] as const;
+export type ProjectHealth = (typeof PROJECT_HEALTH)[number];
+
+export const PROJECT_LIFECYCLE = [
+  "draft",
+  "active",
+  "ready_for_review",
+  "awaiting_ceo_approval",
+  "closed",
+] as const;
+export type ProjectLifecycle = (typeof PROJECT_LIFECYCLE)[number];
+
+export const PROJECT_PHASE = [
+  "discovery",
+  "design",
+  "development",
+  "testing",
+  "launch",
+  "maintenance",
+] as const;
+export type ProjectPhase = (typeof PROJECT_PHASE)[number];
+
+export const PRIORITY = ["low", "medium", "high", "critical"] as const;
+export type Priority = (typeof PRIORITY)[number];
+
+export const HEALTH_DIMENSION = [
+  "scope",
+  "timeline",
+  "resources",
+  "quality",
+  "dependencies",
+  "risks",
+  "budget",
+] as const;
+export type HealthDimension = (typeof HEALTH_DIMENSION)[number];
+
+export const MEETING_STATUS = [
+  "draft",
+  "ready_for_review",
+  "awaiting_signatures",
+  "approved",
+] as const;
+export type MeetingStatus = (typeof MEETING_STATUS)[number];
+
+export const ACTION_STATUS = [
+  "not_started",
+  "in_progress",
+  "blocked",
+  "done",
+  "canceled",
+] as const;
+export type ActionStatus = (typeof ACTION_STATUS)[number];
+
+export const APPROVAL_STATUS = [
+  "pending",
+  "approved",
+  "feedback_submitted",
+  "changes_requested",
+] as const;
+export type ApprovalStatus = (typeof APPROVAL_STATUS)[number];
+
+export const RISK_LEVEL = ["low", "medium", "high"] as const;
+export type RiskLevel = (typeof RISK_LEVEL)[number];
+
+export const RISK_STATUS = ["open", "mitigating", "resolved"] as const;
+export type RiskStatus = (typeof RISK_STATUS)[number];
+
+export const BLOCKER_STATUS = ["open", "resolved"] as const;
+export type BlockerStatus = (typeof BLOCKER_STATUS)[number];
+
+export const MILESTONE_STATUS = ["planned", "in_progress", "done", "at_risk"] as const;
+export type MilestoneStatus = (typeof MILESTONE_STATUS)[number];
+
+export const ROLE = ["pm", "po", "team_lead", "ceo", "member"] as const;
+export type Role = (typeof ROLE)[number];
+
+export const ACTIVITY_TYPE = [
+  "project_created",
+  "project_updated",
+  "health_changed",
+  "deadline_changed",
+  "milestone_updated",
+  "meeting_created",
+  "meeting_submitted",
+  "meeting_approved",
+  "decision_added",
+  "action_added",
+  "action_status_changed",
+  "action_owner_changed",
+  "dependency_added",
+  "risk_added",
+  "blocker_added",
+  "comment_added",
+  "signature_added",
+  "ceo_approval",
+  "project_closed",
+] as const;
+export type ActivityType = (typeof ACTIVITY_TYPE)[number];
+
+// ── Entities ────────────────────────────────────────────────────────────────
+export interface Person {
+  id: string;
+  name: string;
+  role: Role;
+  title: string; // organisational title, Persian
+  email: string;
+  initials: string;
+}
+
+export interface HealthCheck {
+  scope: ProjectHealth;
+  timeline: ProjectHealth;
+  resources: ProjectHealth;
+  quality: ProjectHealth;
+  dependencies: ProjectHealth;
+  risks: ProjectHealth;
+  budget: ProjectHealth;
+}
+
+export interface Metric {
+  id: string;
+  label: string;
+  value: string;
+  hint?: string;
+}
+
+export interface Milestone {
+  id: string;
+  title: string;
+  dueDate: string;
+  status: MilestoneStatus;
+  progress: number; // 0..100
+}
+
+export interface Workstream {
+  id: string;
+  title: string;
+  lead: string; // personId
+  progress: number;
+  summary: string;
+}
+
+export interface ImportantLink {
+  id: string;
+  label: string;
+  url: string;
+}
+
+export interface Project {
+  id: string;
+  name: string;
+  versionLabel: string; // e.g. "نسخه ۲"
+  versionNumber: number;
+  previousVersionId: string | null;
+  lifecycle: ProjectLifecycle;
+  health: ProjectHealth;
+  priority: Priority;
+  phase: ProjectPhase;
+  pmId: string;
+  poId: string;
+  startDate: string;
+  targetDate: string;
+  deliveryDate: string | null;
+  closedDate: string | null;
+  completion: number; // 0..100
+  statusSummary: string;
+  currentFocus: string;
+  nextMilestone: string;
+  executiveSummary: string;
+  healthCheck: HealthCheck;
+  metrics: Metric[];
+  milestones: Milestone[];
+  workstreams: Workstream[];
+  teamIds: string[];
+  links: ImportantLink[];
+  finalResult: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Participant {
+  personId: string;
+  attended: boolean;
+}
+
+export interface Decision {
+  id: string;
+  projectId: string;
+  meetingId: string;
+  text: string;
+  deciderId: string;
+  date: string;
+  area: string; // related topic/area, Persian
+  impact: string;
+  createdAt: string;
+}
+
+export interface ActionItem {
+  id: string;
+  projectId: string;
+  meetingId: string;
+  title: string;
+  description: string;
+  ownerId: string;
+  deadline: string | null;
+  status: ActionStatus;
+  priority: Priority;
+  relatedDecisionId: string | null;
+  createdAt: string;
+  updatedAt: string;
+  completedAt: string | null;
+}
+
+/** Directional dependency: `blockedActionId` is blocked by `blockingActionId`. */
+export interface Dependency {
+  id: string;
+  projectId: string;
+  blockingActionId: string;
+  blockedActionId: string;
+  note: string;
+  createdAt: string;
+}
+
+export interface Risk {
+  id: string;
+  projectId: string;
+  meetingId: string | null;
+  title: string;
+  impact: RiskLevel;
+  probability: RiskLevel;
+  status: RiskStatus;
+  ownerId: string | null;
+  mitigation: string;
+  createdAt: string;
+}
+
+export interface Blocker {
+  id: string;
+  projectId: string;
+  meetingId: string | null;
+  title: string;
+  description: string;
+  status: BlockerStatus;
+  ownerId: string | null;
+  raisedDate: string;
+  resolvedDate: string | null;
+}
+
+export interface Comment {
+  id: string;
+  meetingId: string;
+  authorId: string;
+  authorName: string; // denormalised for reviewer-supplied names
+  body: string;
+  createdAt: string;
+}
+
+export interface Signature {
+  id: string;
+  meetingId: string;
+  approverId: string;
+  approverName: string;
+  role: Role;
+  status: ApprovalStatus;
+  comment: string;
+  signedAt: string | null;
+  revision: number; // meeting revision the signature attests to
+}
+
+export interface Meeting {
+  id: string;
+  projectId: string;
+  sequence: number;
+  title: string;
+  date: string;
+  time: string;
+  location: string;
+  status: MeetingStatus;
+  revision: number;
+  source: "manual" | "assistant";
+  participants: Participant[];
+  agenda: string[];
+  discussion: string;
+  summary: string;
+  nextSteps: string[];
+  openQuestions: string[];
+  createdById: string;
+  createdAt: string;
+  updatedAt: string;
+  reviewToken: string;
+}
+
+export interface ProjectApproval {
+  id: string;
+  projectId: string;
+  approverId: string;
+  approverName: string;
+  status: ApprovalStatus;
+  comment: string;
+  signedAt: string | null;
+}
+
+export interface Activity {
+  id: string;
+  projectId: string;
+  meetingId: string | null;
+  type: ActivityType;
+  actorId: string;
+  actorName: string;
+  entityLabel: string;
+  previousValue: string | null;
+  newValue: string | null;
+  createdAt: string;
+}
+
+// ── The persisted database shape ────────────────────────────────────────────
+export interface Database {
+  people: Person[];
+  projects: Project[];
+  meetings: Meeting[];
+  decisions: Decision[];
+  actions: ActionItem[];
+  dependencies: Dependency[];
+  risks: Risk[];
+  blockers: Blocker[];
+  comments: Comment[];
+  signatures: Signature[];
+  projectApprovals: ProjectApproval[];
+  activities: Activity[];
+}
