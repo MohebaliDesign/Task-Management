@@ -1,4 +1,4 @@
-# سامانهٔ حاکمیت پروژه و پاسخگویی جلسات
+# سامانهٔ نظارت پروژه و یادداشت‌برداری جلسات
 
 **Project Governance & Meeting Accountability System** — an internal web application for PMs and POs to govern project state and turn every in‑person meeting into a traceable, approved record of decisions, actions, ownership, dependencies, and change history.
 
