@@ -23,6 +23,7 @@ import {
   createProjectSchema,
   signMeetingSchema,
   updateActionStatusSchema,
+  updateProjectInfoSchema,
   updateProjectStateSchema,
 } from "./schemas";
 import { actionStatusLabels, healthLabels } from "./labels";
@@ -148,6 +149,34 @@ export async function updateProjectState(_prev: unknown, formData: FormData): Pr
   return { ok: true };
 }
 
+export async function updateProjectInfo(_prev: unknown, formData: FormData): Promise<ActionResult> {
+  const parsed = updateProjectInfoSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { ok: false, error: "لطفاً خطاهای فرم را برطرف کنید.", fieldErrors: fieldErrorsFrom(parsed.error) };
+  const v = parsed.data;
+  mutate((db) => {
+    const p = db.projects.find((x) => x.id === v.projectId);
+    if (!p) return;
+    const prevName = p.name;
+    p.name = v.name;
+    p.pmId = v.pmId;
+    p.poId = v.poId;
+    p.phase = v.phase;
+    p.priority = v.priority;
+    p.updatedAt = nowIso();
+    pushActivity(db, {
+      projectId: p.id,
+      type: "project_updated",
+      entityLabel: "به‌روزرسانی اطلاعات پروژه",
+      previousValue: prevName !== v.name ? prevName : null,
+      newValue: prevName !== v.name ? v.name : null,
+    });
+  });
+  revalidatePath(`/projects/${v.projectId}`);
+  revalidatePath(`/projects/${v.projectId}/settings`);
+  revalidatePath("/projects");
+  return { ok: true };
+}
+
 export async function closeProject(_prev: unknown, formData: FormData): Promise<ActionResult> {
   const parsed = closeProjectSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { ok: false, error: "لطفاً خطاهای فرم را برطرف کنید.", fieldErrors: fieldErrorsFrom(parsed.error) };
@@ -250,17 +279,28 @@ export async function submitMeetingForReview(meetingId: string): Promise<ActionR
 
 // ── Decisions / Actions / Dependencies ──────────────────────────────────────
 export async function addDecision(_prev: unknown, formData: FormData): Promise<ActionResult> {
-  const parsed = addDecisionSchema.safeParse(Object.fromEntries(formData));
+  const raw = Object.fromEntries(formData);
+  const relatedActionIds = formData.getAll("relatedActionIds").map(String).filter(Boolean);
+  const parsed = addDecisionSchema.safeParse({ ...raw, relatedActionIds });
   if (!parsed.success) return { ok: false, error: "لطفاً خطاهای فرم را برطرف کنید.", fieldErrors: fieldErrorsFrom(parsed.error) };
   const v = parsed.data;
   const id = makeId("dec");
+  const meetingId = v.meetingId || null;
   mutate((db) => {
-    const decision: Decision = { id, projectId: v.projectId, meetingId: v.meetingId, text: v.text, deciderId: v.deciderId, date: nowIso(), area: v.area, impact: v.impact, createdAt: nowIso() };
+    const decision: Decision = { id, projectId: v.projectId, meetingId, text: v.text, deciderId: v.deciderId, date: new Date(v.date).toISOString(), area: v.area, impact: v.impact, createdAt: nowIso() };
     db.decisions.push(decision);
-    pushActivity(db, { projectId: v.projectId, meetingId: v.meetingId, type: "decision_added", entityLabel: v.text.slice(0, 60) });
+    pushActivity(db, { projectId: v.projectId, meetingId, type: "decision_added", entityLabel: v.text.slice(0, 60) });
+    for (const actionId of v.relatedActionIds) {
+      const action = db.actions.find((a) => a.id === actionId);
+      if (action && !action.relatedDecisionId) {
+        action.relatedDecisionId = id;
+        action.updatedAt = nowIso();
+      }
+    }
   });
-  revalidatePath(`/projects/${v.projectId}/meetings/${v.meetingId}`);
+  if (meetingId) revalidatePath(`/projects/${v.projectId}/meetings/${meetingId}`);
   revalidatePath(`/projects/${v.projectId}/decisions`);
+  revalidatePath(`/projects/${v.projectId}`);
   return { ok: true, id };
 }
 
@@ -269,18 +309,24 @@ export async function addAction(_prev: unknown, formData: FormData): Promise<Act
   if (!parsed.success) return { ok: false, error: "لطفاً خطاهای فرم را برطرف کنید.", fieldErrors: fieldErrorsFrom(parsed.error) };
   const v = parsed.data;
   const id = makeId("act");
+  const meetingId = v.meetingId || null;
   mutate((db) => {
     const action: ActionItem = {
-      id, projectId: v.projectId, meetingId: v.meetingId, title: v.title, description: v.description,
+      id, projectId: v.projectId, meetingId, title: v.title, description: v.description,
       ownerId: v.ownerId, deadline: v.deadline ? new Date(v.deadline).toISOString() : null,
       status: "not_started", priority: v.priority, relatedDecisionId: v.relatedDecisionId || null,
       createdAt: nowIso(), updatedAt: nowIso(), completedAt: null,
     };
     db.actions.push(action);
-    pushActivity(db, { projectId: v.projectId, meetingId: v.meetingId, type: "action_added", entityLabel: v.title });
+    pushActivity(db, { projectId: v.projectId, meetingId, type: "action_added", entityLabel: v.title });
+    if (v.blockingActionId) {
+      db.dependencies.push({ id: makeId("dep"), projectId: v.projectId, blockingActionId: v.blockingActionId, blockedActionId: id, note: "", createdAt: nowIso() });
+      pushActivity(db, { projectId: v.projectId, meetingId, type: "dependency_added", entityLabel: `«${v.title}» مسدود شد` });
+    }
   });
-  revalidatePath(`/projects/${v.projectId}/meetings/${v.meetingId}`);
+  if (meetingId) revalidatePath(`/projects/${v.projectId}/meetings/${meetingId}`);
   revalidatePath(`/projects/${v.projectId}/actions`);
+  revalidatePath(`/projects/${v.projectId}`);
   return { ok: true, id };
 }
 

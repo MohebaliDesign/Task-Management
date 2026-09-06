@@ -1,5 +1,4 @@
 import { notFound } from "next/navigation";
-import { Card, CardContent } from "@/components/ui/card";
 import { SectionHeader } from "@/components/domain/page-header";
 import { EmptyState } from "@/components/domain/empty-state";
 import { ActivityTimeline } from "@/features/activity/activity-timeline";
@@ -20,11 +19,7 @@ export default function ProjectActivityPage({ params }: { params: { projectId: s
       {activities.length === 0 ? (
         <EmptyState icon="activity" title="تغییری ثبت نشده است" />
       ) : (
-        <Card>
-          <CardContent className="pt-5">
-            <ActivityTimeline activities={activities} />
-          </CardContent>
-        </Card>
+        <ActivityTimeline activities={activities} />
       )}
     </div>
   );

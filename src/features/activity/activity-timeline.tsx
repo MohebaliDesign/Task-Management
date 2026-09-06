@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Card } from "@/components/ui/card";
 import { AppIcon, type IconName } from "@/components/icon";
 import { activityLabels } from "@/lib/labels";
 import { faDate } from "@/lib/utils";
@@ -26,14 +27,6 @@ const iconFor: Record<ActivityType, IconName> = {
   project_closed: "archive",
 };
 
-function ProjectAvatar({ name }: { name: string }) {
-  return (
-    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-semibold text-foreground">
-      {name.slice(0, 2)}
-    </span>
-  );
-}
-
 export function ActivityTimeline({
   activities,
   projectName,
@@ -44,52 +37,47 @@ export function ActivityTimeline({
   showProjectLink?: boolean;
 }) {
   return (
-    <ol className="space-y-3">
+    <Card className="divide-y divide-border">
       {activities.map((a) => {
         const project = projectName?.(a.projectId);
 
         return (
-          <li key={a.id} className="rounded-xl border border-border/70 bg-card p-4">
-            <div className="flex items-center gap-3">
-              {project && <ProjectAvatar name={project} />}
-              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-muted text-muted-foreground">
-                <AppIcon name={iconFor[a.type]} size={16} />
-              </span>
-              <div className="min-w-0 flex-1">
-                <p className="text-sm">
-                  <span className="font-medium">{a.actorName}</span>{" "}
-                  <span className="text-muted-foreground">{activityLabels[a.type]}</span>
-                </p>
-                {a.entityLabel && <p className="mt-1 text-sm text-foreground">{a.entityLabel}</p>}
-              </div>
-              <span className="text-xs text-muted-foreground" title={faDate(a.createdAt, true)}>
-                {faDate(a.createdAt)}
-              </span>
-            </div>
-
-            {(a.previousValue || a.newValue) && (
-              <p className="mt-3 text-xs text-muted-foreground">
-                {a.previousValue && <span className="line-through">{a.previousValue}</span>}
-                {a.previousValue && a.newValue && <span className="mx-1">←</span>}
-                {a.newValue && <span className="text-foreground">{a.newValue}</span>}
+          <div key={a.id} className="flex items-start gap-3 p-3">
+            <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground">
+              <AppIcon name={iconFor[a.type]} size={16} />
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm">
+                <span className="font-medium">{a.actorName}</span>{" "}
+                <span className="text-muted-foreground">{activityLabels[a.type]}</span>
               </p>
-            )}
-
-            {showProjectLink && project && (
-              <div className="mt-3 flex gap-3 text-xs text-muted-foreground">
-                <Link href={`/projects/${a.projectId}`} className="hover:text-foreground">
-                  {project}
-                </Link>
-                {a.meetingId && (
+              <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+                {a.entityLabel && <span className="max-w-xs truncate text-foreground">{a.entityLabel}</span>}
+                {(a.previousValue || a.newValue) && (
+                  <span className="flex items-center gap-1">
+                    {a.previousValue && <span className="line-through">{a.previousValue}</span>}
+                    {a.previousValue && a.newValue && <span>←</span>}
+                    {a.newValue && <span className="text-foreground">{a.newValue}</span>}
+                  </span>
+                )}
+                {showProjectLink && project && (
+                  <Link href={`/projects/${a.projectId}`} className="hover:text-foreground">
+                    {project}
+                  </Link>
+                )}
+                {showProjectLink && a.meetingId && (
                   <Link href={`/projects/${a.projectId}/meetings/${a.meetingId}`} className="hover:text-foreground">
-                    مشاهده جلسه
+                    مشاهدهٔ جلسه
                   </Link>
                 )}
               </div>
-            )}
-          </li>
+            </div>
+            <span className="shrink-0 text-xs text-muted-foreground" title={faDate(a.createdAt, true)}>
+              {faDate(a.createdAt)}
+            </span>
+          </div>
         );
       })}
-    </ol>
+    </Card>
   );
 }

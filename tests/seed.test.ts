@@ -18,22 +18,22 @@ test("every meeting references an existing project", () => {
   for (const m of db.meetings) assert.ok(projectIds.has(m.projectId), `meeting ${m.id} → ${m.projectId}`);
 });
 
-test("every decision references an existing meeting and project", () => {
+test("every decision references an existing (optional) meeting and an existing project", () => {
   const meetingIds = ids(db.meetings);
   const projectIds = ids(db.projects);
   for (const d of db.decisions) {
-    assert.ok(meetingIds.has(d.meetingId), `decision ${d.id} meeting`);
+    assert.ok(d.meetingId === null || meetingIds.has(d.meetingId), `decision ${d.id} meeting`);
     assert.ok(projectIds.has(d.projectId), `decision ${d.id} project`);
   }
 });
 
-test("every action references an existing owner, meeting, and (optional) decision", () => {
+test("every action references an existing owner, an existing (optional) meeting, and (optional) decision", () => {
   const peopleIds = ids(db.people);
   const meetingIds = ids(db.meetings);
   const decisionIds = ids(db.decisions);
   for (const a of db.actions) {
     assert.ok(peopleIds.has(a.ownerId), `action ${a.id} owner`);
-    assert.ok(meetingIds.has(a.meetingId), `action ${a.id} meeting`);
+    assert.ok(a.meetingId === null || meetingIds.has(a.meetingId), `action ${a.id} meeting`);
     if (a.relatedDecisionId) assert.ok(decisionIds.has(a.relatedDecisionId), `action ${a.id} decision`);
   }
 });

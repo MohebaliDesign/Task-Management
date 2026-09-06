@@ -41,7 +41,7 @@ export default function RisksPage({ params }: { params: { projectId: string } })
                   </div>
                   {b.description && <p className="mt-1 text-sm text-muted-foreground">{b.description}</p>}
                   <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
-                    <span className="flex items-center gap-1.5">مسئول: <PersonChip person={getPerson(b.ownerId)} /></span>
+                    <span className="flex items-center gap-1.5">مسئول: <PersonChip person={getPerson(b.ownerId)} variant="compact" /></span>
                     <span>مطرح‌شده: {faDate(b.raisedDate)}</span>
                   </div>
                 </div>
@@ -74,7 +74,7 @@ export default function RisksPage({ params }: { params: { projectId: string } })
                   <div className="mt-2 flex flex-wrap items-center gap-2">
                     <RiskLevelBadge value={r.impact} prefix="اثر" />
                     <RiskLevelBadge value={r.probability} prefix="احتمال" />
-                    {r.ownerId && <span className="flex items-center gap-1.5 text-xs text-muted-foreground">مسئول: <PersonChip person={getPerson(r.ownerId)} /></span>}
+                    {r.ownerId && <span className="flex items-center gap-1.5 text-xs text-muted-foreground">مسئول: <PersonChip person={getPerson(r.ownerId)} variant="compact" /></span>}
                   </div>
                   {r.mitigation && <p className="mt-2 rounded-md bg-muted/50 p-2 text-xs text-muted-foreground">راهکار کاهش: {r.mitigation}</p>}
                 </div>

@@ -6,9 +6,10 @@ import { EmptyState } from "@/components/domain/empty-state";
 import { ActionItemRow } from "@/features/actions/action-item-row";
 import { ActionStatusSelect } from "@/features/actions/action-status-select";
 import { AddDependencyDialog } from "@/features/dependencies/add-dependency-dialog";
+import { AddActionDialog } from "@/features/meetings/add-action-dialog";
 import { PersonChip } from "@/components/domain/person";
 import {
-  getProject, getActions, getDecisions, getDependencyViews, getPerson,
+  getProject, getActions, getDecisions, getDependencyViews, getPerson, getPeople, getMeetings,
 } from "@/lib/queries";
 import { toFa } from "@/lib/utils";
 
@@ -39,9 +40,20 @@ export default function ActionsPage({ params }: { params: { projectId: string } 
           title="اقدامات"
           description="هر اقدام دارای مسئول، مهلت، وضعیت، اولویت، تصمیم مرتبط و جلسهٔ منبع است."
           icon="actions"
+          actions={
+            !readOnly && (
+              <AddActionDialog
+                projectId={project.id}
+                meetings={getMeetings(project.id)}
+                people={getPeople()}
+                decisions={decisions}
+                blockableActions={openActions}
+              />
+            )
+          }
         />
         {actions.length === 0 ? (
-          <EmptyState icon="actions" title="اقدامی ثبت نشده است" description="اقدامات هنگام ثبت جلسه اضافه می‌شوند." />
+          <EmptyState icon="actions" title="اقدامی ثبت نشده است" description="اقدامات را می‌توانید هنگام ثبت جلسه یا مستقیماً از همین‌جا اضافه کنید." />
         ) : (
           <div className="space-y-6">
             {openActions.length > 0 && (
@@ -51,7 +63,7 @@ export default function ActionsPage({ params }: { params: { projectId: string } 
                     key={a.id}
                     action={a}
                     decision={decisions.find((d) => d.id === a.relatedDecisionId)}
-                    meetingHref={`/projects/${project.id}/meetings/${a.meetingId}`}
+                    meetingHref={a.meetingId ? `/projects/${project.id}/meetings/${a.meetingId}` : undefined}
                     blockedBy={blockedBy.get(a.id)}
                     blocking={blocking.get(a.id)}
                     statusControl={readOnly ? undefined : <ActionStatusSelect actionId={a.id} status={a.status} />}
@@ -68,7 +80,7 @@ export default function ActionsPage({ params }: { params: { projectId: string } 
                       key={a.id}
                       action={a}
                       decision={decisions.find((d) => d.id === a.relatedDecisionId)}
-                      meetingHref={`/projects/${project.id}/meetings/${a.meetingId}`}
+                      meetingHref={a.meetingId ? `/projects/${project.id}/meetings/${a.meetingId}` : undefined}
                       statusControl={readOnly ? undefined : <ActionStatusSelect actionId={a.id} status={a.status} />}
                     />
                   ))}
@@ -84,10 +96,19 @@ export default function ActionsPage({ params }: { params: { projectId: string } 
           title="وابستگی‌ها"
           description="چه کسی منتظر چیست؟ رابطهٔ «مسدود توسط / مسدودکنندهٔ» را شفاف نشان می‌دهد."
           icon="dependency"
-          actions={!readOnly && actions.length >= 2 && <AddDependencyDialog projectId={project.id} actions={actions} />}
+          actions={!readOnly && actions.length >= 2 && deps.length > 0 && <AddDependencyDialog projectId={project.id} actions={actions} />}
         />
         {deps.length === 0 ? (
-          <EmptyState icon="dependency" title="وابستگی‌ای ثبت نشده است" description="اگر اقدامی منتظر اقدام دیگری است، آن را به‌صورت وابستگی ثبت کنید." />
+          <EmptyState
+            icon="dependency"
+            title="هنوز وابستگی‌ای ثبت نشده است"
+            description={
+              !readOnly && actions.length >= 2
+                ? "وابستگی‌ها مشخص می‌کنند کدام اقدام منتظر اقدام دیگری است و کار مسدودشده را زودتر شناسایی کنید."
+                : "برای ثبت وابستگی، ابتدا حداقل دو اقدام ایجاد کنید."
+            }
+            action={!readOnly && actions.length >= 2 ? <AddDependencyDialog projectId={project.id} actions={actions} /> : undefined}
+          />
         ) : (
           <Card className="divide-y divide-border">
             {deps.map(({ dependency, blocking: b, blocked }) => (
@@ -96,13 +117,13 @@ export default function ActionsPage({ params }: { params: { projectId: string } 
                   <div className="flex-1 rounded-md border border-destructive/20 bg-destructive-subtle p-2.5">
                     <p className="text-xs text-destructive-text">مسدودشده (منتظر)</p>
                     <p className="text-sm font-medium">{blocked?.title ?? "—"}</p>
-                    <div className="mt-1"><PersonChip person={getPerson(blocked?.ownerId)} /></div>
+                    <div className="mt-1"><PersonChip person={getPerson(blocked?.ownerId)} variant="compact" /></div>
                   </div>
                   <AppIcon name="chevronLeft" size={20} className="shrink-0 text-muted-foreground" />
                   <div className="flex-1 rounded-md border border-border bg-muted/40 p-2.5">
                     <p className="text-xs text-muted-foreground">مسدودکننده (باید اول انجام شود)</p>
                     <p className="text-sm font-medium">{b?.title ?? "—"}</p>
-                    <div className="mt-1"><PersonChip person={getPerson(b?.ownerId)} /></div>
+                    <div className="mt-1"><PersonChip person={getPerson(b?.ownerId)} variant="compact" /></div>
                   </div>
                 </div>
                 {dependency.note && <p className="max-w-xs text-xs text-muted-foreground">{dependency.note}</p>}

@@ -44,7 +44,7 @@ export function StatusPill({
   className?: string;
 }) {
   return (
-    <span className={cn("inline-flex items-center gap-1.5 rounded-md border px-2 py-0.5 text-xs font-medium", toneClasses[tone], className)}>
+    <span className={cn("inline-flex items-center gap-1.5 whitespace-nowrap rounded-md border px-2 py-0.5 text-xs font-medium", toneClasses[tone], className)}>
       {dot && <span className={cn("h-1.5 w-1.5 rounded-full", toneDot[tone])} aria-hidden="true" />}
       {label}
     </span>

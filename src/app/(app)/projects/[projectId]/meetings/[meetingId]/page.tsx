@@ -11,11 +11,13 @@ import { MeetingActionsBar } from "@/features/meetings/meeting-actions-bar";
 import { AddDecisionDialog } from "@/features/meetings/add-decision-dialog";
 import { AddActionDialog } from "@/features/meetings/add-action-dialog";
 import { faDate, faRelative, toFa } from "@/lib/utils";
+import { isOpenAction } from "@/lib/logic";
 import {
   getProject,
   getMeeting,
   getMeetingDecisions,
   getMeetingActions,
+  getActions,
   getComments,
   getSignatures,
   getPeople,
@@ -97,7 +99,15 @@ export default function MeetingDetailPage({ params }: { params: { projectId: str
           <Card>
             <CardHeader className="flex-row items-center justify-between">
               <CardTitle className="flex items-center gap-2"><AppIcon name="actions" size={18} className="text-muted-foreground" />اقدامات ({toFa(actions.length)})</CardTitle>
-              {!readOnly && <AddActionDialog projectId={project.id} meetingId={meeting.id} people={people} decisions={decisions} />}
+              {!readOnly && (
+                <AddActionDialog
+                  projectId={project.id}
+                  meetingId={meeting.id}
+                  people={people}
+                  decisions={decisions}
+                  blockableActions={getActions(project.id).filter(isOpenAction)}
+                />
+              )}
             </CardHeader>
             <CardContent className="p-0">
               {actions.length === 0 ? (

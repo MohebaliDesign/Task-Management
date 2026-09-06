@@ -43,7 +43,8 @@ export function getMeetings(projectId: string): Meeting[] {
     .meetings.filter((m) => m.projectId === projectId)
     .sort((a, b) => b.sequence - a.sequence);
 }
-export function getMeeting(id: string): Meeting | undefined {
+export function getMeeting(id: string | null | undefined): Meeting | undefined {
+  if (!id) return undefined;
   return readDb().meetings.find((m) => m.id === id);
 }
 export function getMeetingByToken(token: string): Meeting | undefined {
