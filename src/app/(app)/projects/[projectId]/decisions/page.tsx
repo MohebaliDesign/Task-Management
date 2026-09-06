@@ -4,14 +4,16 @@ import { Card } from "@/components/ui/card";
 import { AppIcon } from "@/components/icon";
 import { SectionHeader } from "@/components/domain/page-header";
 import { EmptyState } from "@/components/domain/empty-state";
+import { AddDecisionDialog } from "@/features/meetings/add-decision-dialog";
 import { faDate, toFa } from "@/lib/utils";
-import { getProject, getDecisions, getPerson, getMeeting, getActions } from "@/lib/queries";
+import { getProject, getDecisions, getPerson, getPeople, getMeeting, getMeetings, getActions } from "@/lib/queries";
 
 export default function DecisionsPage({ params }: { params: { projectId: string } }) {
   const project = getProject(params.projectId);
   if (!project) notFound();
   const decisions = getDecisions(project.id);
   const actions = getActions(project.id);
+  const readOnly = project.lifecycle === "closed";
 
   return (
     <div>
@@ -19,6 +21,16 @@ export default function DecisionsPage({ params }: { params: { projectId: string 
         title="تصمیم‌ها"
         description="تصمیم‌ها رکوردهای مستقل و قابل‌ردیابی هستند و به جلسهٔ منبع و اقدامات ناشی از خود پیوند دارند."
         icon="decision"
+        actions={
+          !readOnly && (
+            <AddDecisionDialog
+              projectId={project.id}
+              meetings={getMeetings(project.id)}
+              people={getPeople()}
+              unlinkedActions={actions.filter((a) => !a.relatedDecisionId)}
+            />
+          )
+        }
       />
       {decisions.length === 0 ? (
         <EmptyState icon="decision" title="تصمیمی ثبت نشده است" description="تصمیم‌ها هنگام ثبت جلسه اضافه می‌شوند." />

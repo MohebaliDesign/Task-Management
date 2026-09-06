@@ -36,6 +36,16 @@ export const updateProjectStateSchema = z.object({
 });
 export type UpdateProjectStateInput = z.infer<typeof updateProjectStateSchema>;
 
+export const updateProjectInfoSchema = z.object({
+  projectId: req("شناسهٔ پروژه لازم است"),
+  name: req("نام پروژه را وارد کنید").max(80, "نام پروژه طولانی است"),
+  pmId: req("مدیر پروژه را انتخاب کنید"),
+  poId: req("مالک محصول را انتخاب کنید"),
+  phase: z.enum(PROJECT_PHASE),
+  priority: z.enum(PRIORITY),
+});
+export type UpdateProjectInfoInput = z.infer<typeof updateProjectInfoSchema>;
+
 export const createMeetingSchema = z.object({
   projectId: req("شناسهٔ پروژه لازم است"),
   title: req("عنوان جلسه را وارد کنید").max(120),
@@ -53,22 +63,25 @@ export type CreateMeetingInput = z.infer<typeof createMeetingSchema>;
 
 export const addDecisionSchema = z.object({
   projectId: req("شناسهٔ پروژه لازم است"),
-  meetingId: req("شناسهٔ جلسه لازم است"),
+  meetingId: z.string().trim().optional().default(""),
   text: req("متن تصمیم را وارد کنید").max(500),
   deciderId: req("تصمیم‌گیرنده را انتخاب کنید"),
+  date: req("تاریخ تصمیم را وارد کنید"),
   area: z.string().trim().max(60).optional().default("عمومی"),
   impact: z.string().trim().max(60).optional().default("متوسط"),
+  relatedActionIds: z.array(z.string()).optional().default([]),
 });
 
 export const addActionSchema = z.object({
   projectId: req("شناسهٔ پروژه لازم است"),
-  meetingId: req("شناسهٔ جلسه لازم است"),
+  meetingId: z.string().trim().optional().default(""),
   title: req("عنوان اقدام را وارد کنید").max(160),
   description: z.string().trim().max(600).optional().default(""),
   ownerId: req("مسئول اقدام را انتخاب کنید"),
   deadline: z.string().trim().optional().default(""),
   priority: z.enum(PRIORITY),
   relatedDecisionId: z.string().trim().optional().default(""),
+  blockingActionId: z.string().trim().optional().default(""),
 });
 
 export const updateActionStatusSchema = z.object({

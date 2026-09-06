@@ -17,20 +17,26 @@ import { AppIcon } from "@/components/icon";
 import { addAction, type ActionResult } from "@/lib/actions";
 import { PRIORITY } from "@/lib/domain";
 import { priorityLabels } from "@/lib/labels";
-import type { Person, Decision } from "@/lib/domain";
+import type { ActionItem, Person, Decision, Meeting } from "@/lib/domain";
 
 const initial: ActionResult = { ok: false, error: "" };
 
 export function AddActionDialog({
   projectId,
   meetingId,
+  meetings,
   people,
   decisions,
+  blockableActions,
 }: {
   projectId: string;
-  meetingId: string;
+  /** Fixed meeting context (embedded in a meeting-detail page). */
+  meetingId?: string;
+  /** Project meetings, used to render a meeting picker when `meetingId` is not fixed. */
+  meetings?: Meeting[];
   people: Person[];
   decisions: Decision[];
+  blockableActions?: ActionItem[];
 }) {
   const router = useRouter();
   const [open, setOpen] = React.useState(false);
@@ -59,7 +65,7 @@ export function AddActionDialog({
         </DialogHeader>
         <form action={formAction} className="space-y-4">
           <input type="hidden" name="projectId" value={projectId} />
-          <input type="hidden" name="meetingId" value={meetingId} />
+          {meetingId && <input type="hidden" name="meetingId" value={meetingId} />}
           <Field label="عنوان اقدام" htmlFor="title" error={errs.title} required>
             <Input id="title" name="title" aria-invalid={!!errs.title} />
           </Field>
@@ -84,6 +90,16 @@ export function AddActionDialog({
               </Select>
             </Field>
           </div>
+          {!meetingId && (
+            <Field label="جلسهٔ مرتبط" htmlFor="meetingId" error={errs.meetingId} hint="در صورت وجود، جلسهٔ منبع این اقدام را انتخاب کنید.">
+              <Select name="meetingId">
+                <SelectTrigger id="meetingId"><SelectValue placeholder="بدون جلسهٔ مرتبط" /></SelectTrigger>
+                <SelectContent>
+                  {(meetings ?? []).map((m) => <SelectItem key={m.id} value={m.id}>{m.title}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </Field>
+          )}
           <div className="grid grid-cols-2 gap-4">
             <Field label="مهلت" htmlFor="deadline" error={errs.deadline}>
               <Input id="deadline" name="deadline" type="date" className="latin-nums" />
@@ -99,6 +115,21 @@ export function AddActionDialog({
               </Select>
             </Field>
           </div>
+          {blockableActions && blockableActions.length > 0 && (
+            <Field
+              label="این اقدام مسدود است توسط"
+              htmlFor="blockingActionId"
+              error={errs.blockingActionId}
+              hint="اگر این اقدام منتظر اقدام دیگری است، آن را اینجا انتخاب کنید."
+            >
+              <Select name="blockingActionId">
+                <SelectTrigger id="blockingActionId"><SelectValue placeholder="بدون وابستگی" /></SelectTrigger>
+                <SelectContent>
+                  {blockableActions.map((a) => <SelectItem key={a.id} value={a.id}>{a.title}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </Field>
+          )}
           <DialogFooter>
             <DialogClose asChild>
               <Button type="button" variant="ghost">انصراف</Button>

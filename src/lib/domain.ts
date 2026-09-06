@@ -195,7 +195,7 @@ export interface Participant {
 export interface Decision {
   id: string;
   projectId: string;
-  meetingId: string;
+  meetingId: string | null;
   text: string;
   deciderId: string;
   date: string;
@@ -207,7 +207,7 @@ export interface Decision {
 export interface ActionItem {
   id: string;
   projectId: string;
-  meetingId: string;
+  meetingId: string | null;
   title: string;
   description: string;
   ownerId: string;

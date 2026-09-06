@@ -6,21 +6,27 @@ import type { Person } from "@/lib/domain";
 export function PersonChip({
   person,
   showRole = false,
+  variant = "full",
   className,
 }: {
   person: Person | undefined;
   showRole?: boolean;
+  /** "full" (avatar + name, for team/project visualization) or "compact" (name only, for dense inline rows already labeled by context). */
+  variant?: "full" | "compact";
   className?: string;
 }) {
   if (!person) return <span className="text-sm text-muted-foreground">—</span>;
+  if (variant === "compact") {
+    return <span className={cn("truncate text-sm", className)}>{person.name}</span>;
+  }
   return (
-    <span className={cn("inline-flex items-center gap-2", className)}>
-      <Avatar className="h-6 w-6">
+    <span className={cn("inline-flex min-w-0 items-center gap-2", className)}>
+      <Avatar className="h-6 w-6 shrink-0">
         <AvatarFallback className="text-[10px]">{person.initials}</AvatarFallback>
       </Avatar>
-      <span className="flex flex-col leading-tight">
-        <span className="text-sm">{person.name}</span>
-        {showRole && <span className="text-xs text-muted-foreground">{roleLabels[person.role]}</span>}
+      <span className="flex min-w-0 flex-col leading-tight">
+        <span className="truncate text-sm">{person.name}</span>
+        {showRole && <span className="truncate text-xs text-muted-foreground">{roleLabels[person.role]}</span>}
       </span>
     </span>
   );

@@ -8,7 +8,9 @@ import { SectionHeader } from "@/components/domain/page-header";
 import { EmptyState } from "@/components/domain/empty-state";
 import { MetricTile } from "@/features/shared/metric-tile";
 import { HealthCheckGrid } from "@/features/projects/health-check-grid";
-import { HealthBadge, MilestoneStatusBadge, RiskLevelBadge } from "@/components/domain/status";
+import { MilestoneRow } from "@/features/projects/milestone-row";
+import { WorkstreamRow } from "@/features/projects/workstream-row";
+import { HealthBadge, RiskLevelBadge } from "@/components/domain/status";
 import { PersonChip } from "@/components/domain/person";
 import { faDate, toFa } from "@/lib/utils";
 import {
@@ -26,6 +28,8 @@ export default function OverviewPage({ params }: { params: { projectId: string }
   const decisions = getDecisions(project.id).slice(0, 4);
   const risks = getRisks(project.id).filter((r) => r.status !== "resolved").slice(0, 4);
   const blockers = getBlockers(project.id).filter((b) => b.status === "open");
+  const milestones = project.milestones.slice(0, 4);
+  const workstreams = project.workstreams.slice(0, 4);
 
   return (
     <div className="space-y-8">
@@ -106,46 +110,39 @@ export default function OverviewPage({ params }: { params: { projectId: string }
       {/* Milestones + Workstreams */}
       <div className="grid gap-8 lg:grid-cols-2">
         <section>
-          <SectionHeader title="نقاط‌عطف" icon="milestone" />
-          {project.milestones.length === 0 ? (
+          <SectionHeader
+            title="نقاط‌عطف"
+            icon="milestone"
+            actions={
+              <Button asChild variant="ghost" size="sm">
+                <Link href={`/projects/${project.id}/milestones`}>مشاهدهٔ همه</Link>
+              </Button>
+            }
+          />
+          {milestones.length === 0 ? (
             <EmptyState icon="milestone" title="نقطه‌عطفی ثبت نشده است" />
           ) : (
             <Card className="divide-y divide-border">
-              {project.milestones.map((m) => (
-                <div key={m.id} className="p-4">
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="text-sm font-medium">{m.title}</p>
-                    <MilestoneStatusBadge value={m.status} />
-                  </div>
-                  <div className="mt-2 flex items-center gap-3">
-                    <Progress value={m.progress} className="h-1.5" />
-                    <span className="shrink-0 text-xs text-muted-foreground">{faDate(m.dueDate)}</span>
-                  </div>
-                </div>
-              ))}
+              {milestones.map((m) => <MilestoneRow key={m.id} milestone={m} />)}
             </Card>
           )}
         </section>
 
         <section>
-          <SectionHeader title="جریان‌های کاری" icon="actions" />
-          {project.workstreams.length === 0 ? (
+          <SectionHeader
+            title="جریان‌های کاری"
+            icon="actions"
+            actions={
+              <Button asChild variant="ghost" size="sm">
+                <Link href={`/projects/${project.id}/workstreams`}>مشاهدهٔ همه</Link>
+              </Button>
+            }
+          />
+          {workstreams.length === 0 ? (
             <EmptyState icon="actions" title="جریان کاری ثبت نشده است" />
           ) : (
             <Card className="divide-y divide-border">
-              {project.workstreams.map((w) => (
-                <div key={w.id} className="p-4">
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="text-sm font-medium">{w.title}</p>
-                    <span className="text-xs text-muted-foreground">{toFa(w.progress)}٪</span>
-                  </div>
-                  <p className="mt-1 text-xs text-muted-foreground">{w.summary}</p>
-                  <div className="mt-2 flex items-center gap-2">
-                    <Progress value={w.progress} className="h-1.5" />
-                    <PersonChip person={getPerson(w.lead)} />
-                  </div>
-                </div>
-              ))}
+              {workstreams.map((w) => <WorkstreamRow key={w.id} workstream={w} lead={getPerson(w.lead)} />)}
             </Card>
           )}
         </section>
