@@ -21,7 +21,7 @@ export function MobileNav() {
           <AppIcon name="more" size={22} />
         </Button>
       </SheetTrigger>
-      <SheetContent side="end" className="w-72 bg-sidebar">
+      <SheetContent side="end" className="w-72 bg-background">
         <SheetHeader className="mb-6">
           <SheetTitle className="text-start">
             <BrandMark />

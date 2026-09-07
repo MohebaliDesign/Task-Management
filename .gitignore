@@ -34,3 +34,7 @@ yarn-error.log*
 
 # extracted design-system inputs (kept out of the app bundle; source zips live on D:)
 /inputs/design-system/**/*.zip
+
+# local task/prompt briefs (not product docs; kept out of the repo)
+/Project_Detail_Pages_Full_Implementation_Prompt.md
+/Project_Detail_Pages_Improvement_Prompt.md

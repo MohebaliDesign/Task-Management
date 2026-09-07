@@ -15,8 +15,8 @@ export function AppShell({ children }: { children: ReactNode }) {
   const operator = getPerson("p_sara");
   return (
     <div className="min-h-screen bg-background lg:grid lg:grid-cols-[16rem_1fr]">
-      {/* Desktop sidebar */}
-      <aside className="sticky top-0 hidden h-screen flex-col border-e border-sidebar-border bg-sidebar p-4 lg:flex">
+      {/* Desktop sidebar — solid white surface, separated from the gray canvas by a border only */}
+      <aside className="sticky top-0 hidden h-screen flex-col border-e border-sidebar-border bg-background p-4 lg:flex">
         <div className="mb-8 px-1">
           <BrandMark />
         </div>
@@ -28,7 +28,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
       {/* Main column */}
       <div className="flex min-h-screen flex-col">
-        <header className="sticky top-0 z-30 flex h-14 items-center justify-between gap-3 border-b border-border bg-background/80 px-4 backdrop-blur supports-[backdrop-filter]:bg-background/60 lg:px-6">
+        <header className="sticky top-0 z-30 flex h-14 items-center justify-between gap-3 border-b border-border bg-background px-4 lg:px-6">
           <div className="flex items-center gap-2">
             <MobileNav />
             <span className="lg:hidden">

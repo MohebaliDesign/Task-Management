@@ -22,8 +22,10 @@ import {
   addRiskSchema,
   closeProjectSchema,
   createMeetingSchema,
+  createMeetingSpaceSchema,
   createPersonSchema,
   createProjectSchema,
+  createSpaceMeetingSchema,
   signMeetingSchema,
   updateActionStatusSchema,
   updateMeetingSchema,
@@ -123,7 +125,7 @@ export async function createProject(_prev: unknown, formData: FormData): Promise
       milestones: [],
       workstreams: [],
       teamIds: [],
-      links: [],
+      resources: [],
       finalResult: null,
       createdAt: nowIso(),
       updatedAt: nowIso(),
@@ -507,6 +509,58 @@ export async function addBlocker(_prev: unknown, formData: FormData): Promise<Ac
   revalidatePath(`/projects/${v.projectId}/risks`);
   revalidatePath(`/projects/${v.projectId}`);
   return { ok: true };
+}
+
+// ── Meeting Spaces (organization meetings, independent of a project) ───────
+export async function createMeetingSpace(_prev: unknown, formData: FormData): Promise<ActionResult> {
+  const parsed = createMeetingSpaceSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { ok: false, error: "لطفاً خطاهای فرم را برطرف کنید.", fieldErrors: fieldErrorsFrom(parsed.error) };
+  const v = parsed.data;
+  const id = makeId("spc");
+  mutate((db) => {
+    db.meetingSpaces.unshift({
+      id,
+      name: v.name,
+      description: v.description,
+      ownerId: v.ownerId,
+      createdAt: nowIso(),
+      updatedAt: nowIso(),
+    });
+  });
+  revalidatePath("/");
+  revalidatePath("/meetings");
+  return { ok: true, id };
+}
+
+export async function createSpaceMeeting(_prev: unknown, formData: FormData): Promise<ActionResult> {
+  const raw = Object.fromEntries(formData);
+  const participantIds = formData.getAll("participantIds").map(String).filter(Boolean);
+  const parsed = createSpaceMeetingSchema.safeParse({ ...raw, participantIds });
+  if (!parsed.success) return { ok: false, error: "لطفاً خطاهای فرم را برطرف کنید.", fieldErrors: fieldErrorsFrom(parsed.error) };
+  const v = parsed.data;
+  const id = makeId("spm");
+  mutate((db) => {
+    const seq = db.spaceMeetings.filter((m) => m.spaceId === v.spaceId).length + 1;
+    db.spaceMeetings.push({
+      id,
+      spaceId: v.spaceId,
+      sequence: seq,
+      title: v.title,
+      date: new Date(v.date).toISOString(),
+      time: v.time,
+      location: v.location,
+      participantIds,
+      summary: v.summary,
+      createdById: OPERATOR.id,
+      createdAt: nowIso(),
+    });
+    const space = db.meetingSpaces.find((s) => s.id === v.spaceId);
+    if (space) space.updatedAt = nowIso();
+  });
+  revalidatePath(`/meetings/${v.spaceId}`);
+  revalidatePath("/meetings");
+  revalidatePath("/");
+  return { ok: true, id };
 }
 
 // ── Review flow (reviewer-facing) ───────────────────────────────────────────

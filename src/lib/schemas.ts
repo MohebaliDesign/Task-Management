@@ -204,6 +204,25 @@ export const signMeetingSchema = z.object({
   comment: z.string().trim().max(600).optional().default(""),
 });
 
+// ── Meeting Spaces (organization meetings, independent of a project) ───────
+export const createMeetingSpaceSchema = z.object({
+  name: req("نام دستهٔ جلسات را وارد کنید").max(80, "نام دستهٔ جلسات طولانی است"),
+  description: z.string().trim().max(400).optional().default(""),
+  ownerId: req("مسئول دسته را انتخاب کنید"),
+});
+export type CreateMeetingSpaceInput = z.infer<typeof createMeetingSpaceSchema>;
+
+export const createSpaceMeetingSchema = z.object({
+  spaceId: req("شناسهٔ دستهٔ جلسات لازم است"),
+  title: req("عنوان جلسه را وارد کنید").max(120),
+  date: req("تاریخ جلسه را وارد کنید"),
+  time: z.string().trim().default("10:00"),
+  location: z.string().trim().max(120).optional().default(""),
+  participantIds: z.array(z.string()).min(1, "حداقل یک شرکت‌کننده انتخاب کنید"),
+  summary: req("خلاصهٔ جلسه را وارد کنید").max(2000),
+});
+export type CreateSpaceMeetingInput = z.infer<typeof createSpaceMeetingSchema>;
+
 export const closeProjectSchema = z.object({
   projectId: req("شناسهٔ پروژه لازم است"),
   comment: z.string().trim().max(600).optional().default(""),
