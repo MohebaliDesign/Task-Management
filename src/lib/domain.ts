@@ -272,7 +272,8 @@ export interface Risk {
 
 export interface Blocker {
   id: string;
-  projectId: string;
+  /** null when the source meeting belongs to a Meeting Space, not a project. */
+  projectId: string | null;
   meetingId: string | null;
   title: string;
   description: string;
