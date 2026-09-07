@@ -1,56 +1,50 @@
 # ROLE
 
-You are acting as:
+Act as:
 
 - Senior Product Designer
-- Senior UX Designer
+- Senior Visual Designer
 - Senior UX Writer
 - Senior Frontend Engineer
 - Design System Engineer
 
 
-You are working inside Claude Code with Opus 4.8 High reasoning mode.
-
-Your task is to refine and improve the existing product implementation.
-
-This is NOT a new feature development task.
-
-You must improve the current branch:
-
-project-meeting-form-improvements
+Use Claude Code with Opus 4.8 High reasoning mode.
 
 
-The goal is to fix remaining UX inconsistencies, improve visual quality, and make shared product patterns consistent across the application.
+Your task is to perform the final UX and visual refinement pass on the product.
+
+This work must happen in a NEW branch created from MAIN.
 
 ---
 
-# IMPORTANT GIT REQUIREMENT
+# GIT REQUIREMENT
 
-Before making any changes:
+First:
 
-1. Verify current repository.
-2. Verify current branch.
-3. Make sure you are working on:
+1. Checkout latest main.
+2. Create a new branch from main.
 
-project-meeting-form-improvements
+Branch name:
+
+dashboard-final-refinement
+
+
+All changes must be implemented only inside:
+
+dashboard-final-refinement
 
 
 Do NOT merge into main.
 
 Do NOT modify main directly.
 
-All changes must remain inside:
 
-project-meeting-form-improvements
+After completion:
 
-
-After finishing:
-
-- commit all changes;
+- commit changes;
 - push this branch;
-- do NOT create a merge into main.
-
-I will review the branch and merge manually later.
+- keep it ready for manual Pull Request review.
 
 ---
 
@@ -59,627 +53,424 @@ I will review the branch and merge manually later.
 Continue using:
 
 - shadcn/ui
-- Iconsax icon system
+- Iconsax
 - existing Design Tokens
-- Vazirmatn typography
-- RTL layout
+- Vazirmatn font
+- RTL support
 
 
-For visual improvements use:
+Use UI/UX Pro Max principles for:
 
-UI/UX Pro Max Skill
+- hierarchy;
+- spacing;
+- dashboard quality;
+- component consistency;
+- accessibility.
 
-Focus on:
-
-- hierarchy
-- spacing
-- visual maturity
-- SaaS dashboard quality
-- accessibility
-- consistency
-
-
-Do not replace the existing company Design System.
 
 ---
 
-# PRODUCT PRINCIPLE
+# PRODUCT CONTEXT
 
-This product contains shared concepts:
+This is a Project Governance and Meeting Documentation platform.
+
+Main entities:
 
 Project
 Meeting
 Decision
 Action
-Phase
-User
+Dependency
+Blocker
+History
 
 
-Whenever the same concept exists in multiple places, it must behave consistently.
+Primary users:
 
-Example:
-
-A Meeting created from:
-
-- Project context
-- Meeting Space context
+PM / PO
 
 
-is still the same Meeting entity.
+The dashboard should help users quickly understand:
 
-The creation flow, detail structure, and editing experience must remain consistent.
+- projects;
+- meetings;
+- important work items.
 
 ---
 
-# 1. PROJECT CREATION — PHASE MANAGEMENT IMPROVEMENT
+# 1. REMOVE LAST ACTIVITY FROM DASHBOARD
 
 
-Location:
+Remove the entire:
 
-Create Project flow
+"آخرین فعالیت"
 
-Section:
-
-Project Phases Management
-
-
-## Current problem
-
-Phase cards currently have:
-
-- unnecessary padding;
-- unnecessary borders;
-- too much card feeling.
-
-
-Improve this design.
-
-
-## Required changes
-
-
-Remove:
-
-- outer border around phase items;
-- unnecessary card containers;
-- excessive padding.
-
-
-Use a cleaner list-based pattern:
-
-
-Example:
-
-
-Phase name
-
-Date information
-
-Actions
-
---------------------
-
-Phase name
-
-Date information
-
-Actions
-
-
-Use:
-
-- Divider between phases;
-- proper spacing;
-- clear hierarchy.
-
-
-The goal:
-
-Phases should feel like a structured timeline/list, not independent cards.
-
----
-
-# 2. PHASE SELECTOR EXPERIENCE
-
-
-Current behavior:
-
-Users only select from existing phases.
-
-
-Improve it similar to the Project Manager selector pattern.
-
-
-Required behavior:
-
-
-User can:
-
-1. Search existing phases.
-2. Select an existing phase.
-3. Create a new phase if it does not exist.
-
-
-The selector should support:
-
-
-Search input:
-
-
-"جستجوی فاز"
-
-
-Existing phases list:
-
-
-Design
-
-Development
-
-Testing
-
-
-At the bottom:
-
-
-"+ افزودن فاز جدید"
-
-
-When clicked:
-
-Do NOT open a separate page.
-
-Show inline input inside the selector menu.
-
-
-Example:
-
-
-نام فاز جدید:
-
-[________]
-
-ثبت
-
-
-After creation:
-
-The new phase should immediately become selectable.
-
----
-
-# 3. MEETING CREATE PAGE — DECISION AND ACTION CARDS
-
-
-Location:
-
-Meeting creation page
-
-
-Sections:
-
-- Decisions
-- Actions
-
-
-## Current problem
-
-Newly created decision/action items appear too flat or invisible.
-
-
-Improve card styling.
-
-
-Requirements:
-
-
-Cards should have:
-
-- very subtle gray surface;
-- minimal contrast from section background;
-- clear separation;
-- no heavy border.
-
-
-Example:
-
-Section background:
-
-very light neutral
-
-
-Item card:
-
-slightly darker neutral surface
-
-
-Avoid:
-
-- strong shadows;
-- dark borders;
-- heavy cards.
-
-
-The cards should feel lightweight and structured.
-
----
-
-# 4. REMOVE OPEN QUESTIONS FROM MEETING CREATION
-
-
-Remove the:
-
-"Open Questions"
-
-section completely.
+section from dashboard.
 
 
 Reason:
 
-This concept is not required in the current meeting documentation workflow.
+Dashboard should focus on overview and active management.
 
-
-Do not leave empty placeholders.
+Activity/history belongs to dedicated history areas.
 
 Remove:
 
 - UI section;
-- related fields;
-- unnecessary validation;
-- unused state/data handling if it exists.
+- related empty states;
+- unnecessary data fetching if only used here.
+
+---
+
+# 2. ADD UX DESCRIPTIONS TO MEETING SECTIONS
+
+
+Inside Meeting Create/Edit page add short helper descriptions.
+
+Sections:
+
+
+## Decisions
+
+Title:
+
+تصمیمات
+
+
+Description:
+
+"نتیجه‌ها و انتخاب‌هایی که در این جلسه درباره آن‌ها به توافق رسیدید را ثبت کنید."
 
 
 ---
 
-# 5. REMOVE DIRECT ADD ACTION/DECISION FROM MEETING DETAIL PAGE
+## Actions
+
+Title:
+
+اقدامات
 
 
-Location:
+Description:
 
-Meeting Detail page
+"کارهایی که پس از جلسه باید انجام شوند، همراه با مسئول و زمان انجام آن‌ها ثبت کنید."
 
-
-Current behavior:
-
-There are separate buttons to:
-
-- add decision;
-- add action.
-
-
-Remove these.
-
-
-Reason:
-
-Meeting information should have a single editing source.
-
-
-Required behavior:
-
-
-Meeting Detail:
-
-Only show:
-
-"ویرایش جلسه"
-
-
-When user clicks:
-
-Navigate to Meeting Edit page.
-
-
-The edit page should:
-
-- load existing data;
-- prefill all fields;
-- allow editing decisions and actions;
-- save changes together.
-
-
-Do not create multiple editing entry points.
 
 ---
 
-# 6. MEETING SPACE DETAIL — RESPONSIBLE PERSON SECTION
+## Blockers
+
+Title:
+
+موانع
 
 
-Location:
+Description:
 
-Organization Meeting Space detail page
+"مشکلات یا مواردی که باعث توقف یا کند شدن پیشرفت کار شده‌اند را ثبت کنید."
+
+
+Descriptions should be:
+
+- short;
+- clear;
+- PM-friendly;
+- consistent with product tone.
+
+---
+
+# 3. ADD CARD / TABLE VIEW SWITCHING
+
+
+For:
+
+- Projects page
+- Meetings page
+
+
+Add view switcher:
+
+Card View
+
+Table View
+
+
+User should be able to choose preferred display mode.
+
+
+---
+
+# PROJECTS TABLE VIEW
+
+
+Create a professional data table.
+
+
+Columns:
+
+
+Project Name
+
+Owner
+
+Status
+
+Phase
+
+Deadline
+
+Last Update
+
+
+Use shadcn table patterns.
+
+
+---
+
+# MEETINGS TABLE VIEW
+
+
+Create table view.
+
+
+Columns:
+
+
+Meeting Title
+
+Related Project / Meeting Space
+
+Date
+
+Participants
+
+Status
+
+
+---
+
+# 4. ADD SEARCH FILTER SORT TO MEETINGS PAGE
+
+
+Projects already support:
+
+Search
+
+Filter
+
+Sort
+
+
+Meetings should have the same capabilities.
+
+
+Add:
+
+Search meetings
+
+Filter by:
+
+- project;
+- meeting space;
+- date;
+- status;
+
+
+Sort by:
+
+- newest;
+- oldest;
+
+
+Maintain consistency with Projects page.
+
+---
+
+# 5. REDESIGN PROJECT CARDS
 
 
 Current issue:
 
-Responsible person section feels:
+Project cards show too much information.
 
-- visually empty;
-- dry;
-- poorly aligned;
-- not matching product quality.
+They feel:
 
-
-Improve this section using UI/UX Pro Max principles.
+- crowded;
+- difficult to scan;
+- visually noisy.
 
 
-Requirements:
+Redesign based on modern SaaS patterns.
 
 
-Fix:
+Reference direction:
 
-- RTL alignment;
-- spacing;
-- hierarchy;
-- visual presentation.
+Linear / Notion / modern enterprise SaaS.
 
 
-Consider a better pattern:
+---
+
+# NEW PROJECT CARD STRUCTURE
+
+
+Primary information:
+
+
+Project Name
+
+
+Short description
+
+
+Status
+
+
+Owner
+
+
+Secondary information:
+
+
+Phase
+
+
+Progress
+
+
+Last update
+
+
+Action:
+
+
+مشاهده جزئیات →
+
+
+---
+
+# REMOVE FROM PROJECT CARD
+
+
+Remove unnecessary overload:
+
+
+- excessive badges;
+- long descriptions;
+- duplicate information;
+- too many metadata fields.
+
+
+Do not display every possible project attribute inside the card.
+
+Cards are for scanning, not full detail.
+
+---
+
+# 6. VISUAL REFINEMENT
+
+
+Improve overall dashboard visual quality.
+
+
+Avoid:
+
+- excessive borders;
+- heavy shadows;
+- crowded cards.
+
+
+Use:
+
+
+- better spacing;
+- typography hierarchy;
+- subtle elevation;
+- clean surfaces.
+
+
+Cards:
+
+white surface.
+
+
+Background:
+
+neutral light surface.
+
+
+Shadows:
+
+soft and subtle.
+
+
+---
+
+# 7. RTL AND UX WRITING REVIEW
+
+
+Audit:
+
+- buttons;
+- filters;
+- tables;
+- cards;
+- empty states.
+
+
+Ensure Persian RTL behavior.
+
+---
+
+# 8. COMPONENT QUALITY
+
+
+Create reusable components where possible.
+
+
+Avoid duplicate implementations.
+
 
 Example:
 
+ViewSwitcher
 
-Responsible person
+ProjectCard
 
+ProjectTable
 
-[Avatar]
+MeetingCard
 
-Name
-
-Role
-
-
-or a compact profile-style component.
-
-
-Do not simply move text.
-
-Improve the visual experience.
-
----
-
-# 7. UNIFY MEETING CREATION EXPERIENCE
-
-
-This is a critical consistency requirement.
-
-
-Currently there are differences between:
-
-1. Creating meeting from Project page
-
-2. Creating meeting from Meeting section
-
-
-This should not happen.
-
-
-A Meeting is the same entity everywhere.
-
-
-Required:
-
-
-Both flows must use:
-
-- same form structure;
-- same fields;
-- same sections;
-- same validation;
-- same components;
-- same UX behavior.
-
-
-The only difference should be:
-
-Context source.
-
-
-Example:
-
-
-Project Meeting:
-
-Related Project = Project X
-
-
-Organization Meeting:
-
-Meeting Space = Internal Organization Meetings
-
-
-Everything else must remain identical.
-
----
-
-# 8. UNIFY MEETING DETAIL EXPERIENCE
-
-
-The same rule applies to Meeting Detail pages.
-
-
-Whether the meeting belongs to:
-
-- a project;
-- an organization meeting space;
-
-
-The detail page structure must be identical.
-
-
-The following sections must follow one shared structure:
-
-
-Meeting Overview
-
-Participants
-
-Attendance
-
-Summary
-
-Decisions
-
-Actions
-
-Dependencies (if applicable)
-
-Comments / Feedback
-
-Approval / Signature
-
-History
-
-
-Do not create separate versions of Meeting Detail.
-
-Create reusable components if needed.
-
----
-
-# 9. COMPONENT ARCHITECTURE IMPROVEMENT
-
-
-Avoid duplicated implementations.
-
-
-If Project Meeting and Organization Meeting use the same:
-
-
-- Meeting Form
-- Meeting Detail
-- Decision Item
-- Action Item
-- Participant Selector
-
-
-Extract reusable components.
-
-
-Example structure:
-
-
-components/
-
-meeting/
-
-  meeting-form.tsx
-
-  meeting-detail.tsx
-
-  participant-selector.tsx
-
-  decision-list.tsx
-
-  action-list.tsx
-
-
-Adapt to the existing architecture.
-
----
-
-# 10. RTL AND UX QUALITY AUDIT
-
-
-Review all changed components.
-
-
-Check:
-
-- text alignment;
-- icon position;
-- spacing;
-- dropdown direction;
-- input alignment;
-- modal layout.
-
-
-Everything must behave naturally in Persian RTL.
-
----
-
-# 11. UX WRITING REVIEW
-
-
-Review all new and modified text.
-
-
-Use clear Persian UX writing.
-
-
-Avoid generic labels.
-
-
-Examples:
-
-
-Instead of:
-
-"اضافه"
-
-
-Use:
-
-"افزودن فاز"
-
-
-Instead of:
-
-"ویرایش"
-
-where context is unclear:
-
-
-Use:
-
-"ویرایش جلسه"
-
-
-Instead of:
-
-"ثبت"
-
-where possible:
-
-
-Use:
-
-"ثبت تصمیم"
-
-"ثبت اقدام"
-
-"افزودن فرد جدید"
+MeetingTable
 
 
 ---
 
-# 12. FINAL QA
+# FINAL QA
 
 
-Before finishing verify:
+Verify:
 
 
-## Product consistency
+Product:
 
-- Are all meetings using the same structure?
-- Are decisions and actions managed from one source?
-- Are phases easier to manage?
-- Are users able to create missing phases?
-
-
-## UX quality
-
-- Are unnecessary sections removed?
-- Are flows simpler?
-- Are duplicate actions removed?
+- Dashboard focuses on important information.
+- Projects are easy to scan.
+- Meetings have equal capabilities.
+- PM understands Decisions, Actions, Blockers.
 
 
-## Visual quality
+UX:
 
-- Are phase items cleaner?
-- Are decision/action cards subtle?
-- Is the UI less card-heavy?
-- Is hierarchy improved?
+- Less cognitive overload.
+- Better discoverability.
+- Clear descriptions.
+
+
+Visual:
+
+- Premium SaaS feeling.
+- Better hierarchy.
+- Less noisy cards.
 
 
 ---
@@ -693,59 +484,50 @@ npm run lint
 npm run build
 
 
-Start locally:
-
-npm run dev
+Run locally and verify:
 
 
-Check:
+Dashboard
 
-- Project creation
-- Phase management
-- Meeting creation
-- Meeting detail
-- Organization meetings
-- Decision creation
-- Action creation
+Projects
 
+Meetings
 
-Fix runtime issues before completion.
+Card View
+
+Table View
+
 
 ---
 
-# FINAL COMMIT
-
-Create a meaningful commit:
-
-example:
-
-chore: refine meeting flows and improve project phase UX
+# COMMIT
 
 
-Push:
+Create commit:
 
-project-meeting-form-improvements
+
+feat: refine dashboard views and improve project cards
+
+
+Push only:
+
+
+dashboard-final-refinement
 
 
 Do NOT merge into main.
+
 
 ---
 
 # FINAL REPORT
 
+
 Provide:
 
 1. Changed files
-2. UX improvements implemented
-3. Visual improvements implemented
-4. Shared components created/refactored
+2. UX decisions
+3. Visual improvements
+4. Components created
 5. Validation results
-6. Git branch and commit information
-
-Confirm:
-
-Branch:
-
-project-meeting-form-improvements
-
-was pushed successfully.
+6. Git branch status
