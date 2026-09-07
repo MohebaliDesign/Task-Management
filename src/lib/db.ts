@@ -31,10 +31,35 @@ function seedIfMissing() {
   }
 }
 
+/**
+ * A db.json on disk from before a schema change (a new top-level collection
+ * added to `Database`) won't have that key at all — `seedIfMissing` only
+ * covers a file that's missing entirely. Backfill any absent collection with
+ * an empty array so older local snapshots don't crash every reader of it.
+ */
+function withCollectionDefaults(db: Partial<Database>): Database {
+  return {
+    people: db.people ?? [],
+    projects: db.projects ?? [],
+    meetings: db.meetings ?? [],
+    decisions: db.decisions ?? [],
+    actions: db.actions ?? [],
+    dependencies: db.dependencies ?? [],
+    risks: db.risks ?? [],
+    blockers: db.blockers ?? [],
+    comments: db.comments ?? [],
+    signatures: db.signatures ?? [],
+    projectApprovals: db.projectApprovals ?? [],
+    activities: db.activities ?? [],
+    meetingSpaces: db.meetingSpaces ?? [],
+    spaceMeetings: db.spaceMeetings ?? [],
+  };
+}
+
 export function readDb(): Database {
   seedIfMissing();
   const raw = fs.readFileSync(DB_PATH, "utf8");
-  return JSON.parse(raw) as Database;
+  return withCollectionDefaults(JSON.parse(raw) as Partial<Database>);
 }
 
 export function writeDb(db: Database): void {
