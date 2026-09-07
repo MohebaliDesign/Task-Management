@@ -89,6 +89,24 @@ export default function OverviewPage({ params }: { params: { projectId: string }
         </Card>
       </div>
 
+      {/* Phase roadmap (user-defined phases from project creation) */}
+      {project.phases.length > 0 && (
+        <section>
+          <SectionHeader title="فازهای پروژه" icon="milestone" />
+          <Card className="divide-y divide-border">
+            {project.phases.map((phase) => (
+              <div key={phase.id} className="flex items-center justify-between gap-3 p-3 text-sm">
+                <span className="font-medium">{phase.name}</span>
+                <span className="text-xs text-muted-foreground">
+                  {faDate(phase.startDate)}
+                  {phase.deadline ? ` — ${faDate(phase.deadline)}` : ""}
+                </span>
+              </div>
+            ))}
+          </Card>
+        </section>
+      )}
+
       {/* Tier 2 — health check */}
       <section>
         <SectionHeader title="بررسی سلامت" icon="verify" description="وضعیت هر بُعد پروژه به‌صورت جداگانه" />
@@ -225,6 +243,7 @@ export default function OverviewPage({ params }: { params: { projectId: string }
           <SectionHeader title="تیم" icon="people" />
           <Card className="divide-y divide-border">
             {[project.pmId, project.poId, ...project.teamIds]
+              .filter((v): v is string => !!v)
               .filter((v, i, a) => a.indexOf(v) === i)
               .map((id) => (
                 <div key={id} className="p-3">

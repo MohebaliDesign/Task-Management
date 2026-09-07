@@ -45,17 +45,26 @@ export default function DecisionsPage({ params }: { params: { projectId: string 
                   <AppIcon name="decision" size={20} className="mt-0.5 shrink-0 text-primary" />
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-medium">{d.text}</p>
+                    {d.description && <p className="mt-0.5 text-sm text-muted-foreground">{d.description}</p>}
                     <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
                       <span>تصمیم‌گیرنده: {getPerson(d.deciderId)?.name}</span>
                       <span>حوزه: {d.area}</span>
                       <span>اثر: {d.impact}</span>
                       <span>{faDate(d.date)}</span>
-                      {meeting && (
-                        <Link href={`/projects/${project.id}/meetings/${meeting.id}`} className="flex items-center gap-1 hover:text-foreground">
-                          <AppIcon name="meetings" size={13} /> {meeting.title}
-                        </Link>
-                      )}
                     </div>
+                    <p className="mt-1.5 text-xs text-muted-foreground">
+                      {meeting ? (
+                        <>
+                          ایجادشده از جلسه:{" "}
+                          <Link href={`/projects/${project.id}/meetings/${meeting.id}`} className="inline-flex items-center gap-1 text-foreground hover:underline">
+                            <AppIcon name="meetings" size={13} /> {meeting.title}
+                          </Link>{" "}
+                          · {faDate(meeting.date)}
+                        </>
+                      ) : (
+                        "بدون جلسهٔ منبع (ثبت مستقیم)"
+                      )}
+                    </p>
                     {derived.length > 0 && (
                       <div className="mt-2 rounded-md bg-muted/50 p-2">
                         <p className="mb-1 text-xs font-medium text-muted-foreground">اقدامات ناشی از این تصمیم ({toFa(derived.length)}):</p>

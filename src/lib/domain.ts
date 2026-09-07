@@ -90,6 +90,7 @@ export const ACTIVITY_TYPE = [
   "deadline_changed",
   "milestone_updated",
   "meeting_created",
+  "meeting_updated",
   "meeting_submitted",
   "meeting_approved",
   "decision_added",
@@ -103,6 +104,7 @@ export const ACTIVITY_TYPE = [
   "signature_added",
   "ceo_approval",
   "project_closed",
+  "person_added",
 ] as const;
 export type ActivityType = (typeof ACTIVITY_TYPE)[number];
 
@@ -141,6 +143,14 @@ export interface Milestone {
   progress: number; // 0..100
 }
 
+/** A user-defined phase of a project's roadmap (name is free text, not an enum). */
+export interface ProjectPhaseItem {
+  id: string;
+  name: string;
+  startDate: string;
+  deadline: string | null;
+}
+
 export interface Workstream {
   id: string;
   title: string;
@@ -165,10 +175,12 @@ export interface Project {
   health: ProjectHealth;
   priority: Priority;
   phase: ProjectPhase;
+  /** User-defined roadmap phases (name/start/deadline) — see ProjectPhaseItem. */
+  phases: ProjectPhaseItem[];
   pmId: string;
-  poId: string;
+  poId: string | null;
   startDate: string;
-  targetDate: string;
+  targetDate: string | null;
   deliveryDate: string | null;
   closedDate: string | null;
   completion: number; // 0..100
@@ -196,7 +208,8 @@ export interface Decision {
   id: string;
   projectId: string;
   meetingId: string | null;
-  text: string;
+  text: string; // decision title
+  description: string; // optional elaboration
   deciderId: string;
   date: string;
   area: string; // related topic/area, Persian
@@ -290,7 +303,8 @@ export interface Meeting {
   participants: Participant[];
   agenda: string[];
   discussion: string;
-  summary: string;
+  summary: string; // derived flat text (legacy display / review page)
+  summaryPoints: string[]; // structured summary items shown/edited as a list
   nextSteps: string[];
   openQuestions: string[];
   createdById: string;
