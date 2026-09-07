@@ -37,7 +37,7 @@ export function TeamWorkstreams({ project }: { project: Project }) {
             return (
               <TableRow key={id}>
                 <TableCell className="min-w-[180px]">
-                  <PersonChip person={person} showRole />
+                  <PersonChip person={person} />
                 </TableCell>
                 <TableCell className="text-sm text-muted-foreground">{person.title}</TableCell>
                 <TableCell className="min-w-[140px]">

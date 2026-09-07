@@ -29,7 +29,9 @@ export function ProjectResources({
 }: {
   resources?: ProjectResource[];
 }) {
-  
+  if (resources.length === 0) {
+    return <EmptyState icon="link" title="منبعی برای این پروژه ثبت نشده است" />;
+  }
 
   return (
     <Card className="divide-y divide-border">
