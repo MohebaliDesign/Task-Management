@@ -13,6 +13,7 @@ import { SubmitButton } from "@/components/form/submit-button";
 import { SectionHeader } from "@/components/domain/page-header";
 import { LifecycleBadge } from "@/components/domain/status";
 import { PersonChip } from "@/components/domain/person";
+import { PersonSelect } from "@/features/people/person-select";
 import { updateProjectInfo, type ActionResult } from "@/lib/actions";
 import { PROJECT_PHASE, PRIORITY } from "@/lib/domain";
 import { phaseLabels, priorityLabels } from "@/lib/labels";
@@ -21,11 +22,12 @@ import type { Person, Project } from "@/lib/domain";
 
 const initial: ActionResult = { ok: false, error: "" };
 
-export function ProjectInfoCard({ project, people }: { project: Project; people: Person[] }) {
+export function ProjectInfoCard({ project, people: initialPeople }: { project: Project; people: Person[] }) {
   const router = useRouter();
   const [editing, setEditing] = React.useState(false);
   const [state, formAction] = useFormState(updateProjectInfo, initial);
   const errs = state.ok ? {} : state.fieldErrors ?? {};
+  const [people, setPeople] = React.useState(initialPeople);
   const pm = people.find((p) => p.id === project.pmId);
   const po = people.find((p) => p.id === project.poId);
 
@@ -60,20 +62,10 @@ export function ProjectInfoCard({ project, people }: { project: Project; people:
               </Field>
               <div className="grid grid-cols-2 gap-4">
                 <Field label="مدیر پروژه" htmlFor="pmId" error={errs.pmId} required>
-                  <Select name="pmId" defaultValue={project.pmId}>
-                    <SelectTrigger id="pmId"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      {people.map((p) => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
+                  <PersonSelect id="pmId" name="pmId" people={people} defaultValue={project.pmId} onPersonCreated={(p) => setPeople((prev) => [...prev, p])} />
                 </Field>
-                <Field label="مالک محصول" htmlFor="poId" error={errs.poId} required>
-                  <Select name="poId" defaultValue={project.poId ?? undefined}>
-                    <SelectTrigger id="poId"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      {people.map((p) => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
+                <Field label="مالک محصول" htmlFor="poId" error={errs.poId} hint="اختیاری">
+                  <PersonSelect id="poId" name="poId" people={people} defaultValue={project.poId ?? undefined} placeholder="بدون مالک محصول" onPersonCreated={(p) => setPeople((prev) => [...prev, p])} />
                 </Field>
               </div>
               <div className="grid grid-cols-2 gap-4">

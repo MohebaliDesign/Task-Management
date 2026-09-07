@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
 import { PageHeader } from "@/components/domain/page-header";
 import { CreateProjectForm } from "@/features/projects/create-project-form";
-import { getPeople } from "@/lib/queries";
+import { getPeople, getProjects } from "@/lib/queries";
 
 export const metadata: Metadata = { title: "پروژهٔ جدید" };
 
 export default function NewProjectPage() {
   const people = getPeople();
+  const projects = getProjects();
   return (
     <div className="mx-auto max-w-3xl">
       <PageHeader
@@ -15,7 +16,7 @@ export default function NewProjectPage() {
         icon="projects"
         crumbs={[{ label: "پروژه‌ها", href: "/projects" }, { label: "پروژهٔ جدید" }]}
       />
-      <CreateProjectForm people={people} />
+      <CreateProjectForm people={people} projects={projects} />
     </div>
   );
 }

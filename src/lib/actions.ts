@@ -9,7 +9,9 @@ import type {
   ActivityType,
   Decision,
   Meeting,
+  Person,
   Project,
+  ProjectPhaseItem,
 } from "./domain";
 import {
   addActionSchema,
@@ -21,14 +23,16 @@ import {
   closeProjectSchema,
   createMeetingSchema,
   createMeetingSpaceSchema,
+  createPersonSchema,
   createProjectSchema,
   createSpaceMeetingSchema,
   signMeetingSchema,
   updateActionStatusSchema,
+  updateMeetingSchema,
   updateProjectInfoSchema,
   updateProjectStateSchema,
 } from "./schemas";
-import { actionStatusLabels, healthLabels } from "./labels";
+import { actionStatusLabels, healthLabels, roleLabels } from "./labels";
 import { allSignaturesApproved } from "./logic";
 
 /**
@@ -83,21 +87,32 @@ export async function createProject(_prev: unknown, formData: FormData): Promise
   if (!parsed.success) return { ok: false, error: "لطفاً خطاهای فرم را برطرف کنید.", fieldErrors: fieldErrorsFrom(parsed.error) };
   const v = parsed.data;
   const id = makeId("prj");
+  const phases: ProjectPhaseItem[] = v.phasesJson.map((p) => ({
+    id: makeId("phz"),
+    name: p.name,
+    startDate: new Date(p.startDate).toISOString(),
+    deadline: p.deadline ? new Date(p.deadline).toISOString() : null,
+  }));
   mutate((db) => {
+    // Case 1: linked to a previous version. Case 2: a fresh, unlinked version number.
+    const previousVersionId = v.previousVersionId && db.projects.some((x) => x.id === v.previousVersionId)
+      ? v.previousVersionId
+      : null;
     const project: Project = {
       id,
       name: v.name,
       versionLabel: `نسخه ${v.versionNumber}`,
       versionNumber: v.versionNumber,
-      previousVersionId: null,
+      previousVersionId,
       lifecycle: "active",
       health: "on_track",
       priority: v.priority,
       phase: v.phase,
+      phases,
       pmId: v.pmId,
-      poId: v.poId,
+      poId: v.poId || null,
       startDate: new Date(v.startDate).toISOString(),
-      targetDate: new Date(v.targetDate).toISOString(),
+      targetDate: v.targetDate ? new Date(v.targetDate).toISOString() : null,
       deliveryDate: null,
       closedDate: null,
       completion: 0,
@@ -133,9 +148,9 @@ export async function updateProjectState(_prev: unknown, formData: FormData): Pr
     if (p.health !== v.health) {
       pushActivity(db, { projectId: p.id, type: "health_changed", entityLabel: "سلامت پروژه", previousValue: healthLabels[p.health].label, newValue: healthLabels[v.health].label });
     }
-    const newTarget = new Date(v.targetDate).toISOString();
-    if (p.targetDate.slice(0, 10) !== newTarget.slice(0, 10)) {
-      pushActivity(db, { projectId: p.id, type: "deadline_changed", entityLabel: "مهلت پروژه", previousValue: p.targetDate.slice(0, 10), newValue: newTarget.slice(0, 10) });
+    const newTarget = v.targetDate ? new Date(v.targetDate).toISOString() : null;
+    if ((p.targetDate?.slice(0, 10) ?? null) !== (newTarget?.slice(0, 10) ?? null)) {
+      pushActivity(db, { projectId: p.id, type: "deadline_changed", entityLabel: "مهلت پروژه", previousValue: p.targetDate?.slice(0, 10) ?? "بدون مهلت", newValue: newTarget?.slice(0, 10) ?? "بدون مهلت" });
     }
     p.health = v.health;
     p.completion = v.completion;
@@ -161,7 +176,7 @@ export async function updateProjectInfo(_prev: unknown, formData: FormData): Pro
     const prevName = p.name;
     p.name = v.name;
     p.pmId = v.pmId;
-    p.poId = v.poId;
+    p.poId = v.poId || null;
     p.phase = v.phase;
     p.priority = v.priority;
     p.updatedAt = nowIso();
@@ -209,15 +224,43 @@ export async function closeProject(_prev: unknown, formData: FormData): Promise<
   return { ok: true };
 }
 
+// ── People (inline "+ افزودن فرد جدید" creation) ────────────────────────────
+function initialsFrom(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  return (parts[0]?.[0] ?? "") + (parts[1]?.[0] ?? "");
+}
+
+export type CreatePersonResult =
+  | { ok: true; person: Person }
+  | { ok: false; error: string; fieldErrors?: Record<string, string> };
+
+export async function createPerson(formData: FormData): Promise<CreatePersonResult> {
+  const parsed = createPersonSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { ok: false, error: "لطفاً خطاهای فرم را برطرف کنید.", fieldErrors: fieldErrorsFrom(parsed.error) };
+  const v = parsed.data;
+  const person: Person = {
+    id: makeId("p"),
+    name: v.name,
+    role: v.role,
+    title: roleLabels[v.role],
+    email: "",
+    initials: initialsFrom(v.name) || "?",
+  };
+  mutate((db) => {
+    db.people.push(person);
+    // Not tied to a specific project — logged against no project context.
+  });
+  revalidatePath("/");
+  return { ok: true, person };
+}
+
 // ── Meetings ────────────────────────────────────────────────────────────────
 function splitLines(s: string): string[] {
   return s.split("\n").map((x) => x.trim()).filter(Boolean);
 }
 
 export async function createMeeting(_prev: unknown, formData: FormData): Promise<ActionResult> {
-  const raw = Object.fromEntries(formData);
-  const participantIds = formData.getAll("participantIds").map(String).filter(Boolean);
-  const parsed = createMeetingSchema.safeParse({ ...raw, participantIds });
+  const parsed = createMeetingSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { ok: false, error: "لطفاً خطاهای فرم را برطرف کنید.", fieldErrors: fieldErrorsFrom(parsed.error) };
   const v = parsed.data;
   const id = makeId("mtg");
@@ -234,10 +277,11 @@ export async function createMeeting(_prev: unknown, formData: FormData): Promise
       status: "draft",
       revision: 1,
       source: "manual",
-      participants: participantIds.map((pid) => ({ personId: pid, attended: true })),
+      participants: v.participantsJson.map((p) => ({ personId: p.personId, attended: p.attended })),
       agenda: splitLines(v.agenda),
       discussion: v.discussion,
-      summary: v.summary,
+      summary: v.summaryPointsJson.join(" ؛ "),
+      summaryPoints: v.summaryPointsJson,
       nextSteps: splitLines(v.nextSteps),
       openQuestions: splitLines(v.openQuestions),
       createdById: OPERATOR.id,
@@ -247,9 +291,82 @@ export async function createMeeting(_prev: unknown, formData: FormData): Promise
     };
     db.meetings.push(meeting);
     pushActivity(db, { projectId: v.projectId, meetingId: id, type: "meeting_created", entityLabel: v.title, newValue: "پیش‌نویس" });
+
+    // Decisions drafted inline in the meeting form — created in order so
+    // actions below can reference them by index before they have real ids.
+    const decisionIds: string[] = [];
+    for (const d of v.decisionsJson) {
+      const decisionId = makeId("dec");
+      const decision: Decision = {
+        id: decisionId,
+        projectId: v.projectId,
+        meetingId: id,
+        text: d.text,
+        description: d.description,
+        deciderId: d.deciderId,
+        date: meeting.date,
+        area: d.area,
+        impact: "متوسط",
+        createdAt: nowIso(),
+      };
+      db.decisions.push(decision);
+      decisionIds.push(decisionId);
+      pushActivity(db, { projectId: v.projectId, meetingId: id, type: "decision_added", entityLabel: d.text.slice(0, 60) });
+    }
+
+    for (const a of v.actionsJson) {
+      const actionId = makeId("act");
+      const relatedDecisionId = a.relatedDecisionIndex !== undefined ? decisionIds[a.relatedDecisionIndex] ?? null : null;
+      const action: ActionItem = {
+        id: actionId,
+        projectId: v.projectId,
+        meetingId: id,
+        title: a.title,
+        description: "",
+        ownerId: a.ownerId,
+        deadline: a.deadline ? new Date(a.deadline).toISOString() : null,
+        status: a.status,
+        priority: a.priority,
+        relatedDecisionId,
+        createdAt: nowIso(),
+        updatedAt: nowIso(),
+        completedAt: a.status === "done" ? nowIso() : null,
+      };
+      db.actions.push(action);
+      pushActivity(db, { projectId: v.projectId, meetingId: id, type: "action_added", entityLabel: a.title });
+    }
   });
   revalidatePath(`/projects/${v.projectId}/meetings`);
+  revalidatePath(`/projects/${v.projectId}/decisions`);
+  revalidatePath(`/projects/${v.projectId}/actions`);
+  revalidatePath(`/projects/${v.projectId}`);
   return { ok: true, id };
+}
+
+export async function updateMeeting(_prev: unknown, formData: FormData): Promise<ActionResult> {
+  const parsed = updateMeetingSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { ok: false, error: "لطفاً خطاهای فرم را برطرف کنید.", fieldErrors: fieldErrorsFrom(parsed.error) };
+  const v = parsed.data;
+  mutate((db) => {
+    const m = db.meetings.find((x) => x.id === v.meetingId);
+    if (!m) return;
+    m.title = v.title;
+    m.date = new Date(v.date).toISOString();
+    m.time = v.time;
+    m.location = v.location;
+    m.participants = v.participantsJson.map((p) => ({ personId: p.personId, attended: p.attended }));
+    m.agenda = splitLines(v.agenda);
+    m.discussion = v.discussion;
+    m.summary = v.summaryPointsJson.join(" ؛ ");
+    m.summaryPoints = v.summaryPointsJson;
+    m.nextSteps = splitLines(v.nextSteps);
+    m.openQuestions = splitLines(v.openQuestions);
+    m.updatedAt = nowIso();
+    pushActivity(db, { projectId: v.projectId, meetingId: m.id, type: "meeting_updated", entityLabel: m.title });
+  });
+  revalidatePath(`/projects/${v.projectId}/meetings/${v.meetingId}`);
+  revalidatePath(`/projects/${v.projectId}/meetings`);
+  return { ok: true, id: v.meetingId };
 }
 
 export async function submitMeetingForReview(meetingId: string): Promise<ActionResult> {
@@ -289,7 +406,7 @@ export async function addDecision(_prev: unknown, formData: FormData): Promise<A
   const id = makeId("dec");
   const meetingId = v.meetingId || null;
   mutate((db) => {
-    const decision: Decision = { id, projectId: v.projectId, meetingId, text: v.text, deciderId: v.deciderId, date: new Date(v.date).toISOString(), area: v.area, impact: v.impact, createdAt: nowIso() };
+    const decision: Decision = { id, projectId: v.projectId, meetingId, text: v.text, description: v.description, deciderId: v.deciderId, date: new Date(v.date).toISOString(), area: v.area, impact: v.impact, createdAt: nowIso() };
     db.decisions.push(decision);
     pushActivity(db, { projectId: v.projectId, meetingId, type: "decision_added", entityLabel: v.text.slice(0, 60) });
     for (const actionId of v.relatedActionIds) {

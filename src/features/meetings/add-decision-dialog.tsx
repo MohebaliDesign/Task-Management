@@ -66,8 +66,11 @@ export function AddDecisionDialog({
         <form action={formAction} className="space-y-4">
           <input type="hidden" name="projectId" value={projectId} />
           {meetingId && <input type="hidden" name="meetingId" value={meetingId} />}
-          <Field label="متن تصمیم" htmlFor="text" error={errs.text} required>
-            <Textarea id="text" name="text" rows={3} aria-invalid={!!errs.text} />
+          <Field label="عنوان تصمیم" htmlFor="text" error={errs.text} required>
+            <Textarea id="text" name="text" rows={2} aria-invalid={!!errs.text} />
+          </Field>
+          <Field label="توضیحات (اختیاری)" htmlFor="description" error={errs.description}>
+            <Textarea id="description" name="description" rows={2} />
           </Field>
           <div className="grid grid-cols-2 gap-4">
             <Field label="تصمیم‌گیرنده" htmlFor="deciderId" error={errs.deciderId} required>

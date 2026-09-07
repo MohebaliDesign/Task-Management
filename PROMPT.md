@@ -1,495 +1,325 @@
 # ROLE
 
-You are acting as a:
+You are acting as a Senior Git Engineer and Senior Full-Stack Developer.
 
-- Senior Product Designer
-- Senior UX Designer
-- Senior UX Writer
-- Senior Frontend Engineer
-- Design System Engineer
+Your task is to safely synchronize the latest changes from the `main` branch into the existing feature branch:
 
-using Claude Code with Opus 4.8 High reasoning mode.
+```
+project-meeting-form-improvements
+```
 
-Your task is to improve the existing Project Governance & Meeting Accountability System.
+The goal is NOT to merge this feature branch into main.
 
-This is NOT a redesign from scratch.
+The goal is the opposite:
 
-You must inspect the current implementation and refine the existing product based on UX, IA, and visual maturity principles.
+Update the feature branch so that it contains:
 
+1. All latest changes from `main`
+2. All existing changes and implementations from `project-meeting-form-improvements`
 
-# PROJECT CONTEXT
+The final result must remain inside:
 
-This product is a Project Governance & Meeting Accountability platform.
+```
+project-meeting-form-improvements
+```
 
-Core model:
+After verification, I will manually review it and create a Pull Request into `main`.
 
-Project
-→ Meeting
-→ Decision
-→ Action
-→ Owner
-→ Dependency
-→ History
-→ Approval
+---
 
-Primary users:
+# IMPORTANT GIT RULES
 
-- PM
-- PO
-
-
-The product should help users manage:
-
-- projects
-- meetings
-- decisions
-- actions
-- dependencies
-- project history
-
-
-# REQUIRED GIT WORKFLOW
-
-Before any modification:
+Before doing anything:
 
 1. Check current repository.
-2. Create a new branch from the current development branch.
+2. Check current branch.
+3. Check remote configuration.
+4. Check working tree status.
 
-Branch name:
+Run:
 
-dashboard-meeting-improvements
+```bash
+git status
+git branch
+git remote -v
+```
 
+Make sure you are working on the correct repository.
 
-All changes must happen only inside this branch.
+Do NOT modify:
 
-Do not modify main directly.
+```
+main
+```
 
-After completion:
+directly.
 
-- commit changes
-- push the branch
-- provide summary of changed files
+Do NOT force push.
 
+Do NOT delete branches.
 
-# DESIGN QUALITY REQUIREMENT
+Do NOT lose any existing work.
 
-Use:
+---
 
-UI/UX Pro Max Skill
+# CURRENT BRANCH STRUCTURE
 
-for:
+Current situation:
 
-- SaaS dashboard patterns
-- visual hierarchy
-- spacing
-- accessibility
-- component quality
-- interaction patterns
+```
+main
+ |
+ |-- New updates from teammate are already merged and pushed here
+ |
+ |
+project-meeting-form-improvements
+ |
+ |-- Contains previous feature development changes
+```
 
+The desired final structure:
 
-Continue using:
+```
+main
+ |
+ |-- latest shared changes
+ |
+ |
+project-meeting-form-improvements
+ |
+ |-- latest main changes
+ |
+ |-- existing feature changes preserved
+```
 
-- shadcn/ui
-- Iconsax icons
-- existing design tokens
+---
 
+# REQUIRED WORKFLOW
 
-Do not introduce random UI libraries.
+## Step 1 — Switch to feature branch
 
+Checkout:
 
-# 1. APPLICATION SHELL COLOR SYSTEM
+```bash
+git checkout project-meeting-form-improvements
+```
 
+or:
 
-Current issue:
+```bash
+git switch project-meeting-form-improvements
+```
 
-Sidebar, header, and content area have insufficient visual separation.
+---
 
+## Step 2 — Update remote references
 
-Update layout:
+Fetch latest remote state:
 
-Sidebar:
+```bash
+git fetch origin
+```
 
-white background.
+---
 
+## Step 3 — Integrate latest main changes
 
-Header:
+Bring the latest `main` branch changes into:
 
-white background.
+```
+project-meeting-form-improvements
+```
 
+Preferred approach:
 
-Main content/workspace:
+Use a clean merge:
 
-keep current light gray surface background.
+```bash
+git merge origin/main
+```
 
+Do NOT merge feature branch into main.
 
-Goal:
+The direction must be:
 
-Create clear separation between:
+```
+origin/main
+        ↓
+project-meeting-form-improvements
+```
 
-Navigation
-Global header
-Working canvas
+---
 
+# CONFLICT HANDLING
 
-Do not make the entire application white.
+If merge conflicts happen:
 
+Do NOT automatically discard either side.
 
-# 2. DASHBOARD PRIMARY AND SECONDARY CTA SYSTEM
+Analyze each conflict carefully.
 
+Priority:
 
-The dashboard needs two creation actions.
+1. Preserve latest main changes.
+2. Preserve valuable feature changes from:
+   
+```
+project-meeting-form-improvements
+```
 
+3. Resolve conflicts based on the final product behavior.
 
-## Primary CTA
+For important files:
 
-Keep project creation as the main action.
+- understand the purpose;
+- combine both implementations when needed;
+- avoid deleting functionality.
 
-Button:
+After resolving conflicts:
 
-"ایجاد پروژه"
+```bash
+git add .
+git commit
+```
 
+---
 
-This should remain visually dominant.
+# VERIFY FEATURE INTEGRITY
 
+After merge, verify that all previous feature work still exists.
 
-## Secondary CTA
+Especially check:
 
-Add a new action:
+- project creation improvements;
+- meeting form improvements;
+- meeting space functionality;
+- dashboard changes;
+- existing UI improvements;
+- design system usage;
+- shadcn components;
+- Iconsax integration.
 
-"ایجاد دسته جلسات"
+The goal is:
 
+```
+main updates + feature branch functionality
+```
 
-Important:
+not:
 
-This is NOT creating an empty meeting.
+```
+main replacing feature branch
+```
 
+---
 
-Users should be able to create a meeting category/space.
+# RUN VALIDATION
 
+After synchronization:
+
+Run:
+
+```bash
+npm install
+npm run lint
+npm run build
+```
+
+If the project has tests:
+
+Run them as well.
+
+Check for:
+
+- TypeScript errors;
+- missing dependencies;
+- broken imports;
+- runtime errors.
+
+---
+
+# RUN LOCAL CHECK
+
+Start the application:
+
+```bash
+npm run dev
+```
+
+Verify that:
+
+- application starts successfully;
+- dashboard loads;
+- project pages load;
+- meeting pages load;
+- no runtime errors exist.
+
+---
+
+# COMMIT
+
+After successful synchronization create a clear commit:
 
 Example:
 
-"جلسات داخلی سازمان"
+```
+chore: sync main updates into project-meeting-form-improvements
+```
 
-Inside this category users can create multiple meetings:
+---
 
-- management meeting
-- organization coordination meeting
-- internal discussion meetings
+# PUSH
 
+Push only this branch:
 
-# 3. NEW MEETING SPACE CREATION FLOW
+```bash
+git push origin project-meeting-form-improvements
+```
 
+Do not push to main.
 
-Create a new flow similar to project creation.
-
-Reuse existing patterns.
-
-However remove project-specific fields.
-
-
-Remove:
-
-- Version number
-- Current phase
-- Deadline
-- Executive summary
-- Next milestone
-
-
-Keep:
-
-- Name
-- Description
-- Owner
-- Related people/team if existing pattern supports it
-
-
-Example:
-
-
-Create Meeting Space
-
-
-Name:
-
-جلسات داخلی سازمان
-
-
-Description:
-
-جلسات مربوط به هماهنگی‌های سازمانی
-
-
-Owner:
-
-
-Create
-
-
-# 4. INFORMATION ARCHITECTURE UPDATE
-
-
-Current model:
-
-Project
-  |
- Meeting
-
-
-Expand it to:
-
-
-Workspace
-
-├── Projects
-
-│    └── Project Meetings
-
-
-└── Meeting Spaces
-
-     ├── Meeting 1
-     ├── Meeting 2
-     └── Meeting 3
-
-
-Do not break existing project meetings.
-
-Support both:
-
-1. Project-related meetings
-
-2. Independent organization meetings
-
-
-# 5. SIDEBAR UPDATE
-
-
-Add new navigation item:
-
-
-"جلسات"
-
-
-The sidebar should include:
-
-
-Dashboard
-
-Projects
-
-Meetings
-
-History
-
-
-Follow existing sidebar style.
-
-
-# 6. DASHBOARD NEW SECTION
-
-
-Create a new dashboard section below Active Projects.
-
-
-Current:
-
-Active Projects
-
-
-New:
-
-
-Active Projects
-
-
-Meeting Spaces
-
-
-The new section should display:
-
-- Meeting space name
-- Number of meetings
-- Last meeting date
-- Owner
-- View action
-
-
-Example:
-
-
-جلسات داخلی سازمان
-
-12 جلسه ثبت شده
-
-آخرین جلسه:
-5 شهریور
-
-
-مشاهده جلسات →
-
-
-# 7. REMOVE DUPLICATE DASHBOARD SECTIONS
-
-
-There are two dashboard sections opposite Active Projects.
-
-Remove them.
-
-Reason:
-
-Their information is already displayed inside project cards as badges.
-
-
-Avoid duplicate information.
-
-The dashboard should become cleaner.
-
-
-After removal:
-
-Active Projects should expand and use full available width.
-
-
-# 8. VISUAL DASHBOARD REFINEMENT
-
-
-Improve dashboard maturity.
-
-
-Avoid:
-
-- excessive borders
-- flat white cards everywhere
-- prototype feeling
-
-
-Use:
-
-- surface hierarchy
-- spacing
-- typography hierarchy
-- existing design tokens
-
-
-Preferred structure:
-
-
-Background:
-
-neutral gray surface
-
-
-Sections/cards:
-
-white surfaces
-
-
-Use borders only when necessary.
-
-
-# 9. RTL QUALITY AUDIT
-
-
-Review all changed areas.
-
-Fix:
-
-- RTL alignment
-- icon placement
-- button direction
-- spacing
-- Persian text handling
-
-
-Ensure all components behave correctly in RTL.
-
-
-# 10. UX WRITING REVIEW
-
-
-Review all new and existing related copy.
-
-
-Avoid generic labels.
-
-
-Prefer:
-
-
-"ایجاد پروژه"
-
-instead of:
-
-"ساخت"
-
-
-"ایجاد دسته جلسات"
-
-instead of:
-
-"جلسه جدید"
-
-
-All text should be understandable for PM and PO users.
-
-
-# 11. RESPONSIVE CHECK
-
-
-Review:
-
-- desktop
-- tablet
-- mobile
-
-
-Ensure:
-
-- CTA hierarchy remains clear
-- cards adapt correctly
-- navigation works properly
-
-
-# 12. FINAL REVIEW
-
-
-Before finishing verify:
-
-
-Product:
-
-- Can users understand difference between projects and meeting spaces?
-- Can users create both project and organization meeting categories?
-- Is information architecture clear?
-
-
-UX:
-
-- Are actions obvious?
-- Are labels understandable?
-- Is duplicate information removed?
-
-
-Visual:
-
-- Does dashboard feel like a mature SaaS product?
-- Is hierarchy improved?
-- Are surfaces separated correctly?
-
+---
 
 # FINAL REPORT
 
+After completion provide:
 
-Provide:
+## Git status
 
-1. Changed files
-2. UX improvements
-3. Product decisions implemented
-4. Visual improvements
-5. Testing results
-6. Git branch information
+- current branch
+- latest commit
+- merge status
 
-Branch:
-dashboard-meeting-improvements
+## Changes integrated from main
+
+Summarize what was brought from main.
+
+## Feature changes preserved
+
+Summarize what remained from:
+
+```
+project-meeting-form-improvements
+```
+
+## Conflicts resolved
+
+If any, explain briefly.
+
+## Verification
+
+Report:
+
+- lint result
+- build result
+- local run result
+
+## Pull Request readiness
+
+Confirm whether:
+
+```
+project-meeting-form-improvements
+```
+
+is ready to be reviewed and merged into main.

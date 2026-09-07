@@ -43,6 +43,24 @@ export default function OverviewPage({ params }: { params: { projectId: string }
         <MetricTile icon="link" label="منابع پروژه" value={toFa(project.resources.length)} hint="منبع مرتبط ثبت‌شده" />
       </div>
 
+      {/* Phase roadmap (user-defined phases from project creation) */}
+      {project.phases.length > 0 && (
+        <section>
+          <SectionHeader title="فازهای پروژه" icon="milestone" />
+          <Card className="divide-y divide-border">
+            {project.phases.map((phase) => (
+              <div key={phase.id} className="flex items-center justify-between gap-3 p-3 text-sm">
+                <span className="font-medium">{phase.name}</span>
+                <span className="text-xs text-muted-foreground">
+                  {faDate(phase.startDate)}
+                  {phase.deadline ? ` — ${faDate(phase.deadline)}` : ""}
+                </span>
+              </div>
+            ))}
+          </Card>
+        </section>
+      )}
+
       {/* 2 — خلاصه پروژه */}
       <section>
         <SectionHeader title="خلاصه پروژه" icon="overview" />

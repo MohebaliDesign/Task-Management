@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { AppIcon } from "@/components/icon";
 import { PageHeader } from "@/components/domain/page-header";
 import { EmptyState } from "@/components/domain/empty-state";
@@ -49,7 +50,17 @@ export default function MeetingDetailPage({ params }: { params: { projectId: str
         actions={
           <div className="flex flex-col items-end gap-2">
             <MeetingStatusBadge value={meeting.status} />
-            <MeetingActionsBar meetingId={meeting.id} reviewToken={meeting.reviewToken} status={meeting.status} readOnly={readOnly} />
+            <div className="flex flex-wrap items-center gap-2">
+              {!readOnly && (
+                <Button asChild variant="outline" size="sm">
+                  <Link href={`/projects/${project.id}/meetings/${meeting.id}/edit`}>
+                    <AppIcon name="edit" size={16} />
+                    ویرایش جلسه
+                  </Link>
+                </Button>
+              )}
+              <MeetingActionsBar meetingId={meeting.id} reviewToken={meeting.reviewToken} status={meeting.status} readOnly={readOnly} />
+            </div>
           </div>
         }
       />
@@ -59,7 +70,20 @@ export default function MeetingDetailPage({ params }: { params: { projectId: str
           {/* Summary */}
           <Card>
             <CardHeader><CardTitle className="flex items-center gap-2"><AppIcon name="clipboard" size={18} className="text-muted-foreground" />خلاصهٔ جلسه</CardTitle></CardHeader>
-            <CardContent><p className="text-sm leading-7 text-foreground-alt">{meeting.summary}</p></CardContent>
+            <CardContent>
+              {meeting.summaryPoints.length > 0 ? (
+                <ul className="space-y-2">
+                  {meeting.summaryPoints.map((point, i) => (
+                    <li key={i} className="flex items-start gap-2 text-sm leading-7 text-foreground-alt">
+                      <AppIcon name="check" size={15} className="mt-1.5 shrink-0 text-muted-foreground" />
+                      {point}
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-sm leading-7 text-foreground-alt">{meeting.summary}</p>
+              )}
+            </CardContent>
           </Card>
 
           {/* Discussion */}
@@ -86,6 +110,7 @@ export default function MeetingDetailPage({ params }: { params: { projectId: str
                       <AppIcon name="decision" size={18} className="mt-0.5 shrink-0 text-primary" />
                       <div>
                         <p className="text-sm">{d.text}</p>
+                        {d.description && <p className="mt-0.5 text-sm text-muted-foreground">{d.description}</p>}
                         <p className="mt-1 text-xs text-muted-foreground">{getPerson(d.deciderId)?.name} · حوزه: {d.area} · اثر: {d.impact}</p>
                       </div>
                     </li>
