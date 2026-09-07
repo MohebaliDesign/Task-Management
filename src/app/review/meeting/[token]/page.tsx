@@ -8,7 +8,7 @@ import { EmptyState } from "@/components/domain/empty-state";
 import { ReviewCommentForm } from "@/features/review/review-comment-form";
 import { ReviewSignForm } from "@/features/review/review-sign-form";
 import {
-  getMeetingByToken, getProject, getMeetingDecisions, getMeetingActions,
+  getMeetingByToken, getProject, getMeetingSpace, getMeetingDecisions, getMeetingActions,
   getDependencyViews, getBlockers, getSignatures, getComments, getPerson,
 } from "@/lib/queries";
 import { faDate, faRelative, toFa } from "@/lib/utils";
@@ -32,13 +32,14 @@ export default function ReviewPage({ params }: { params: { token: string } }) {
     );
   }
 
-  const project = getProject(meeting.projectId);
+  const project = meeting.projectId ? getProject(meeting.projectId) : undefined;
+  const space = meeting.spaceId ? getMeetingSpace(meeting.spaceId) : undefined;
   const decisions = getMeetingDecisions(meeting.id);
   const actions = getMeetingActions(meeting.id);
-  const deps = getDependencyViews(meeting.projectId).filter(
-    (d) => d.blocking?.meetingId === meeting.id || d.blocked?.meetingId === meeting.id,
-  );
-  const blockers = getBlockers(meeting.projectId).filter((b) => b.meetingId === meeting.id);
+  const deps = meeting.projectId
+    ? getDependencyViews(meeting.projectId).filter((d) => d.blocking?.meetingId === meeting.id || d.blocked?.meetingId === meeting.id)
+    : [];
+  const blockers = meeting.projectId ? getBlockers(meeting.projectId).filter((b) => b.meetingId === meeting.id) : [];
   const signatures = getSignatures(meeting.id);
   const comments = getComments(meeting.id);
   const pendingSignatures = signatures.filter((s) => s.status === "pending");
@@ -49,7 +50,7 @@ export default function ReviewPage({ params }: { params: { token: string } }) {
       <div className="mx-auto max-w-3xl space-y-6 py-8">
         {/* Identity */}
         <div>
-          <p className="text-sm text-muted-foreground">{project?.name} — {project?.versionLabel}</p>
+          <p className="text-sm text-muted-foreground">{project ? `${project.name} — ${project.versionLabel}` : space?.name}</p>
           <div className="mt-1 flex flex-wrap items-center justify-between gap-2">
             <h1 className="text-2xl font-semibold">{meeting.title}</h1>
             <MeetingStatusBadge value={meeting.status} />

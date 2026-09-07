@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { PageHeader } from "@/components/domain/page-header";
-import { CreateSpaceMeetingForm } from "@/features/meeting-spaces/create-space-meeting-form";
+import { CreateMeetingForm } from "@/features/meetings/create-meeting-form";
 import { getMeetingSpace, getPeople } from "@/lib/queries";
 
 export default function NewSpaceMeetingPage({ params }: { params: { spaceId: string } }) {
@@ -19,7 +19,7 @@ export default function NewSpaceMeetingPage({ params }: { params: { spaceId: str
           { label: "جلسهٔ جدید" },
         ]}
       />
-      <CreateSpaceMeetingForm spaceId={space.id} people={people} />
+      <CreateMeetingForm spaceId={space.id} people={people} />
     </div>
   );
 }

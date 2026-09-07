@@ -1,5 +1,7 @@
 import "server-only";
 import { readDb } from "./db";
+import { PROJECT_PHASE } from "./domain";
+import { phaseLabels } from "./labels";
 import type {
   ActionItem,
   Activity,
@@ -14,7 +16,6 @@ import type {
   ProjectApproval,
   Risk,
   Signature,
-  SpaceMeeting,
 } from "./domain";
 
 /** All read access goes through these helpers so pages never touch fs/db.ts. */
@@ -43,6 +44,11 @@ export function getProject(id: string): Project | undefined {
 export function getMeetings(projectId: string): Meeting[] {
   return readDb()
     .meetings.filter((m) => m.projectId === projectId)
+    .sort((a, b) => b.sequence - a.sequence);
+}
+export function getSpaceMeetings(spaceId: string): Meeting[] {
+  return readDb()
+    .meetings.filter((m) => m.spaceId === spaceId)
     .sort((a, b) => b.sequence - a.sequence);
 }
 export function getMeeting(id: string | null | undefined): Meeting | undefined {
@@ -151,25 +157,24 @@ export function getMeetingSpace(id: string | null | undefined): MeetingSpace | u
   if (!id) return undefined;
   return readDb().meetingSpaces.find((s) => s.id === id);
 }
-export function getSpaceMeetings(spaceId: string): SpaceMeeting[] {
-  return readDb()
-    .spaceMeetings.filter((m) => m.spaceId === spaceId)
-    .sort((a, b) => b.sequence - a.sequence);
-}
-export function getSpaceMeeting(id: string | null | undefined): SpaceMeeting | undefined {
-  if (!id) return undefined;
-  return readDb().spaceMeetings.find((m) => m.id === id);
-}
 
 export interface MeetingSpaceStats {
   meetingCount: number;
   lastMeetingDate: string | null;
 }
 export function getMeetingSpaceStats(spaceId: string): MeetingSpaceStats {
-  const meetings = readDb().spaceMeetings.filter((m) => m.spaceId === spaceId);
+  const meetings = readDb().meetings.filter((m) => m.spaceId === spaceId);
   const lastMeetingDate = meetings.reduce<string | null>(
     (latest, m) => (!latest || m.date > latest ? m.date : latest),
     null,
   );
   return { meetingCount: meetings.length, lastMeetingDate };
+}
+
+// ── Phase name suggestions (searchable phase picker) ────────────────────────
+/** Canonical phase labels plus every free-text phase name already used across projects. */
+export function getPhaseNameSuggestions(): string[] {
+  const canonical = PROJECT_PHASE.map((p) => phaseLabels[p].label);
+  const used = readDb().projects.flatMap((p) => p.phases.map((ph) => ph.name));
+  return [...new Set([...canonical, ...used])];
 }

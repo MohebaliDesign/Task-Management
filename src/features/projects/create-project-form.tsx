@@ -13,6 +13,7 @@ import { Field } from "@/components/form/field";
 import { SubmitButton } from "@/components/form/submit-button";
 import { AppIcon } from "@/components/icon";
 import { PersonSelect } from "@/features/people/person-select";
+import { PhaseSelect } from "@/features/projects/phase-select";
 import { createProject, type ActionResult } from "@/lib/actions";
 import { PRIORITY } from "@/lib/domain";
 import { priorityLabels } from "@/lib/labels";
@@ -29,7 +30,15 @@ interface PhaseDraft {
   deadline: string;
 }
 
-export function CreateProjectForm({ people: initialPeople, projects }: { people: Person[]; projects: Project[] }) {
+export function CreateProjectForm({
+  people: initialPeople,
+  projects,
+  phaseNameSuggestions,
+}: {
+  people: Person[];
+  projects: Project[];
+  phaseNameSuggestions: string[];
+}) {
   const router = useRouter();
   const [state, formAction] = useFormState(createProject, initial);
   const errs = state.ok ? {} : state.fieldErrors ?? {};
@@ -56,6 +65,10 @@ export function CreateProjectForm({ people: initialPeople, projects }: { people:
 
   const phasesJson = JSON.stringify(
     phases.filter((p) => p.name.trim()).map((p) => ({ name: p.name, startDate: p.startDate, deadline: p.deadline })),
+  );
+  const phaseSuggestions = React.useMemo(
+    () => [...new Set([...phaseNameSuggestions, ...phases.map((p) => p.name).filter(Boolean)])],
+    [phaseNameSuggestions, phases],
   );
 
   return (
@@ -128,22 +141,19 @@ export function CreateProjectForm({ people: initialPeople, projects }: { people:
             افزودن فاز جدید
           </Button>
         </CardHeader>
-        <CardContent className="space-y-3">
+        <CardContent className="p-0">
           {phases.length === 0 ? (
-            <p className="text-sm text-muted-foreground">هنوز فازی اضافه نشده است. فازها اختیاری‌اند و بعداً هم قابل افزودن‌اند.</p>
+            <p className="p-5 text-sm text-muted-foreground">هنوز فازی اضافه نشده است. فازها اختیاری‌اند و بعداً هم قابل افزودن‌اند.</p>
           ) : (
-            phases.map((phase, i) => (
-              <div key={phase.key} className="grid grid-cols-[1fr_auto] items-start gap-3 rounded-md border border-border p-3">
-                <div className="grid gap-3 sm:grid-cols-3">
-                  <Field label={`نام فاز ${i + 1}`} htmlFor={`phase-name-${phase.key}`}>
-                    <Input
-                      id={`phase-name-${phase.key}`}
-                      value={phase.name}
-                      onChange={(e) => updatePhase(phase.key, { name: e.target.value })}
-                      placeholder="مثلاً: کشف و تحلیل"
-                    />
-                  </Field>
-                  <Field label="تاریخ شروع" htmlFor={`phase-start-${phase.key}`}>
+            <div className="divide-y divide-border">
+              {phases.map((phase, i) => (
+                <div key={phase.key} className="flex flex-wrap items-end gap-3 px-5 py-4">
+                  <div className="min-w-[180px] flex-1">
+                    <Field label={`نام فاز ${i + 1}`} htmlFor={`phase-name-${phase.key}`}>
+                      <PhaseSelect value={phase.name} onChange={(name) => updatePhase(phase.key, { name })} suggestions={phaseSuggestions} />
+                    </Field>
+                  </div>
+                  <Field label="تاریخ شروع" htmlFor={`phase-start-${phase.key}`} className="w-36">
                     <Input
                       id={`phase-start-${phase.key}`}
                       type="date"
@@ -152,7 +162,7 @@ export function CreateProjectForm({ people: initialPeople, projects }: { people:
                       onChange={(e) => updatePhase(phase.key, { startDate: e.target.value })}
                     />
                   </Field>
-                  <Field label="مهلت" htmlFor={`phase-deadline-${phase.key}`}>
+                  <Field label="مهلت" htmlFor={`phase-deadline-${phase.key}`} className="w-36">
                     <Input
                       id={`phase-deadline-${phase.key}`}
                       type="date"
@@ -161,12 +171,12 @@ export function CreateProjectForm({ people: initialPeople, projects }: { people:
                       onChange={(e) => updatePhase(phase.key, { deadline: e.target.value })}
                     />
                   </Field>
+                  <Button type="button" variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive-text" onClick={() => removePhase(phase.key)} aria-label={`حذف فاز ${i + 1}`}>
+                    <AppIcon name="trash" size={16} />
+                  </Button>
                 </div>
-                <Button type="button" variant="ghost" size="icon" className="mt-6 text-muted-foreground hover:text-destructive-text" onClick={() => removePhase(phase.key)} aria-label="حذف فاز">
-                  <AppIcon name="trash" size={16} />
-                </Button>
-              </div>
-            ))
+              ))}
+            </div>
           )}
         </CardContent>
       </Card>

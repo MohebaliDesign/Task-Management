@@ -21,30 +21,36 @@ export interface DecisionDraft {
 
 /**
  * Same field structure as the standalone "افزودن تصمیم" modal (AddDecisionDialog),
- * but purely client-side — it hands a draft back to the meeting-creation form
- * instead of calling a server action, since the meeting doesn't have an id yet.
+ * but purely client-side — it hands a draft back to the meeting form instead of
+ * calling a server action. Also used to edit an already-drafted item: pass
+ * `initial` + a custom `trigger` (e.g. an edit icon on the item row).
  */
 export function DecisionDraftDialog({
   people,
   onPersonCreated,
-  onAdd,
+  onSubmit,
+  initial,
+  trigger,
 }: {
   people: Person[];
   onPersonCreated: (person: Person) => void;
-  onAdd: (draft: DecisionDraft) => void;
+  onSubmit: (draft: DecisionDraft) => void;
+  initial?: DecisionDraft;
+  trigger?: React.ReactNode;
 }) {
+  const isEdit = !!initial;
   const [open, setOpen] = React.useState(false);
-  const [text, setText] = React.useState("");
-  const [description, setDescription] = React.useState("");
-  const [deciderId, setDeciderId] = React.useState("");
-  const [area, setArea] = React.useState("عمومی");
+  const [text, setText] = React.useState(initial?.text ?? "");
+  const [description, setDescription] = React.useState(initial?.description ?? "");
+  const [deciderId, setDeciderId] = React.useState(initial?.deciderId ?? "");
+  const [area, setArea] = React.useState(initial?.area ?? "عمومی");
   const [error, setError] = React.useState("");
 
-  function reset() {
-    setText("");
-    setDescription("");
-    setDeciderId("");
-    setArea("عمومی");
+  function resetToInitial() {
+    setText(initial?.text ?? "");
+    setDescription(initial?.description ?? "");
+    setDeciderId(initial?.deciderId ?? "");
+    setArea(initial?.area ?? "عمومی");
     setError("");
   }
 
@@ -52,21 +58,23 @@ export function DecisionDraftDialog({
     e.preventDefault();
     if (!text.trim()) return setError("عنوان تصمیم را وارد کنید.");
     if (!deciderId) return setError("مسئول تصمیم را انتخاب کنید.");
-    onAdd({ text: text.trim(), description: description.trim(), deciderId, area: area.trim() || "عمومی" });
-    reset();
+    onSubmit({ text: text.trim(), description: description.trim(), deciderId, area: area.trim() || "عمومی" });
     setOpen(false);
+    if (!isEdit) resetToInitial();
   }
 
   return (
-    <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) reset(); }}>
+    <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (o) resetToInitial(); }}>
       <DialogTrigger asChild>
-        <Button type="button" variant="outline" size="sm">
-          <AppIcon name="add" size={16} /> افزودن تصمیم
-        </Button>
+        {trigger ?? (
+          <Button type="button" variant="outline" size="sm">
+            <AppIcon name="add" size={16} /> افزودن تصمیم
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>افزودن تصمیم</DialogTitle>
+          <DialogTitle>{isEdit ? "ویرایش تصمیم" : "افزودن تصمیم"}</DialogTitle>
           <DialogDescription>تصمیم‌ها رکوردهای مستقل و قابل‌ردیابی هستند، نه بخشی از یادداشت جلسه.</DialogDescription>
         </DialogHeader>
         <form onSubmit={submit} className="space-y-4">
@@ -89,7 +97,7 @@ export function DecisionDraftDialog({
             <DialogClose asChild>
               <Button type="button" variant="ghost">انصراف</Button>
             </DialogClose>
-            <Button type="submit">افزودن تصمیم</Button>
+            <Button type="submit">{isEdit ? "ذخیرهٔ تغییرات" : "افزودن تصمیم"}</Button>
           </DialogFooter>
         </form>
       </DialogContent>

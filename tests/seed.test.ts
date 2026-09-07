@@ -13,17 +13,22 @@ test("seed has the expected top-level collections populated", () => {
   assert.ok(db.actions.length >= 3);
 });
 
-test("every meeting references an existing project", () => {
+test("every meeting belongs to exactly one context: a project or a meeting space", () => {
   const projectIds = ids(db.projects);
-  for (const m of db.meetings) assert.ok(projectIds.has(m.projectId), `meeting ${m.id} → ${m.projectId}`);
+  const spaceIds = ids(db.meetingSpaces);
+  for (const m of db.meetings) {
+    assert.ok(!!m.projectId !== !!m.spaceId, `meeting ${m.id} must have exactly one of projectId/spaceId`);
+    if (m.projectId) assert.ok(projectIds.has(m.projectId), `meeting ${m.id} → ${m.projectId}`);
+    if (m.spaceId) assert.ok(spaceIds.has(m.spaceId), `meeting ${m.id} → ${m.spaceId}`);
+  }
 });
 
-test("every decision references an existing (optional) meeting and an existing project", () => {
+test("every decision references an existing (optional) meeting and an existing (optional) project", () => {
   const meetingIds = ids(db.meetings);
   const projectIds = ids(db.projects);
   for (const d of db.decisions) {
     assert.ok(d.meetingId === null || meetingIds.has(d.meetingId), `decision ${d.id} meeting`);
-    assert.ok(projectIds.has(d.projectId), `decision ${d.id} project`);
+    assert.ok(d.projectId === null || projectIds.has(d.projectId), `decision ${d.id} project`);
   }
 });
 

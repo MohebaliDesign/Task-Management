@@ -25,34 +25,43 @@ export interface ActionDraft {
   relatedDecisionKey: string | null;
 }
 
-/** Same field structure as the standalone "افزودن اقدام" modal, drafted client-side. */
+/**
+ * Same field structure as the standalone "افزودن اقدام" modal, drafted
+ * client-side. Also used to edit an already-drafted item: pass `initial` +
+ * a custom `trigger` (e.g. an edit icon on the item row).
+ */
 export function ActionDraftDialog({
   people,
   decisionOptions,
   onPersonCreated,
-  onAdd,
+  onSubmit,
+  initial,
+  trigger,
 }: {
   people: Person[];
   decisionOptions: { key: string; text: string }[];
   onPersonCreated: (person: Person) => void;
-  onAdd: (draft: ActionDraft) => void;
+  onSubmit: (draft: ActionDraft) => void;
+  initial?: ActionDraft;
+  trigger?: React.ReactNode;
 }) {
+  const isEdit = !!initial;
   const [open, setOpen] = React.useState(false);
-  const [title, setTitle] = React.useState("");
-  const [ownerId, setOwnerId] = React.useState("");
-  const [deadline, setDeadline] = React.useState("");
-  const [priority, setPriority] = React.useState<Priority>("medium");
-  const [status, setStatus] = React.useState<ActionStatus>("not_started");
-  const [relatedDecisionKey, setRelatedDecisionKey] = React.useState<string>(NONE);
+  const [title, setTitle] = React.useState(initial?.title ?? "");
+  const [ownerId, setOwnerId] = React.useState(initial?.ownerId ?? "");
+  const [deadline, setDeadline] = React.useState(initial?.deadline ?? "");
+  const [priority, setPriority] = React.useState<Priority>(initial?.priority ?? "medium");
+  const [status, setStatus] = React.useState<ActionStatus>(initial?.status ?? "not_started");
+  const [relatedDecisionKey, setRelatedDecisionKey] = React.useState<string>(initial?.relatedDecisionKey ?? NONE);
   const [error, setError] = React.useState("");
 
-  function reset() {
-    setTitle("");
-    setOwnerId("");
-    setDeadline("");
-    setPriority("medium");
-    setStatus("not_started");
-    setRelatedDecisionKey(NONE);
+  function resetToInitial() {
+    setTitle(initial?.title ?? "");
+    setOwnerId(initial?.ownerId ?? "");
+    setDeadline(initial?.deadline ?? "");
+    setPriority(initial?.priority ?? "medium");
+    setStatus(initial?.status ?? "not_started");
+    setRelatedDecisionKey(initial?.relatedDecisionKey ?? NONE);
     setError("");
   }
 
@@ -60,7 +69,7 @@ export function ActionDraftDialog({
     e.preventDefault();
     if (!title.trim()) return setError("عنوان اقدام را وارد کنید.");
     if (!ownerId) return setError("مسئول اقدام را انتخاب کنید.");
-    onAdd({
+    onSubmit({
       title: title.trim(),
       ownerId,
       deadline,
@@ -68,20 +77,22 @@ export function ActionDraftDialog({
       status,
       relatedDecisionKey: relatedDecisionKey === NONE ? null : relatedDecisionKey,
     });
-    reset();
     setOpen(false);
+    if (!isEdit) resetToInitial();
   }
 
   return (
-    <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) reset(); }}>
+    <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (o) resetToInitial(); }}>
       <DialogTrigger asChild>
-        <Button type="button" size="sm">
-          <AppIcon name="add" size={16} /> افزودن اقدام
-        </Button>
+        {trigger ?? (
+          <Button type="button" size="sm">
+            <AppIcon name="add" size={16} /> افزودن اقدام
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>افزودن اقدام</DialogTitle>
+          <DialogTitle>{isEdit ? "ویرایش اقدام" : "افزودن اقدام"}</DialogTitle>
           <DialogDescription>اقدام با مسئول، مهلت، اولویت و وضعیت ثبت می‌شود.</DialogDescription>
         </DialogHeader>
         <form onSubmit={submit} className="space-y-4">
@@ -130,7 +141,7 @@ export function ActionDraftDialog({
             <DialogClose asChild>
               <Button type="button" variant="ghost">انصراف</Button>
             </DialogClose>
-            <Button type="submit">افزودن اقدام</Button>
+            <Button type="submit">{isEdit ? "ذخیرهٔ تغییرات" : "افزودن اقدام"}</Button>
           </DialogFooter>
         </form>
       </DialogContent>

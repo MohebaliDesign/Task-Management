@@ -17,7 +17,7 @@ import { ActionDraftDialog, type ActionDraft } from "@/features/meetings/action-
 import { createMeeting, updateMeeting, type ActionResult } from "@/lib/actions";
 import { roleLabels, priorityLabels, actionStatusLabels } from "@/lib/labels";
 import { makeId } from "@/lib/utils";
-import type { Meeting, Person } from "@/lib/domain";
+import type { ActionItem, Decision, Meeting, Person } from "@/lib/domain";
 
 const initial: ActionResult = { ok: false, error: "" };
 const today = new Date().toISOString().slice(0, 10);
@@ -28,25 +28,40 @@ interface ParticipantState {
 }
 interface DecisionDraftUI extends DecisionDraft {
   key: string;
+  id?: string;
 }
 interface ActionDraftUI extends ActionDraft {
   key: string;
+  id?: string;
 }
 
+/**
+ * A meeting is the same entity whether it's created from a Project or from a
+ * Meeting Space — this form is the single shared implementation for both.
+ * Pass exactly one of projectId/spaceId for the context; the rest (fields,
+ * sections, validation, decisions/actions handling) never branches on it.
+ */
 export function CreateMeetingForm({
   projectId,
+  spaceId,
   people: initialPeople,
   meeting,
+  meetingDecisions = [],
+  meetingActions = [],
 }: {
-  projectId: string;
+  projectId?: string;
+  spaceId?: string;
   people: Person[];
   /** Present in edit mode — every field is prefilled and the form calls updateMeeting. */
   meeting?: Meeting;
+  meetingDecisions?: Decision[];
+  meetingActions?: ActionItem[];
 }) {
   const router = useRouter();
   const isEdit = !!meeting;
   const [state, formAction] = useFormState(isEdit ? updateMeeting : createMeeting, initial);
   const errs = state.ok ? {} : state.fieldErrors ?? {};
+  const basePath = spaceId ? `/meetings/${spaceId}` : `/projects/${projectId}/meetings`;
 
   const [people, setPeople] = React.useState(initialPeople);
   const [participants, setParticipants] = React.useState<ParticipantState[]>(
@@ -58,15 +73,23 @@ export function CreateMeetingForm({
   const [summaryDraft, setSummaryDraft] = React.useState("");
   const [editingPointIndex, setEditingPointIndex] = React.useState<number | null>(null);
 
-  const [decisions, setDecisions] = React.useState<DecisionDraftUI[]>([]);
-  const [actions, setActions] = React.useState<ActionDraftUI[]>([]);
+  const [decisions, setDecisions] = React.useState<DecisionDraftUI[]>(
+    meetingDecisions.map((d) => ({ key: d.id, id: d.id, text: d.text, description: d.description, deciderId: d.deciderId, area: d.area })),
+  );
+  const [actions, setActions] = React.useState<ActionDraftUI[]>(
+    meetingActions.map((a) => ({
+      key: a.id, id: a.id, title: a.title, ownerId: a.ownerId,
+      deadline: a.deadline ? a.deadline.slice(0, 10) : "", priority: a.priority, status: a.status,
+      relatedDecisionKey: a.relatedDecisionId,
+    })),
+  );
 
   React.useEffect(() => {
     if (state.ok) {
-      toast.success(isEdit ? "جلسه به‌روزرسانی شد." : "جلسه ثبت شد. اکنون می‌توانید تصمیم‌ها و اقدامات بیشتری را اضافه کنید.");
-      router.push(`/projects/${projectId}/meetings/${state.id ?? meeting?.id}`);
+      toast.success(isEdit ? "جلسه به‌روزرسانی شد." : "جلسه ثبت شد.");
+      router.push(`${basePath}/${state.id ?? meeting?.id}`);
     }
-  }, [state, router, projectId, isEdit, meeting?.id]);
+  }, [state, router, basePath, isEdit, meeting?.id]);
 
   function toggleParticipant(personId: string, checked: boolean) {
     setParticipants((prev) =>
@@ -107,12 +130,18 @@ export function CreateMeetingForm({
   function addDecisionDraft(draft: DecisionDraft) {
     setDecisions((prev) => [...prev, { key: makeId("dec"), ...draft }]);
   }
+  function updateDecisionDraft(key: string, draft: DecisionDraft) {
+    setDecisions((prev) => prev.map((d) => (d.key === key ? { ...d, ...draft } : d)));
+  }
   function removeDecisionDraft(key: string) {
     setDecisions((prev) => prev.filter((d) => d.key !== key));
     setActions((prev) => prev.map((a) => (a.relatedDecisionKey === key ? { ...a, relatedDecisionKey: null } : a)));
   }
   function addActionDraft(draft: ActionDraft) {
     setActions((prev) => [...prev, { key: makeId("act"), ...draft }]);
+  }
+  function updateActionDraft(key: string, draft: ActionDraft) {
+    setActions((prev) => prev.map((a) => (a.key === key ? { ...a, ...draft } : a)));
   }
   function removeActionDraft(key: string) {
     setActions((prev) => prev.filter((a) => a.key !== key));
@@ -121,12 +150,13 @@ export function CreateMeetingForm({
   const participantsJson = JSON.stringify(participants);
   const summaryPointsJson = JSON.stringify(summaryPoints);
   const decisionsJson = JSON.stringify(
-    decisions.map((d) => ({ text: d.text, description: d.description, deciderId: d.deciderId, area: d.area })),
+    decisions.map((d) => ({ id: d.id, text: d.text, description: d.description, deciderId: d.deciderId, area: d.area })),
   );
   const actionsJson = JSON.stringify(
     actions.map((a) => {
       const idx = a.relatedDecisionKey ? decisions.findIndex((d) => d.key === a.relatedDecisionKey) : -1;
       return {
+        id: a.id,
         title: a.title,
         ownerId: a.ownerId,
         deadline: a.deadline,
@@ -139,12 +169,13 @@ export function CreateMeetingForm({
 
   return (
     <form action={formAction} className="space-y-6">
-      <input type="hidden" name="projectId" value={projectId} />
+      {projectId && <input type="hidden" name="projectId" value={projectId} />}
+      {spaceId && <input type="hidden" name="spaceId" value={spaceId} />}
       {isEdit && <input type="hidden" name="meetingId" value={meeting!.id} />}
       <input type="hidden" name="participantsJson" value={participantsJson} />
       <input type="hidden" name="summaryPointsJson" value={summaryPointsJson} />
-      {!isEdit && <input type="hidden" name="decisionsJson" value={decisionsJson} />}
-      {!isEdit && <input type="hidden" name="actionsJson" value={actionsJson} />}
+      <input type="hidden" name="decisionsJson" value={decisionsJson} />
+      <input type="hidden" name="actionsJson" value={actionsJson} />
 
       <Card>
         <CardHeader><CardTitle className="flex items-center gap-2"><AppIcon name="meetings" size={18} className="text-muted-foreground" />شناسهٔ جلسه</CardTitle></CardHeader>
@@ -247,15 +278,15 @@ export function CreateMeetingForm({
           {summaryPoints.length === 0 ? (
             <p className="text-sm text-muted-foreground">هنوز نکته‌ای اضافه نشده است.</p>
           ) : (
-            <ul className="space-y-1.5">
+            <ul className="divide-y divide-border">
               {summaryPoints.map((point, i) => (
-                <li key={i} className={`flex items-start gap-2 rounded-md border p-2.5 text-sm ${editingPointIndex === i ? "border-primary bg-primary/5" : "border-border"}`}>
+                <li key={i} className={`flex items-start gap-2 px-1 py-2.5 text-sm ${editingPointIndex === i ? "bg-primary/5" : ""}`}>
                   <AppIcon name="check" size={15} className="mt-0.5 shrink-0 text-muted-foreground" />
                   <span className="flex-1">{point}</span>
-                  <button type="button" onClick={() => editSummaryPoint(i)} className="shrink-0 text-muted-foreground hover:text-foreground" aria-label="ویرایش">
+                  <button type="button" onClick={() => editSummaryPoint(i)} className="shrink-0 text-muted-foreground hover:text-foreground" aria-label="ویرایش نکته">
                     <AppIcon name="edit" size={15} />
                   </button>
-                  <button type="button" onClick={() => deleteSummaryPoint(i)} className="shrink-0 text-muted-foreground hover:text-destructive-text" aria-label="حذف">
+                  <button type="button" onClick={() => deleteSummaryPoint(i)} className="shrink-0 text-muted-foreground hover:text-destructive-text" aria-label="حذف نکته">
                     <AppIcon name="trash" size={15} />
                   </button>
                 </li>
@@ -265,72 +296,92 @@ export function CreateMeetingForm({
         </CardContent>
       </Card>
 
-      {!isEdit && (
-        <Card>
-          <CardHeader className="flex-row items-center justify-between">
-            <CardTitle className="flex items-center gap-2"><AppIcon name="decision" size={18} className="text-muted-foreground" />تصمیم‌ها (اختیاری)</CardTitle>
-            <DecisionDraftDialog people={people} onPersonCreated={(p) => setPeople((prev) => [...prev, p])} onAdd={addDecisionDraft} />
-          </CardHeader>
-          {decisions.length > 0 && (
-            <CardContent className="space-y-2 pt-0">
-              {decisions.map((d) => (
-                <div key={d.key} className="flex items-start justify-between gap-3 rounded-md border border-border p-3">
-                  <div className="min-w-0">
-                    <p className="text-sm">{d.text}</p>
-                    {d.description && <p className="mt-0.5 text-xs text-muted-foreground">{d.description}</p>}
-                    <p className="mt-1 text-xs text-muted-foreground">حوزه: {d.area}</p>
-                  </div>
-                  <button type="button" onClick={() => removeDecisionDraft(d.key)} className="shrink-0 text-muted-foreground hover:text-destructive-text" aria-label="حذف تصمیم">
+      <Card>
+        <CardHeader className="flex-row items-center justify-between">
+          <CardTitle className="flex items-center gap-2"><AppIcon name="decision" size={18} className="text-muted-foreground" />تصمیم‌ها (اختیاری)</CardTitle>
+          <DecisionDraftDialog people={people} onPersonCreated={(p) => setPeople((prev) => [...prev, p])} onSubmit={addDecisionDraft} />
+        </CardHeader>
+        {decisions.length > 0 && (
+          <CardContent className="space-y-2 pt-0">
+            {decisions.map((d) => (
+              <div key={d.key} className="flex items-start justify-between gap-3 rounded-md bg-muted/60 p-3">
+                <div className="min-w-0">
+                  <p className="text-sm">{d.text}</p>
+                  {d.description && <p className="mt-0.5 text-xs text-muted-foreground">{d.description}</p>}
+                  <p className="mt-1 text-xs text-muted-foreground">حوزه: {d.area}</p>
+                </div>
+                <div className="flex shrink-0 items-center gap-1">
+                  <DecisionDraftDialog
+                    people={people}
+                    onPersonCreated={(p) => setPeople((prev) => [...prev, p])}
+                    onSubmit={(draft) => updateDecisionDraft(d.key, draft)}
+                    initial={{ text: d.text, description: d.description, deciderId: d.deciderId, area: d.area }}
+                    trigger={
+                      <button type="button" className="text-muted-foreground hover:text-foreground" aria-label="ویرایش تصمیم">
+                        <AppIcon name="edit" size={15} />
+                      </button>
+                    }
+                  />
+                  <button type="button" onClick={() => removeDecisionDraft(d.key)} className="text-muted-foreground hover:text-destructive-text" aria-label="حذف تصمیم">
                     <AppIcon name="trash" size={15} />
                   </button>
                 </div>
-              ))}
-            </CardContent>
-          )}
-        </Card>
-      )}
-
-      {!isEdit && (
-        <Card>
-          <CardHeader className="flex-row items-center justify-between">
-            <CardTitle className="flex items-center gap-2"><AppIcon name="actions" size={18} className="text-muted-foreground" />اقدامات (اختیاری)</CardTitle>
-            <ActionDraftDialog
-              people={people}
-              decisionOptions={decisions.map((d) => ({ key: d.key, text: d.text }))}
-              onPersonCreated={(p) => setPeople((prev) => [...prev, p])}
-              onAdd={addActionDraft}
-            />
-          </CardHeader>
-          {actions.length > 0 && (
-            <CardContent className="space-y-2 pt-0">
-              {actions.map((a) => (
-                <div key={a.key} className="flex items-start justify-between gap-3 rounded-md border border-border p-3">
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium">{a.title}</p>
-                    <p className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
-                      <span>{priorityLabels[a.priority].label}</span>
-                      <span>{actionStatusLabels[a.status].label}</span>
-                      {a.deadline && <span>مهلت: {a.deadline}</span>}
-                    </p>
-                  </div>
-                  <button type="button" onClick={() => removeActionDraft(a.key)} className="shrink-0 text-muted-foreground hover:text-destructive-text" aria-label="حذف اقدام">
-                    <AppIcon name="trash" size={15} />
-                  </button>
-                </div>
-              ))}
-            </CardContent>
-          )}
-        </Card>
-      )}
+              </div>
+            ))}
+          </CardContent>
+        )}
+      </Card>
 
       <Card>
-        <CardHeader><CardTitle className="text-sm">گام‌های بعدی و پرسش‌های باز</CardTitle></CardHeader>
-        <CardContent className="grid gap-4 sm:grid-cols-2">
+        <CardHeader className="flex-row items-center justify-between">
+          <CardTitle className="flex items-center gap-2"><AppIcon name="actions" size={18} className="text-muted-foreground" />اقدامات (اختیاری)</CardTitle>
+          <ActionDraftDialog
+            people={people}
+            decisionOptions={decisions.map((d) => ({ key: d.key, text: d.text }))}
+            onPersonCreated={(p) => setPeople((prev) => [...prev, p])}
+            onSubmit={addActionDraft}
+          />
+        </CardHeader>
+        {actions.length > 0 && (
+          <CardContent className="space-y-2 pt-0">
+            {actions.map((a) => (
+              <div key={a.key} className="flex items-start justify-between gap-3 rounded-md bg-muted/60 p-3">
+                <div className="min-w-0">
+                  <p className="text-sm font-medium">{a.title}</p>
+                  <p className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
+                    <span>{priorityLabels[a.priority].label}</span>
+                    <span>{actionStatusLabels[a.status].label}</span>
+                    {a.deadline && <span>مهلت: {a.deadline}</span>}
+                  </p>
+                </div>
+                <div className="flex shrink-0 items-center gap-1">
+                  <ActionDraftDialog
+                    people={people}
+                    decisionOptions={decisions.filter((d) => d.key !== a.key).map((d) => ({ key: d.key, text: d.text }))}
+                    onPersonCreated={(p) => setPeople((prev) => [...prev, p])}
+                    onSubmit={(draft) => updateActionDraft(a.key, draft)}
+                    initial={{ title: a.title, ownerId: a.ownerId, deadline: a.deadline, priority: a.priority, status: a.status, relatedDecisionKey: a.relatedDecisionKey }}
+                    trigger={
+                      <button type="button" className="text-muted-foreground hover:text-foreground" aria-label="ویرایش اقدام">
+                        <AppIcon name="edit" size={15} />
+                      </button>
+                    }
+                  />
+                  <button type="button" onClick={() => removeActionDraft(a.key)} className="text-muted-foreground hover:text-destructive-text" aria-label="حذف اقدام">
+                    <AppIcon name="trash" size={15} />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </CardContent>
+        )}
+      </Card>
+
+      <Card>
+        <CardHeader><CardTitle className="text-sm">گام‌های بعدی</CardTitle></CardHeader>
+        <CardContent>
           <Field label="گام‌های بعدی" htmlFor="nextSteps" error={errs.nextSteps} hint="هر سطر یک مورد.">
             <Textarea id="nextSteps" name="nextSteps" rows={3} defaultValue={meeting?.nextSteps.join("\n")} />
-          </Field>
-          <Field label="پرسش‌های باز" htmlFor="openQuestions" error={errs.openQuestions} hint="هر سطر یک مورد.">
-            <Textarea id="openQuestions" name="openQuestions" rows={3} defaultValue={meeting?.openQuestions.join("\n")} />
           </Field>
         </CardContent>
       </Card>
