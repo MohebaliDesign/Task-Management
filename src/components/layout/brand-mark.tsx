@@ -8,7 +8,7 @@ export function BrandMark() {
         <AppIcon name="verify" size={22} variant="Bold" />
       </span>
       <span className="flex flex-col leading-tight">
-        <span className="text-sm font-semibold text-sidebar-foreground">سامانهٔ حاکمیت</span>
+        <span className="text-sm font-semibold text-sidebar-foreground">سامانهٔ نظارت</span>
         <span className="text-[11px] text-sidebar-muted">پروژه و پاسخگویی جلسات</span>
       </span>
     </Link>
