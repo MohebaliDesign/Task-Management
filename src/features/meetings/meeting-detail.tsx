@@ -8,8 +8,9 @@ import { MeetingStatusBadge, ApprovalBadge } from "@/components/domain/status";
 import { PersonChip } from "@/components/domain/person";
 import { ActionItemRow } from "@/features/actions/action-item-row";
 import { MeetingActionsBar } from "@/features/meetings/meeting-actions-bar";
+import { BlockerRow } from "@/features/risks/blocker-row";
 import { faDate, faRelative, toFa } from "@/lib/utils";
-import { getMeetingDecisions, getMeetingActions, getComments, getSignatures, getPerson } from "@/lib/queries";
+import { getMeetingDecisions, getMeetingActions, getMeetingBlockers, getComments, getSignatures, getPerson } from "@/lib/queries";
 import type { Meeting } from "@/lib/domain";
 
 /**
@@ -31,6 +32,7 @@ export function MeetingDetail({
 }) {
   const decisions = getMeetingDecisions(meeting.id);
   const actions = getMeetingActions(meeting.id);
+  const blockers = getMeetingBlockers(meeting.id);
   const comments = getComments(meeting.id);
   const signatures = getSignatures(meeting.id);
 
@@ -124,6 +126,22 @@ export function MeetingDetail({
                     </li>
                   ))}
                 </ul>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Blockers — read-only here; managed together with the meeting via "ویرایش جلسه" */}
+          <Card>
+            <CardHeader><CardTitle className="flex items-center gap-2"><AppIcon name="blocker" size={18} className="text-muted-foreground" />موانع ({toFa(blockers.length)})</CardTitle></CardHeader>
+            <CardContent className="p-0">
+              {blockers.length === 0 ? (
+                <div className="p-4"><EmptyState icon="check" title="هنوز مانعی برای این جلسه ثبت نشده است." /></div>
+              ) : (
+                <div className="divide-y divide-border">
+                  {blockers.map((b) => (
+                    <BlockerRow key={b.id} blocker={b} owner={getPerson(b.ownerId)} />
+                  ))}
+                </div>
               )}
             </CardContent>
           </Card>

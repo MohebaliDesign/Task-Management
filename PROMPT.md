@@ -11,26 +11,17 @@ You are acting as:
 
 You are working inside Claude Code with Opus 4.8 High reasoning mode.
 
-Your task is to refine and improve the existing product implementation.
 
-This is NOT a new feature development task.
-
-You must improve the current branch:
+Your task is to make a small but important product refinement inside the existing branch:
 
 project-meeting-form-improvements
 
-
-The goal is to fix remaining UX inconsistencies, improve visual quality, and make shared product patterns consistent across the application.
 
 ---
 
 # IMPORTANT GIT REQUIREMENT
 
-Before making any changes:
-
-1. Verify current repository.
-2. Verify current branch.
-3. Make sure you are working on:
+All changes must be implemented only inside:
 
 project-meeting-form-improvements
 
@@ -39,647 +30,326 @@ Do NOT merge into main.
 
 Do NOT modify main directly.
 
-All changes must remain inside:
 
-project-meeting-form-improvements
+After implementation:
 
+- commit changes;
+- push changes to the same branch;
+- keep the branch ready for manual review and future pull request.
 
-After finishing:
-
-- commit all changes;
-- push this branch;
-- do NOT create a merge into main.
-
-I will review the branch and merge manually later.
 
 ---
 
-# DESIGN REQUIREMENTS
+# PRODUCT CONTEXT
 
-Continue using:
+This product manages project governance and meeting outcomes.
 
-- shadcn/ui
-- Iconsax icon system
-- existing Design Tokens
-- Vazirmatn typography
-- RTL layout
-
-
-For visual improvements use:
-
-UI/UX Pro Max Skill
-
-Focus on:
-
-- hierarchy
-- spacing
-- visual maturity
-- SaaS dashboard quality
-- accessibility
-- consistency
-
-
-Do not replace the existing company Design System.
-
----
-
-# PRODUCT PRINCIPLE
-
-This product contains shared concepts:
+Core entities:
 
 Project
-Meeting
-Decision
-Action
-Phase
-User
+→ Meeting
+→ Decision
+→ Action
+→ Dependency
+→ Blocker
+→ History
 
 
-Whenever the same concept exists in multiple places, it must behave consistently.
-
-Example:
-
-A Meeting created from:
-
-- Project context
-- Meeting Space context
-
-
-is still the same Meeting entity.
-
-The creation flow, detail structure, and editing experience must remain consistent.
+Meetings are the main place where PMs document what happened, what was decided, and what needs follow-up.
 
 ---
 
-# 1. PROJECT CREATION — PHASE MANAGEMENT IMPROVEMENT
+# FEATURE REQUEST
+
+Add "Blockers / Obstacles" support inside the Meeting Creation flow.
+
+Currently:
+
+The product already has a dedicated Blockers section/tab where blockers can be managed.
+
+The same concept must also exist during meeting documentation.
+
+When PM is creating or documenting a meeting, they should be able to capture blockers that were identified during that meeting.
+
+---
+
+# 1. ADD BLOCKERS SECTION TO MEETING CREATION PAGE
 
 
 Location:
 
-Create Project flow
-
-Section:
-
-Project Phases Management
+Meeting creation/edit page
 
 
-## Current problem
+Add a new section:
 
-Phase cards currently have:
+Title:
 
-- unnecessary padding;
-- unnecessary borders;
-- too much card feeling.
+"موانع"
 
 
-Improve this design.
+This section should be placed logically near:
+
+- Decisions
+- Actions
+- Dependencies
 
 
-## Required changes
+because blockers are part of meeting outcomes.
 
-
-Remove:
-
-- outer border around phase items;
-- unnecessary card containers;
-- excessive padding.
-
-
-Use a cleaner list-based pattern:
-
-
-Example:
-
-
-Phase name
-
-Date information
-
-Actions
-
---------------------
-
-Phase name
-
-Date information
-
-Actions
-
-
-Use:
-
-- Divider between phases;
-- proper spacing;
-- clear hierarchy.
-
-
-The goal:
-
-Phases should feel like a structured timeline/list, not independent cards.
 
 ---
 
-# 2. PHASE SELECTOR EXPERIENCE
+# 2. BLOCKER ITEM STRUCTURE
 
 
-Current behavior:
+Reuse the same data model and fields that already exist in the dedicated Blockers section.
 
-Users only select from existing phases.
+Do NOT create a separate blocker implementation.
 
-
-Improve it similar to the Project Manager selector pattern.
-
-
-Required behavior:
+The meeting blocker should use the same entity/component structure.
 
 
-User can:
+Each blocker should support the existing blocker information.
 
-1. Search existing phases.
-2. Select an existing phase.
-3. Create a new phase if it does not exist.
+Example structure:
 
-
-The selector should support:
-
-
-Search input:
-
-
-"جستجوی فاز"
+- Blocker title
+- Description
+- Related project/context if required by existing model
+- Owner/responsible person (if available)
+- Status
+- Priority
+- Resolution information (if already supported)
 
 
-Existing phases list:
-
-
-Design
-
-Development
-
-Testing
-
-
-At the bottom:
-
-
-"+ افزودن فاز جدید"
-
-
-When clicked:
-
-Do NOT open a separate page.
-
-Show inline input inside the selector menu.
-
-
-Example:
-
-
-نام فاز جدید:
-
-[________]
-
-ثبت
-
-
-After creation:
-
-The new phase should immediately become selectable.
+Follow the existing product pattern.
 
 ---
 
-# 3. MEETING CREATE PAGE — DECISION AND ACTION CARDS
+# 3. BLOCKER CREATION EXPERIENCE
 
 
-Location:
-
-Meeting creation page
-
-
-Sections:
+Follow the same UX pattern used for:
 
 - Decisions
 - Actions
 
 
-## Current problem
-
-Newly created decision/action items appear too flat or invisible.
+Provide CTA:
 
 
-Improve card styling.
+"+ ثبت مانع"
 
 
-Requirements:
+When clicked:
+
+Allow PM to add a blocker item.
 
 
-Cards should have:
+After saving:
 
-- very subtle gray surface;
-- minimal contrast from section background;
-- clear separation;
-- no heavy border.
+Display it as a lightweight list/card item inside the Meeting form.
+
+
+---
+
+# 4. VISUAL DESIGN
+
+
+Follow the existing Decision and Action section styling.
+
+
+Blocker items should:
+
+- have subtle surface difference;
+- avoid heavy borders;
+- maintain clear hierarchy;
+- work correctly in RTL.
+
+
+Do not create a new visual pattern.
+
+
+Reuse existing components where possible.
+
+---
+
+# 5. MEETING DETAIL PAGE
+
+
+After saving the meeting:
+
+The registered blockers must appear inside the Meeting Detail page.
+
+
+Add a section:
+
+
+"موانع"
+
+
+The structure should be consistent with:
+
+- Decisions section
+- Actions section
+
+
+---
+
+# 6. DATA CONSISTENCY
+
+
+Important:
+
+Do not create blockers only inside meetings.
+
+The blocker created from a meeting should also be available inside the existing Blockers area/tab.
+
+
+The relationship should be preserved.
 
 
 Example:
 
-Section background:
 
-very light neutral
+Meeting:
 
-
-Item card:
-
-slightly darker neutral surface
+"جلسه بررسی توسعه محصول"
 
 
-Avoid:
-
-- strong shadows;
-- dark borders;
-- heavy cards.
+contains:
 
 
-The cards should feel lightweight and structured.
+Blocker:
 
----
-
-# 4. REMOVE OPEN QUESTIONS FROM MEETING CREATION
+"عدم دسترسی تیم توسعه به API"
 
 
-Remove the:
+This blocker should also appear in:
 
-"Open Questions"
-
-section completely.
-
-
-Reason:
-
-This concept is not required in the current meeting documentation workflow.
-
-
-Do not leave empty placeholders.
-
-Remove:
-
-- UI section;
-- related fields;
-- unnecessary validation;
-- unused state/data handling if it exists.
+Blockers section.
 
 
 ---
 
-# 5. REMOVE DIRECT ADD ACTION/DECISION FROM MEETING DETAIL PAGE
-
-
-Location:
-
-Meeting Detail page
-
-
-Current behavior:
-
-There are separate buttons to:
-
-- add decision;
-- add action.
-
-
-Remove these.
-
-
-Reason:
-
-Meeting information should have a single editing source.
-
-
-Required behavior:
-
-
-Meeting Detail:
-
-Only show:
-
-"ویرایش جلسه"
+# 7. EDIT FLOW
 
 
 When user clicks:
 
-Navigate to Meeting Edit page.
+"ویرایش جلسه"
 
 
-The edit page should:
-
-- load existing data;
-- prefill all fields;
-- allow editing decisions and actions;
-- save changes together.
+The existing blockers should be loaded as prefilled data.
 
 
-Do not create multiple editing entry points.
+User should be able to:
 
----
-
-# 6. MEETING SPACE DETAIL — RESPONSIBLE PERSON SECTION
-
-
-Location:
-
-Organization Meeting Space detail page
+- edit blockers;
+- remove blockers;
+- add new blockers.
 
 
-Current issue:
-
-Responsible person section feels:
-
-- visually empty;
-- dry;
-- poorly aligned;
-- not matching product quality.
-
-
-Improve this section using UI/UX Pro Max principles.
-
-
-Requirements:
-
-
-Fix:
-
-- RTL alignment;
-- spacing;
-- hierarchy;
-- visual presentation.
-
-
-Consider a better pattern:
-
-Example:
-
-
-Responsible person
-
-
-[Avatar]
-
-Name
-
-Role
-
-
-or a compact profile-style component.
-
-
-Do not simply move text.
-
-Improve the visual experience.
+The Meeting edit page remains the single source for editing meeting outcomes.
 
 ---
 
-# 7. UNIFY MEETING CREATION EXPERIENCE
-
-
-This is a critical consistency requirement.
-
-
-Currently there are differences between:
-
-1. Creating meeting from Project page
-
-2. Creating meeting from Meeting section
-
-
-This should not happen.
-
-
-A Meeting is the same entity everywhere.
-
-
-Required:
-
-
-Both flows must use:
-
-- same form structure;
-- same fields;
-- same sections;
-- same validation;
-- same components;
-- same UX behavior.
-
-
-The only difference should be:
-
-Context source.
-
-
-Example:
-
-
-Project Meeting:
-
-Related Project = Project X
-
-
-Organization Meeting:
-
-Meeting Space = Internal Organization Meetings
-
-
-Everything else must remain identical.
-
----
-
-# 8. UNIFY MEETING DETAIL EXPERIENCE
-
-
-The same rule applies to Meeting Detail pages.
-
-
-Whether the meeting belongs to:
-
-- a project;
-- an organization meeting space;
-
-
-The detail page structure must be identical.
-
-
-The following sections must follow one shared structure:
-
-
-Meeting Overview
-
-Participants
-
-Attendance
-
-Summary
-
-Decisions
-
-Actions
-
-Dependencies (if applicable)
-
-Comments / Feedback
-
-Approval / Signature
-
-History
-
-
-Do not create separate versions of Meeting Detail.
-
-Create reusable components if needed.
-
----
-
-# 9. COMPONENT ARCHITECTURE IMPROVEMENT
-
-
-Avoid duplicated implementations.
-
-
-If Project Meeting and Organization Meeting use the same:
-
-
-- Meeting Form
-- Meeting Detail
-- Decision Item
-- Action Item
-- Participant Selector
-
-
-Extract reusable components.
-
-
-Example structure:
-
-
-components/
-
-meeting/
-
-  meeting-form.tsx
-
-  meeting-detail.tsx
-
-  participant-selector.tsx
-
-  decision-list.tsx
-
-  action-list.tsx
-
-
-Adapt to the existing architecture.
-
----
-
-# 10. RTL AND UX QUALITY AUDIT
-
-
-Review all changed components.
-
-
-Check:
-
-- text alignment;
-- icon position;
-- spacing;
-- dropdown direction;
-- input alignment;
-- modal layout.
-
-
-Everything must behave naturally in Persian RTL.
-
----
-
-# 11. UX WRITING REVIEW
-
-
-Review all new and modified text.
+# 8. UX WRITING
 
 
 Use clear Persian UX writing.
 
 
-Avoid generic labels.
+Section title:
+
+"موانع"
 
 
-Examples:
+Empty state:
+
+"هنوز مانعی برای این جلسه ثبت نشده است."
 
 
-Instead of:
+CTA:
 
-"اضافه"
-
-
-Use:
-
-"افزودن فاز"
+"ثبت مانع"
 
 
-Instead of:
+Avoid generic labels such as:
 
-"ویرایش"
+"افزودن"
 
-where context is unclear:
-
-
-Use:
-
-"ویرایش جلسه"
-
-
-Instead of:
+or
 
 "ثبت"
 
-where possible:
+
+when context is unclear.
+
+---
+
+# 9. COMPONENT ARCHITECTURE
 
 
-Use:
+Do not duplicate blocker components.
 
-"ثبت تصمیم"
 
-"ثبت اقدام"
+If a blocker component already exists:
 
-"افزودن فرد جدید"
+
+Reuse it.
+
+
+If needed:
+
+Extract a reusable component shared between:
+
+- Blockers page
+- Meeting form
+- Meeting detail
+
+
+Maintain consistency across the product.
+
+---
+
+# 10. RTL AND ACCESSIBILITY CHECK
+
+
+Verify:
+
+- RTL alignment;
+- Persian typography;
+- icon placement;
+- keyboard accessibility;
+- form validation.
 
 
 ---
 
-# 12. FINAL QA
+# FINAL QA
 
 
-Before finishing verify:
+Verify:
 
 
-## Product consistency
+Product:
 
-- Are all meetings using the same structure?
-- Are decisions and actions managed from one source?
-- Are phases easier to manage?
-- Are users able to create missing phases?
-
-
-## UX quality
-
-- Are unnecessary sections removed?
-- Are flows simpler?
-- Are duplicate actions removed?
+- Can PM register blockers during meeting documentation?
+- Are blockers connected to the existing blocker system?
+- Can blockers be edited through meeting edit flow?
 
 
-## Visual quality
+UX:
 
-- Are phase items cleaner?
-- Are decision/action cards subtle?
-- Is the UI less card-heavy?
-- Is hierarchy improved?
+- Is blocker creation consistent with decisions/actions?
+- Is the flow clear?
+
+
+Visual:
+
+- Does the new section match the existing design?
 
 
 ---
@@ -693,59 +363,20 @@ npm run lint
 npm run build
 
 
-Start locally:
+Run local application and check:
 
-npm run dev
-
-
-Check:
-
-- Project creation
-- Phase management
 - Meeting creation
+- Meeting editing
 - Meeting detail
-- Organization meetings
-- Decision creation
-- Action creation
+- Blockers section
 
-
-Fix runtime issues before completion.
 
 ---
 
-# FINAL COMMIT
-
-Create a meaningful commit:
-
-example:
-
-chore: refine meeting flows and improve project phase UX
+# COMMIT AND PUSH
 
 
-Push:
+Create commit:
 
-project-meeting-form-improvements
-
-
-Do NOT merge into main.
-
----
-
-# FINAL REPORT
-
-Provide:
-
-1. Changed files
-2. UX improvements implemented
-3. Visual improvements implemented
-4. Shared components created/refactored
-5. Validation results
-6. Git branch and commit information
-
-Confirm:
-
-Branch:
-
-project-meeting-form-improvements
-
-was pushed successfully.
+```bash
+feat: add blockers support to meeting workflow

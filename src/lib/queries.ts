@@ -88,6 +88,9 @@ export function getRisks(projectId: string): Risk[] {
 export function getBlockers(projectId: string): Blocker[] {
   return readDb().blockers.filter((b) => b.projectId === projectId);
 }
+export function getMeetingBlockers(meetingId: string): Blocker[] {
+  return readDb().blockers.filter((b) => b.meetingId === meetingId);
+}
 export function getComments(meetingId: string): Comment[] {
   return readDb()
     .comments.filter((c) => c.meetingId === meetingId)

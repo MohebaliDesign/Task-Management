@@ -268,6 +268,7 @@ function revalidateMeetingPaths(m: Pick<Meeting, "id" | "projectId" | "spaceId">
   if (m.projectId) {
     revalidatePath(`/projects/${m.projectId}/decisions`);
     revalidatePath(`/projects/${m.projectId}/actions`);
+    revalidatePath(`/projects/${m.projectId}/risks`);
     revalidatePath(`/projects/${m.projectId}`);
   } else {
     revalidatePath("/meetings");
@@ -356,6 +357,15 @@ export async function createMeeting(_prev: unknown, formData: FormData): Promise
       db.actions.push(action);
       if (projectId) pushActivity(db, { projectId, meetingId: id, type: "action_added", entityLabel: a.title });
     }
+
+    for (const b of v.blockersJson) {
+      const blockerId = makeId("blk");
+      db.blockers.push({
+        id: blockerId, projectId, meetingId: id, title: b.title, description: b.description,
+        status: "open", ownerId: b.ownerId || null, raisedDate: nowIso(), resolvedDate: null,
+      });
+      if (projectId) pushActivity(db, { projectId, meetingId: id, type: "blocker_added", entityLabel: b.title, newValue: "باز" });
+    }
   });
   revalidateMeetingPaths({ id, projectId, spaceId });
   return { ok: true, id };
@@ -432,6 +442,23 @@ export async function updateMeeting(_prev: unknown, formData: FormData): Promise
       }
     }
     db.actions = db.actions.filter((a) => a.meetingId !== m.id || keepActionIds.has(a.id));
+
+    const existingBlockers = db.blockers.filter((b) => b.meetingId === m.id);
+    const keepBlockerIds = new Set<string>();
+    for (const b of v.blockersJson) {
+      const existing = b.id ? existingBlockers.find((eb) => eb.id === b.id) : undefined;
+      if (existing) {
+        existing.title = b.title;
+        existing.description = b.description;
+        existing.ownerId = b.ownerId || null;
+        keepBlockerIds.add(existing.id);
+      } else {
+        const newId = makeId("blk");
+        db.blockers.push({ id: newId, projectId: m.projectId, meetingId: m.id, title: b.title, description: b.description, status: "open", ownerId: b.ownerId || null, raisedDate: nowIso(), resolvedDate: null });
+        keepBlockerIds.add(newId);
+      }
+    }
+    db.blockers = db.blockers.filter((b) => b.meetingId !== m.id || keepBlockerIds.has(b.id));
 
     if (m.projectId) pushActivity(db, { projectId: m.projectId, meetingId: m.id, type: "meeting_updated", entityLabel: m.title });
     touched = { id: m.id, projectId: m.projectId, spaceId: m.spaceId };
