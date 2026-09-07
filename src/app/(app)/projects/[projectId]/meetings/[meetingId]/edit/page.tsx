@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { PageHeader } from "@/components/domain/page-header";
 import { CreateMeetingForm } from "@/features/meetings/create-meeting-form";
-import { getProject, getMeeting, getMeetingDecisions, getMeetingActions, getPeople } from "@/lib/queries";
+import { getProject, getMeeting, getMeetingDecisions, getMeetingActions, getMeetingBlockers, getPeople } from "@/lib/queries";
 import { toFa } from "@/lib/utils";
 
 export default function EditMeetingPage({ params }: { params: { projectId: string; meetingId: string } }) {
@@ -29,6 +29,7 @@ export default function EditMeetingPage({ params }: { params: { projectId: strin
         meeting={meeting}
         meetingDecisions={getMeetingDecisions(meeting.id)}
         meetingActions={getMeetingActions(meeting.id)}
+        meetingBlockers={getMeetingBlockers(meeting.id)}
       />
     </div>
   );

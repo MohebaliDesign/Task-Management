@@ -111,6 +111,14 @@ const actionDraftSchema = z.object({
 });
 export type ActionDraft = z.infer<typeof actionDraftSchema>;
 
+const blockerDraftSchema = z.object({
+  id: z.string().trim().optional(),
+  title: req("عنوان مانع را وارد کنید").max(240),
+  description: z.string().trim().max(500).optional().default(""),
+  ownerId: z.string().trim().optional().default(""),
+});
+export type BlockerDraft = z.infer<typeof blockerDraftSchema>;
+
 /**
  * Shared by project meetings and Meeting Space meetings — same fields, same
  * validation, same sections, regardless of context. Exactly one of
@@ -130,6 +138,7 @@ const meetingCoreSchema = z.object({
   nextSteps: z.string().trim().optional().default(""),
   decisionsJson: jsonArray(decisionDraftSchema),
   actionsJson: jsonArray(actionDraftSchema),
+  blockersJson: jsonArray(blockerDraftSchema),
 }).refine((v) => !!v.projectId || !!v.spaceId, {
   message: "زمینهٔ جلسه (پروژه یا دستهٔ جلسات) مشخص نیست",
   path: ["projectId"],

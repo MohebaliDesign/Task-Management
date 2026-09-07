@@ -3,11 +3,11 @@ import { Card } from "@/components/ui/card";
 import { AppIcon } from "@/components/icon";
 import { SectionHeader } from "@/components/domain/page-header";
 import { EmptyState } from "@/components/domain/empty-state";
-import { RiskLevelBadge, RiskStatusBadge, BlockerStatusBadge } from "@/components/domain/status";
+import { RiskLevelBadge, RiskStatusBadge } from "@/components/domain/status";
 import { PersonChip } from "@/components/domain/person";
 import { AddRiskDialog, AddBlockerDialog } from "@/features/risks/risk-blocker-dialogs";
+import { BlockerRow } from "@/features/risks/blocker-row";
 import { getProject, getRisks, getBlockers, getPeople, getPerson } from "@/lib/queries";
-import { faDate } from "@/lib/utils";
 
 export default function RisksPage({ params }: { params: { projectId: string } }) {
   const project = getProject(params.projectId);
@@ -32,20 +32,7 @@ export default function RisksPage({ params }: { params: { projectId: string } })
         ) : (
           <Card className="divide-y divide-border">
             {blockers.map((b) => (
-              <div key={b.id} className="flex items-start gap-3 p-4">
-                <AppIcon name="blocker" size={20} className={`mt-0.5 shrink-0 ${b.status === "open" ? "text-destructive-text" : "text-muted-foreground"}`} />
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-start justify-between gap-2">
-                    <p className="text-sm font-medium">{b.title}</p>
-                    <BlockerStatusBadge value={b.status} />
-                  </div>
-                  {b.description && <p className="mt-1 text-sm text-muted-foreground">{b.description}</p>}
-                  <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
-                    <span className="flex items-center gap-1.5">مسئول: <PersonChip person={getPerson(b.ownerId)} variant="compact" /></span>
-                    <span>مطرح‌شده: {faDate(b.raisedDate)}</span>
-                  </div>
-                </div>
-              </div>
+              <BlockerRow key={b.id} blocker={b} owner={getPerson(b.ownerId)} />
             ))}
           </Card>
         )}

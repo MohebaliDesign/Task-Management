@@ -14,10 +14,11 @@ import { AppIcon } from "@/components/icon";
 import { AddPersonDialog } from "@/features/people/add-person-dialog";
 import { DecisionDraftDialog, type DecisionDraft } from "@/features/meetings/decision-draft-dialog";
 import { ActionDraftDialog, type ActionDraft } from "@/features/meetings/action-draft-dialog";
+import { BlockerDraftDialog, type BlockerDraft } from "@/features/meetings/blocker-draft-dialog";
 import { createMeeting, updateMeeting, type ActionResult } from "@/lib/actions";
 import { roleLabels, priorityLabels, actionStatusLabels } from "@/lib/labels";
 import { makeId } from "@/lib/utils";
-import type { ActionItem, Decision, Meeting, Person } from "@/lib/domain";
+import type { ActionItem, Blocker, Decision, Meeting, Person } from "@/lib/domain";
 
 const initial: ActionResult = { ok: false, error: "" };
 const today = new Date().toISOString().slice(0, 10);
@@ -31,6 +32,10 @@ interface DecisionDraftUI extends DecisionDraft {
   id?: string;
 }
 interface ActionDraftUI extends ActionDraft {
+  key: string;
+  id?: string;
+}
+interface BlockerDraftUI extends BlockerDraft {
   key: string;
   id?: string;
 }
@@ -48,6 +53,7 @@ export function CreateMeetingForm({
   meeting,
   meetingDecisions = [],
   meetingActions = [],
+  meetingBlockers = [],
 }: {
   projectId?: string;
   spaceId?: string;
@@ -56,6 +62,7 @@ export function CreateMeetingForm({
   meeting?: Meeting;
   meetingDecisions?: Decision[];
   meetingActions?: ActionItem[];
+  meetingBlockers?: Blocker[];
 }) {
   const router = useRouter();
   const isEdit = !!meeting;
@@ -82,6 +89,9 @@ export function CreateMeetingForm({
       deadline: a.deadline ? a.deadline.slice(0, 10) : "", priority: a.priority, status: a.status,
       relatedDecisionKey: a.relatedDecisionId,
     })),
+  );
+  const [blockers, setBlockers] = React.useState<BlockerDraftUI[]>(
+    meetingBlockers.map((b) => ({ key: b.id, id: b.id, title: b.title, description: b.description, ownerId: b.ownerId ?? "" })),
   );
 
   React.useEffect(() => {
@@ -147,6 +157,16 @@ export function CreateMeetingForm({
     setActions((prev) => prev.filter((a) => a.key !== key));
   }
 
+  function addBlockerDraft(draft: BlockerDraft) {
+    setBlockers((prev) => [...prev, { key: makeId("blk"), ...draft }]);
+  }
+  function updateBlockerDraft(key: string, draft: BlockerDraft) {
+    setBlockers((prev) => prev.map((b) => (b.key === key ? { ...b, ...draft } : b)));
+  }
+  function removeBlockerDraft(key: string) {
+    setBlockers((prev) => prev.filter((b) => b.key !== key));
+  }
+
   const participantsJson = JSON.stringify(participants);
   const summaryPointsJson = JSON.stringify(summaryPoints);
   const decisionsJson = JSON.stringify(
@@ -166,6 +186,9 @@ export function CreateMeetingForm({
       };
     }),
   );
+  const blockersJson = JSON.stringify(
+    blockers.map((b) => ({ id: b.id, title: b.title, description: b.description, ownerId: b.ownerId })),
+  );
 
   return (
     <form action={formAction} className="space-y-6">
@@ -176,6 +199,7 @@ export function CreateMeetingForm({
       <input type="hidden" name="summaryPointsJson" value={summaryPointsJson} />
       <input type="hidden" name="decisionsJson" value={decisionsJson} />
       <input type="hidden" name="actionsJson" value={actionsJson} />
+      <input type="hidden" name="blockersJson" value={blockersJson} />
 
       <Card>
         <CardHeader><CardTitle className="flex items-center gap-2"><AppIcon name="meetings" size={18} className="text-muted-foreground" />شناسهٔ جلسه</CardTitle></CardHeader>
@@ -375,6 +399,45 @@ export function CreateMeetingForm({
             ))}
           </CardContent>
         )}
+      </Card>
+
+      <Card>
+        <CardHeader className="flex-row items-center justify-between">
+          <CardTitle className="flex items-center gap-2"><AppIcon name="blocker" size={18} className="text-muted-foreground" />موانع (اختیاری)</CardTitle>
+          <BlockerDraftDialog people={people} onPersonCreated={(p) => setPeople((prev) => [...prev, p])} onSubmit={addBlockerDraft} />
+        </CardHeader>
+        <CardContent className="pt-0">
+          {blockers.length === 0 ? (
+            <p className="text-sm text-muted-foreground">هنوز مانعی برای این جلسه ثبت نشده است.</p>
+          ) : (
+            <div className="space-y-2">
+              {blockers.map((b) => (
+                <div key={b.key} className="flex items-start justify-between gap-3 rounded-md bg-muted/60 p-3">
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium">{b.title}</p>
+                    {b.description && <p className="mt-0.5 text-xs text-muted-foreground">{b.description}</p>}
+                  </div>
+                  <div className="flex shrink-0 items-center gap-1">
+                    <BlockerDraftDialog
+                      people={people}
+                      onPersonCreated={(p) => setPeople((prev) => [...prev, p])}
+                      onSubmit={(draft) => updateBlockerDraft(b.key, draft)}
+                      initial={{ title: b.title, description: b.description, ownerId: b.ownerId }}
+                      trigger={
+                        <button type="button" className="text-muted-foreground hover:text-foreground" aria-label="ویرایش مانع">
+                          <AppIcon name="edit" size={15} />
+                        </button>
+                      }
+                    />
+                    <button type="button" onClick={() => removeBlockerDraft(b.key)} className="text-muted-foreground hover:text-destructive-text" aria-label="حذف مانع">
+                      <AppIcon name="trash" size={15} />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
       </Card>
 
       <Card>
