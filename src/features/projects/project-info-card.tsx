@@ -68,7 +68,7 @@ export function ProjectInfoCard({ project, people }: { project: Project; people:
                   </Select>
                 </Field>
                 <Field label="مالک محصول" htmlFor="poId" error={errs.poId} required>
-                  <Select name="poId" defaultValue={project.poId}>
+                  <Select name="poId" defaultValue={project.poId ?? undefined}>
                     <SelectTrigger id="poId"><SelectValue /></SelectTrigger>
                     <SelectContent>
                       {people.map((p) => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}

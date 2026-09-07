@@ -80,7 +80,7 @@ export function SectionHeader({
         {icon && <AppIcon name={icon} size={18} className="text-muted-foreground" />}
         <div>
           <h2 className="text-sm font-semibold">{title}</h2>
-          {description && <p className="text-xs text-muted-foreground">{description}</p>}
+          {/* {description && <p className="text-xs text-muted-foreground">{description}</p>} */}
         </div>
       </div>
       {actions}

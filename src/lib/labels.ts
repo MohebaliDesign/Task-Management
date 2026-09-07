@@ -18,6 +18,7 @@ import type {
   MilestoneStatus,
   Role,
   ActivityType,
+  ResourceKind,
 } from "./domain";
 
 export type Tone =
@@ -118,6 +119,15 @@ export const milestoneStatusLabels: Record<MilestoneStatus, LabelEntry> = {
   in_progress: { label: "در حال انجام", tone: "primary" },
   done: { label: "انجام‌شده", tone: "success" },
   at_risk: { label: "در معرض خطر", tone: "warning" },
+};
+
+export const resourceKindLabels: Record<ResourceKind, string> = {
+  figma: "فایل طراحی",
+  repo: "مخزن کد",
+  docs: "سند",
+  drive: "فضای ذخیره‌سازی",
+  slack: "کانال ارتباطی",
+  other: "منبع پروژه",
 };
 
 export const roleLabels: Record<Role, string> = {
