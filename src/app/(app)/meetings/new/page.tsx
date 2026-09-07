@@ -13,7 +13,7 @@ export default function NewMeetingSpacePage() {
         title="ایجاد دستهٔ جلسات جدید"
         description="یک دستهٔ جلسات، گروهی از جلسات سازمانی مستقل از پروژه است — مثلاً «جلسات داخلی سازمان». پس از ایجاد، می‌توانید چند جلسه در آن ثبت کنید."
         icon="meetings"
-        crumbs={[{ label: "جلسات", href: "/meetings" }, { label: "دستهٔ جدید" }]}
+        crumbs={[{ label: "جلسات", href: "/meetings" }, { label: "دسته‌های جلسات", href: "/meetings/spaces" }, { label: "دستهٔ جدید" }]}
       />
       <CreateMeetingSpaceForm people={people} />
     </div>

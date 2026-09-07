@@ -4,18 +4,15 @@ import { MetricTile } from "@/features/shared/metric-tile";
 import { ProjectCard } from "@/features/projects/project-card";
 import { MeetingSpaceCard } from "@/features/meeting-spaces/meeting-space-card";
 import { EmptyState } from "@/components/domain/empty-state";
-import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { AppIcon } from "@/components/icon";
-import { faRelative, toFa } from "@/lib/utils";
-import { getProjects, getActivities, getBlockers, getProjectStats, getMeetingSpaces } from "@/lib/queries";
-import { activityLabels } from "@/lib/labels";
+import { toFa } from "@/lib/utils";
+import { getProjects, getBlockers, getProjectStats, getMeetingSpaces } from "@/lib/queries";
 
 export default function DashboardPage() {
   const projects = getProjects();
   const active = projects.filter((p) => p.lifecycle !== "closed");
   const atRisk = active.filter((p) => p.health !== "on_track");
-  const recentActivity = getActivities().slice(0, 6);
   const meetingSpaces = getMeetingSpaces();
 
   const openBlockersCount = active.reduce(
@@ -86,14 +83,14 @@ export default function DashboardPage() {
         )}
       </section>
 
-      <section aria-label="دسته‌های جلسات" className="mb-8">
+      <section aria-label="دسته‌های جلسات">
         <SectionHeader
           title="دسته‌های جلسات"
           icon="meetings"
           description="جلسات سازمانی مستقل از پروژه"
           actions={
             <Button asChild variant="ghost" size="sm">
-              <Link href="/meetings">مشاهدهٔ همه</Link>
+              <Link href="/meetings/spaces">مشاهدهٔ همه</Link>
             </Button>
           }
         />
@@ -115,35 +112,6 @@ export default function DashboardPage() {
             ))}
           </div>
         )}
-      </section>
-
-      <section aria-label="آخرین تغییرات" className="mt-8">
-        <SectionHeader
-          title="آخرین تغییرات"
-          icon="activity"
-          actions={
-            <Button asChild variant="ghost" size="sm">
-              <Link href="/activity">مشاهدهٔ همه</Link>
-            </Button>
-          }
-        />
-        <Card className="divide-y divide-border">
-          {recentActivity.map((a) => (
-            <div key={a.id} className="flex items-center gap-3 p-3 text-sm">
-              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent text-accent-foreground">
-                <AppIcon name="activity" size={16} />
-              </span>
-              <div className="min-w-0 flex-1">
-                <p className="truncate">
-                  <span className="font-medium">{a.actorName}</span>{" "}
-                  <span className="text-muted-foreground">— {activityLabels[a.type]}</span>
-                  {a.entityLabel ? <span className="text-muted-foreground">: {a.entityLabel}</span> : null}
-                </p>
-              </div>
-              <span className="shrink-0 text-xs text-muted-foreground">{faRelative(a.createdAt)}</span>
-            </div>
-          ))}
-        </Card>
       </section>
     </>
   );

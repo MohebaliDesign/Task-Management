@@ -18,6 +18,7 @@ export default function EditSpaceMeetingPage({ params }: { params: { spaceId: st
         icon="meetings"
         crumbs={[
           { label: "جلسات", href: "/meetings" },
+          { label: "دسته‌های جلسات", href: "/meetings/spaces" },
           { label: space.name, href: `/meetings/${space.id}` },
           { label: `جلسهٔ ${toFa(meeting.sequence)}`, href: `/meetings/${space.id}/${meeting.id}` },
           { label: "ویرایش" },

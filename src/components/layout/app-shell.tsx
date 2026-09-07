@@ -39,7 +39,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             <ThemeToggle />
           </div>
         </header>
-        <main className="flex-1 px-4 py-6 lg:px-8 lg:py-8">
+        <main className="flex-1 bg-muted/60 px-4 py-6 lg:px-8 lg:py-8">
           <div className="mx-auto w-full max-w-6xl">{children}</div>
         </main>
       </div>

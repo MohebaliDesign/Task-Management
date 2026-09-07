@@ -15,6 +15,7 @@ export default function NewSpaceMeetingPage({ params }: { params: { spaceId: str
         icon="meetings"
         crumbs={[
           { label: "جلسات", href: "/meetings" },
+          { label: "دسته‌های جلسات", href: "/meetings/spaces" },
           { label: space.name, href: `/meetings/${space.id}` },
           { label: "جلسهٔ جدید" },
         ]}

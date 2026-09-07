@@ -37,10 +37,11 @@ export function ProjectsFilterBar() {
   const health = params.get("health") ?? ALL;
   const lifecycle = params.get("lifecycle") ?? ALL;
   const phase = params.get("phase") ?? ALL;
-  const hasFilters = health !== ALL || lifecycle !== ALL || phase !== ALL || q.length > 0;
+  const sort = params.get("sort") ?? "newest";
+  const hasFilters = health !== ALL || lifecycle !== ALL || phase !== ALL || sort !== "newest" || q.length > 0;
 
   return (
-    <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+    <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
       <div className="relative sm:w-64">
         <span className="pointer-events-none absolute inset-y-0 start-3 flex items-center text-muted-foreground">
           <AppIcon name="search" size={18} />
@@ -58,13 +59,24 @@ export function ProjectsFilterBar() {
       <FilterSelect label="وضعیت" value={lifecycle} onChange={(v) => update("lifecycle", v)} options={PROJECT_LIFECYCLE.map((l) => ({ value: l, label: lifecycleLabels[l].label }))} />
       <FilterSelect label="فاز" value={phase} onChange={(v) => update("phase", v)} options={PROJECT_PHASE.map((p) => ({ value: p, label: phaseLabels[p].label }))} />
 
+      <Select value={sort} onValueChange={(v) => update("sort", v === "newest" ? "" : v)}>
+        <SelectTrigger className="w-full sm:w-36" aria-label="ترتیب">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="newest">جدیدترین</SelectItem>
+          <SelectItem value="oldest">قدیمی‌ترین</SelectItem>
+        </SelectContent>
+      </Select>
+
       {hasFilters && (
         <Button
           variant="ghost"
           size="sm"
           onClick={() => {
             setQ("");
-            router.replace(pathname, { scroll: false });
+            const view = params.get("view");
+            router.replace(view ? `${pathname}?view=${view}` : pathname, { scroll: false });
           }}
         >
           <AppIcon name="close" size={16} />

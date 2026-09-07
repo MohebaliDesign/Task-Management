@@ -23,7 +23,7 @@ export default function MeetingSpaceDetailPage({ params }: { params: { spaceId: 
         title={space.name}
         description={space.description || "بدون توضیحات"}
         icon="meetings"
-        crumbs={[{ label: "جلسات", href: "/meetings" }, { label: space.name }]}
+        crumbs={[{ label: "جلسات", href: "/meetings" }, { label: "دسته‌های جلسات", href: "/meetings/spaces" }, { label: space.name }]}
         actions={
           <Button asChild>
             <Link href={`/meetings/${space.id}/new`}>
