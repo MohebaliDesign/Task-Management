@@ -1,429 +1,325 @@
 # ROLE
 
-Act as:
+You are acting as a Senior Git Engineer and Senior Full-Stack Developer.
 
-- Senior Product Designer
-- Senior UX Designer
-- Senior UX Writer
-- Senior Frontend Engineer
+Your task is to safely synchronize the latest changes from the `main` branch into the existing feature branch:
 
-
-Use Claude Opus 4.8 High reasoning.
-
-
-You are improving an existing Project Governance & Meeting Accountability System.
-
-
-# PRODUCT MODEL
-
-Core entities:
-
-Project
-→ Meeting
-→ Decision
-→ Action
-→ Owner
-→ Dependency
-→ History
-→ Approval
-
-
-Do not redesign randomly.
-
-Improve the existing implementation according to UX principles, IA consistency, and design system quality.
-
-
-# GIT REQUIREMENT
-
-Create a new branch:
-
+```
 project-meeting-form-improvements
+```
 
+The goal is NOT to merge this feature branch into main.
 
-Branch must be created from current development branch.
+The goal is the opposite:
 
-All changes only inside this branch.
+Update the feature branch so that it contains:
 
-Commit and push after completion.
+1. All latest changes from `main`
+2. All existing changes and implementations from `project-meeting-form-improvements`
 
+The final result must remain inside:
 
-# DESIGN SYSTEM
-
-Continue using:
-
-- shadcn/ui
-- Iconsax
-- existing design tokens
-- Vazirmatn font
-- RTL support
-
-
-Use uiux-pro-max skill for all visual improvements.
-
-
-# 1. VISUAL SYSTEM IMPROVEMENT
-
-
-Reduce gray intensity in cards and sections.
-
-Improve surfaces:
-
-Main background:
-
-light neutral gray.
-
-
-Cards:
-
-white.
-
-
-Reduce excessive borders.
-
-
-Replace heavy shadows with subtle SaaS-style elevation.
-
-
-Use soft shadow:
-
-rgba(0,0,0,0.05-0.06)
-
-
-Goal:
-
-clean, premium, professional dashboard feeling.
-
-
-# 2. PROJECT CREATION FLOW
-
-
-Update project creation.
-
-
-## Version management
-
-Current version behavior is too strict.
-
-
-Version previous relation must be optional.
-
-
-Support:
-
-
-Case 1:
-
-New project version connected to previous version.
-
-
-Case 2:
-
-User creates version 6 directly without previous versions existing.
-
-
-Add:
-
-Previous Version selector (optional)
-
-
-Helper:
-
-"اگر این نسخه ادامه نسخه قبلی است، پروژه مرتبط را انتخاب کنید."
-
-
-# 3. PROJECT RESPONSIBILITY SECTION
-
-
-Project Manager:
-
-Required.
-
-
-Product Owner:
-
-Optional.
-
-
-Update selects.
-
-At the bottom of user select lists add:
-
-
-"+ افزودن فرد جدید"
-
-
-Click opens modal:
-
-
-Fields:
-
-Name
-
-Role
-
-
-After saving:
-
-new user becomes selectable.
-
-
-# 4. PROJECT PHASE MANAGEMENT
-
-
-Replace simple current phase selection.
-
-
-Create phase management.
-
-
-Support multiple phases.
-
-
-Each phase needs:
-
-
-Name
-
-Start date
-
-Deadline
-
-
-Allow adding new phases:
-
-
-"+ افزودن فاز جدید"
-
-
-Display selected phases clearly.
-
-
-# 5. OPTIONAL DEADLINE
-
-
-Project deadline should not be required.
-
-
-Make target deadline optional.
-
-
-# 6. PROJECT STATUS SECTION
-
-
-Remove:
-
-
-Executive Summary
-
-
-Next milestone
-
-
-Keep only:
-
-
-Current Project Status
-
-
-Current Focus
-
-
-# 7. CREATE MEETING FORM
-
-
-Improve participants section.
-
-
-Allow adding new users.
-
-
-Button:
-
-
-"+ افزودن شرکت‌کننده"
-
-
-Modal:
-
-
-Name
-
-Role
-
-
-Each participant needs attendance state.
-
-
-Add checkbox:
-
-"در جلسه حضور نداشت"
-
-
-# 8. MEETING SUMMARY
-
-
-Replace large textarea.
-
-
-Create structured summary items.
-
-
-Input:
-
-Add summary point.
-
-
-Enter or plus button creates item.
-
-
-Display list below.
-
-
-Each item has:
-
-Edit icon
-
-Delete icon
-
-
-# 9. DECISIONS IN CREATE MEETING
-
-
-Add decision section.
-
-
-Use same structure as existing decision modal.
-
-
-Each decision needs:
-
-
-Title
-
-Description
-
-Owner/person responsible
-
-Related information
-
-
-# 10. ACTIONS IN CREATE MEETING
-
-
-Add action section.
-
-
-Use existing action modal structure.
-
-
-Include:
-
-
-Title
-
-Owner
-
-Deadline
-
-Priority
-
-Status
-
-
-# 11. MEETING DETAIL EDITING
-
-
-Remove separate edit buttons per section.
-
-
-Add one global button:
-
-
-"ویرایش جلسه"
-
-
-Click opens meeting creation/edit page.
-
-
-All existing data should be prefilled.
-
-
-# 12. DECISION SOURCE CONTEXT
-
-
-In meeting details:
-
-Every decision must show:
-
-
-Created from meeting:
-
-Meeting title
-
-Date
-
-
-This improves auditability and history.
-
-
-# 13. RTL AND UX WRITING AUDIT
-
-
-Review all changed components.
-
-
-Fix:
-
-RTL alignment
-
-Persian typography
-
-button labels
-
-helper texts
-
-empty states
-
-
-Use clear Persian UX writing.
-
-
-# 14. FINAL QA
-
-
-Verify:
-
-
-Product:
-
-- Version model supports real usage.
-- Meeting and project entities are consistent.
-- Decisions/actions preserve source context.
-
-
-UX:
-
-- Forms are easier to complete.
-- Required vs optional fields are clear.
-- Adding people is possible everywhere.
-
-
-Visual:
-
-- Dashboard feels premium.
-- Shadows are subtle.
-- Gray usage is reduced.
-
-
-Provide final report:
-
-- changed files
-- implemented UX decisions
-- visual improvements
-- testing results
-- git branch
-
-
-Branch:
-
+```
 project-meeting-form-improvements
+```
+
+After verification, I will manually review it and create a Pull Request into `main`.
+
+---
+
+# IMPORTANT GIT RULES
+
+Before doing anything:
+
+1. Check current repository.
+2. Check current branch.
+3. Check remote configuration.
+4. Check working tree status.
+
+Run:
+
+```bash
+git status
+git branch
+git remote -v
+```
+
+Make sure you are working on the correct repository.
+
+Do NOT modify:
+
+```
+main
+```
+
+directly.
+
+Do NOT force push.
+
+Do NOT delete branches.
+
+Do NOT lose any existing work.
+
+---
+
+# CURRENT BRANCH STRUCTURE
+
+Current situation:
+
+```
+main
+ |
+ |-- New updates from teammate are already merged and pushed here
+ |
+ |
+project-meeting-form-improvements
+ |
+ |-- Contains previous feature development changes
+```
+
+The desired final structure:
+
+```
+main
+ |
+ |-- latest shared changes
+ |
+ |
+project-meeting-form-improvements
+ |
+ |-- latest main changes
+ |
+ |-- existing feature changes preserved
+```
+
+---
+
+# REQUIRED WORKFLOW
+
+## Step 1 — Switch to feature branch
+
+Checkout:
+
+```bash
+git checkout project-meeting-form-improvements
+```
+
+or:
+
+```bash
+git switch project-meeting-form-improvements
+```
+
+---
+
+## Step 2 — Update remote references
+
+Fetch latest remote state:
+
+```bash
+git fetch origin
+```
+
+---
+
+## Step 3 — Integrate latest main changes
+
+Bring the latest `main` branch changes into:
+
+```
+project-meeting-form-improvements
+```
+
+Preferred approach:
+
+Use a clean merge:
+
+```bash
+git merge origin/main
+```
+
+Do NOT merge feature branch into main.
+
+The direction must be:
+
+```
+origin/main
+        ↓
+project-meeting-form-improvements
+```
+
+---
+
+# CONFLICT HANDLING
+
+If merge conflicts happen:
+
+Do NOT automatically discard either side.
+
+Analyze each conflict carefully.
+
+Priority:
+
+1. Preserve latest main changes.
+2. Preserve valuable feature changes from:
+   
+```
+project-meeting-form-improvements
+```
+
+3. Resolve conflicts based on the final product behavior.
+
+For important files:
+
+- understand the purpose;
+- combine both implementations when needed;
+- avoid deleting functionality.
+
+After resolving conflicts:
+
+```bash
+git add .
+git commit
+```
+
+---
+
+# VERIFY FEATURE INTEGRITY
+
+After merge, verify that all previous feature work still exists.
+
+Especially check:
+
+- project creation improvements;
+- meeting form improvements;
+- meeting space functionality;
+- dashboard changes;
+- existing UI improvements;
+- design system usage;
+- shadcn components;
+- Iconsax integration.
+
+The goal is:
+
+```
+main updates + feature branch functionality
+```
+
+not:
+
+```
+main replacing feature branch
+```
+
+---
+
+# RUN VALIDATION
+
+After synchronization:
+
+Run:
+
+```bash
+npm install
+npm run lint
+npm run build
+```
+
+If the project has tests:
+
+Run them as well.
+
+Check for:
+
+- TypeScript errors;
+- missing dependencies;
+- broken imports;
+- runtime errors.
+
+---
+
+# RUN LOCAL CHECK
+
+Start the application:
+
+```bash
+npm run dev
+```
+
+Verify that:
+
+- application starts successfully;
+- dashboard loads;
+- project pages load;
+- meeting pages load;
+- no runtime errors exist.
+
+---
+
+# COMMIT
+
+After successful synchronization create a clear commit:
+
+Example:
+
+```
+chore: sync main updates into project-meeting-form-improvements
+```
+
+---
+
+# PUSH
+
+Push only this branch:
+
+```bash
+git push origin project-meeting-form-improvements
+```
+
+Do not push to main.
+
+---
+
+# FINAL REPORT
+
+After completion provide:
+
+## Git status
+
+- current branch
+- latest commit
+- merge status
+
+## Changes integrated from main
+
+Summarize what was brought from main.
+
+## Feature changes preserved
+
+Summarize what remained from:
+
+```
+project-meeting-form-improvements
+```
+
+## Conflicts resolved
+
+If any, explain briefly.
+
+## Verification
+
+Report:
+
+- lint result
+- build result
+- local run result
+
+## Pull Request readiness
+
+Confirm whether:
+
+```
+project-meeting-form-improvements
+```
+
+is ready to be reviewed and merged into main.
