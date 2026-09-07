@@ -25,7 +25,6 @@ import {
   createMeetingSpaceSchema,
   createPersonSchema,
   createProjectSchema,
-  createSpaceMeetingSchema,
   signMeetingSchema,
   updateActionStatusSchema,
   updateMeetingSchema,
@@ -259,16 +258,35 @@ function splitLines(s: string): string[] {
   return s.split("\n").map((x) => x.trim()).filter(Boolean);
 }
 
+function meetingBasePath(m: Pick<Meeting, "projectId" | "spaceId">): string {
+  return m.projectId ? `/projects/${m.projectId}/meetings` : `/meetings/${m.spaceId}`;
+}
+function revalidateMeetingPaths(m: Pick<Meeting, "id" | "projectId" | "spaceId">) {
+  const base = meetingBasePath(m);
+  revalidatePath(base);
+  revalidatePath(`${base}/${m.id}`);
+  if (m.projectId) {
+    revalidatePath(`/projects/${m.projectId}/decisions`);
+    revalidatePath(`/projects/${m.projectId}/actions`);
+    revalidatePath(`/projects/${m.projectId}`);
+  } else {
+    revalidatePath("/meetings");
+  }
+}
+
 export async function createMeeting(_prev: unknown, formData: FormData): Promise<ActionResult> {
   const parsed = createMeetingSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { ok: false, error: "لطفاً خطاهای فرم را برطرف کنید.", fieldErrors: fieldErrorsFrom(parsed.error) };
   const v = parsed.data;
   const id = makeId("mtg");
+  const projectId = v.projectId || null;
+  const spaceId = v.spaceId || null;
   mutate((db) => {
-    const seq = db.meetings.filter((m) => m.projectId === v.projectId).length + 1;
+    const seq = db.meetings.filter((m) => (projectId ? m.projectId === projectId : m.spaceId === spaceId)).length + 1;
     const meeting: Meeting = {
       id,
-      projectId: v.projectId,
+      projectId,
+      spaceId,
       sequence: seq,
       title: v.title,
       date: new Date(v.date).toISOString(),
@@ -283,14 +301,17 @@ export async function createMeeting(_prev: unknown, formData: FormData): Promise
       summary: v.summaryPointsJson.join(" ؛ "),
       summaryPoints: v.summaryPointsJson,
       nextSteps: splitLines(v.nextSteps),
-      openQuestions: splitLines(v.openQuestions),
       createdById: OPERATOR.id,
       createdAt: nowIso(),
       updatedAt: nowIso(),
       reviewToken: `rev-${id}`,
     };
     db.meetings.push(meeting);
-    pushActivity(db, { projectId: v.projectId, meetingId: id, type: "meeting_created", entityLabel: v.title, newValue: "پیش‌نویس" });
+    if (projectId) pushActivity(db, { projectId, meetingId: id, type: "meeting_created", entityLabel: v.title, newValue: "پیش‌نویس" });
+    if (spaceId) {
+      const space = db.meetingSpaces.find((s) => s.id === spaceId);
+      if (space) space.updatedAt = nowIso();
+    }
 
     // Decisions drafted inline in the meeting form — created in order so
     // actions below can reference them by index before they have real ids.
@@ -299,7 +320,7 @@ export async function createMeeting(_prev: unknown, formData: FormData): Promise
       const decisionId = makeId("dec");
       const decision: Decision = {
         id: decisionId,
-        projectId: v.projectId,
+        projectId,
         meetingId: id,
         text: d.text,
         description: d.description,
@@ -311,7 +332,7 @@ export async function createMeeting(_prev: unknown, formData: FormData): Promise
       };
       db.decisions.push(decision);
       decisionIds.push(decisionId);
-      pushActivity(db, { projectId: v.projectId, meetingId: id, type: "decision_added", entityLabel: d.text.slice(0, 60) });
+      if (projectId) pushActivity(db, { projectId, meetingId: id, type: "decision_added", entityLabel: d.text.slice(0, 60) });
     }
 
     for (const a of v.actionsJson) {
@@ -319,7 +340,7 @@ export async function createMeeting(_prev: unknown, formData: FormData): Promise
       const relatedDecisionId = a.relatedDecisionIndex !== undefined ? decisionIds[a.relatedDecisionIndex] ?? null : null;
       const action: ActionItem = {
         id: actionId,
-        projectId: v.projectId,
+        projectId,
         meetingId: id,
         title: a.title,
         description: "",
@@ -333,13 +354,10 @@ export async function createMeeting(_prev: unknown, formData: FormData): Promise
         completedAt: a.status === "done" ? nowIso() : null,
       };
       db.actions.push(action);
-      pushActivity(db, { projectId: v.projectId, meetingId: id, type: "action_added", entityLabel: a.title });
+      if (projectId) pushActivity(db, { projectId, meetingId: id, type: "action_added", entityLabel: a.title });
     }
   });
-  revalidatePath(`/projects/${v.projectId}/meetings`);
-  revalidatePath(`/projects/${v.projectId}/decisions`);
-  revalidatePath(`/projects/${v.projectId}/actions`);
-  revalidatePath(`/projects/${v.projectId}`);
+  revalidateMeetingPaths({ id, projectId, spaceId });
   return { ok: true, id };
 }
 
@@ -347,6 +365,7 @@ export async function updateMeeting(_prev: unknown, formData: FormData): Promise
   const parsed = updateMeetingSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { ok: false, error: "لطفاً خطاهای فرم را برطرف کنید.", fieldErrors: fieldErrorsFrom(parsed.error) };
   const v = parsed.data;
+  let touched: { id: string; projectId: string | null; spaceId: string | null } | null = null;
   mutate((db) => {
     const m = db.meetings.find((x) => x.id === v.meetingId);
     if (!m) return;
@@ -360,21 +379,72 @@ export async function updateMeeting(_prev: unknown, formData: FormData): Promise
     m.summary = v.summaryPointsJson.join(" ؛ ");
     m.summaryPoints = v.summaryPointsJson;
     m.nextSteps = splitLines(v.nextSteps);
-    m.openQuestions = splitLines(v.openQuestions);
     m.updatedAt = nowIso();
-    pushActivity(db, { projectId: v.projectId, meetingId: m.id, type: "meeting_updated", entityLabel: m.title });
+
+    // Decisions/actions are fully synchronised from the submitted lists:
+    // items carrying an existing id are updated in place, unlisted items are
+    // removed, and items without an id are inserted fresh.
+    const existingDecisions = db.decisions.filter((d) => d.meetingId === m.id);
+    const decisionIds: string[] = [];
+    const keepDecisionIds = new Set<string>();
+    for (const d of v.decisionsJson) {
+      const existing = d.id ? existingDecisions.find((ed) => ed.id === d.id) : undefined;
+      if (existing) {
+        existing.text = d.text;
+        existing.description = d.description;
+        existing.deciderId = d.deciderId;
+        existing.area = d.area;
+        decisionIds.push(existing.id);
+        keepDecisionIds.add(existing.id);
+      } else {
+        const newId = makeId("dec");
+        db.decisions.push({ id: newId, projectId: m.projectId, meetingId: m.id, text: d.text, description: d.description, deciderId: d.deciderId, date: m.date, area: d.area, impact: "متوسط", createdAt: nowIso() });
+        decisionIds.push(newId);
+        keepDecisionIds.add(newId);
+      }
+    }
+    db.decisions = db.decisions.filter((d) => d.meetingId !== m.id || keepDecisionIds.has(d.id));
+
+    const existingActions = db.actions.filter((a) => a.meetingId === m.id);
+    const keepActionIds = new Set<string>();
+    for (const a of v.actionsJson) {
+      const relatedDecisionId = a.relatedDecisionIndex !== undefined ? decisionIds[a.relatedDecisionIndex] ?? null : null;
+      const existing = a.id ? existingActions.find((ea) => ea.id === a.id) : undefined;
+      if (existing) {
+        existing.title = a.title;
+        existing.ownerId = a.ownerId;
+        existing.deadline = a.deadline ? new Date(a.deadline).toISOString() : null;
+        existing.priority = a.priority;
+        existing.status = a.status;
+        existing.relatedDecisionId = relatedDecisionId;
+        existing.updatedAt = nowIso();
+        existing.completedAt = a.status === "done" ? (existing.completedAt ?? nowIso()) : null;
+        keepActionIds.add(existing.id);
+      } else {
+        const newId = makeId("act");
+        db.actions.push({
+          id: newId, projectId: m.projectId, meetingId: m.id, title: a.title, description: "",
+          ownerId: a.ownerId, deadline: a.deadline ? new Date(a.deadline).toISOString() : null,
+          status: a.status, priority: a.priority, relatedDecisionId,
+          createdAt: nowIso(), updatedAt: nowIso(), completedAt: a.status === "done" ? nowIso() : null,
+        });
+        keepActionIds.add(newId);
+      }
+    }
+    db.actions = db.actions.filter((a) => a.meetingId !== m.id || keepActionIds.has(a.id));
+
+    if (m.projectId) pushActivity(db, { projectId: m.projectId, meetingId: m.id, type: "meeting_updated", entityLabel: m.title });
+    touched = { id: m.id, projectId: m.projectId, spaceId: m.spaceId };
   });
-  revalidatePath(`/projects/${v.projectId}/meetings/${v.meetingId}`);
-  revalidatePath(`/projects/${v.projectId}/meetings`);
+  if (touched) revalidateMeetingPaths(touched);
   return { ok: true, id: v.meetingId };
 }
 
 export async function submitMeetingForReview(meetingId: string): Promise<ActionResult> {
-  let projectId = "";
+  let touched: { id: string; projectId: string | null; spaceId: string | null } | null = null;
   mutate((db) => {
     const m = db.meetings.find((x) => x.id === meetingId);
     if (!m) return;
-    projectId = m.projectId;
     // Ensure every team-lead participant has a pending signature to collect.
     const leads = m.participants
       .map((p) => db.people.find((x) => x.id === p.personId))
@@ -387,12 +457,10 @@ export async function submitMeetingForReview(meetingId: string): Promise<ActionR
     }
     m.status = "awaiting_signatures";
     m.updatedAt = nowIso();
-    pushActivity(db, { projectId: m.projectId, meetingId, type: "meeting_submitted", entityLabel: m.title, previousValue: "پیش‌نویس", newValue: "در انتظار امضا" });
+    if (m.projectId) pushActivity(db, { projectId: m.projectId, meetingId, type: "meeting_submitted", entityLabel: m.title, previousValue: "پیش‌نویس", newValue: "در انتظار امضا" });
+    touched = { id: m.id, projectId: m.projectId, spaceId: m.spaceId };
   });
-  if (projectId) {
-    revalidatePath(`/projects/${projectId}/meetings/${meetingId}`);
-    revalidatePath(`/projects/${projectId}/meetings`);
-  }
+  if (touched) revalidateMeetingPaths(touched);
   return { ok: true };
 }
 
@@ -453,7 +521,7 @@ export async function updateActionStatus(formData: FormData): Promise<ActionResu
   const parsed = updateActionStatusSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { ok: false, error: "وضعیت نامعتبر است." };
   const v = parsed.data;
-  let projectId = "";
+  let projectId: string | null = null;
   mutate((db) => {
     const a = db.actions.find((x) => x.id === v.actionId);
     if (!a) return;
@@ -462,7 +530,7 @@ export async function updateActionStatus(formData: FormData): Promise<ActionResu
     a.status = v.status;
     a.updatedAt = nowIso();
     a.completedAt = v.status === "done" ? nowIso() : null;
-    pushActivity(db, { projectId: a.projectId, meetingId: a.meetingId, type: "action_status_changed", entityLabel: a.title, previousValue: actionStatusLabels[prev].label, newValue: actionStatusLabels[v.status].label });
+    if (a.projectId) pushActivity(db, { projectId: a.projectId, meetingId: a.meetingId, type: "action_status_changed", entityLabel: a.title, previousValue: actionStatusLabels[prev].label, newValue: actionStatusLabels[v.status].label });
   });
   if (projectId) {
     revalidatePath(`/projects/${projectId}/actions`);
@@ -532,51 +600,20 @@ export async function createMeetingSpace(_prev: unknown, formData: FormData): Pr
   return { ok: true, id };
 }
 
-export async function createSpaceMeeting(_prev: unknown, formData: FormData): Promise<ActionResult> {
-  const raw = Object.fromEntries(formData);
-  const participantIds = formData.getAll("participantIds").map(String).filter(Boolean);
-  const parsed = createSpaceMeetingSchema.safeParse({ ...raw, participantIds });
-  if (!parsed.success) return { ok: false, error: "لطفاً خطاهای فرم را برطرف کنید.", fieldErrors: fieldErrorsFrom(parsed.error) };
-  const v = parsed.data;
-  const id = makeId("spm");
-  mutate((db) => {
-    const seq = db.spaceMeetings.filter((m) => m.spaceId === v.spaceId).length + 1;
-    db.spaceMeetings.push({
-      id,
-      spaceId: v.spaceId,
-      sequence: seq,
-      title: v.title,
-      date: new Date(v.date).toISOString(),
-      time: v.time,
-      location: v.location,
-      participantIds,
-      summary: v.summary,
-      createdById: OPERATOR.id,
-      createdAt: nowIso(),
-    });
-    const space = db.meetingSpaces.find((s) => s.id === v.spaceId);
-    if (space) space.updatedAt = nowIso();
-  });
-  revalidatePath(`/meetings/${v.spaceId}`);
-  revalidatePath("/meetings");
-  revalidatePath("/");
-  return { ok: true, id };
-}
-
 // ── Review flow (reviewer-facing) ───────────────────────────────────────────
 export async function addComment(_prev: unknown, formData: FormData): Promise<ActionResult> {
   const parsed = addCommentSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { ok: false, error: "لطفاً خطاهای فرم را برطرف کنید.", fieldErrors: fieldErrorsFrom(parsed.error) };
   const v = parsed.data;
-  let projectId = "";
+  let touched: { id: string; projectId: string | null; spaceId: string | null } | null = null;
   mutate((db) => {
     const m = db.meetings.find((x) => x.id === v.meetingId);
     if (!m) return;
-    projectId = m.projectId;
     db.comments.push({ id: makeId("cm"), meetingId: v.meetingId, authorId: "reviewer", authorName: v.authorName, body: v.body, createdAt: nowIso() });
-    pushActivity(db, { projectId: m.projectId, meetingId: v.meetingId, type: "comment_added", actorName: v.authorName, entityLabel: "بازخورد بازبین" });
+    if (m.projectId) pushActivity(db, { projectId: m.projectId, meetingId: v.meetingId, type: "comment_added", actorName: v.authorName, entityLabel: "بازخورد بازبین" });
+    touched = { id: m.id, projectId: m.projectId, spaceId: m.spaceId };
   });
-  if (projectId) revalidatePath(`/projects/${projectId}/meetings/${v.meetingId}`);
+  if (touched) revalidateMeetingPaths(touched);
   return { ok: true };
 }
 
@@ -584,31 +621,33 @@ export async function signMeeting(_prev: unknown, formData: FormData): Promise<A
   const parsed = signMeetingSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { ok: false, error: "امضا ناموفق بود.", fieldErrors: fieldErrorsFrom(parsed.error) };
   const v = parsed.data;
-  let projectId = "";
+  let touched: { id: string; projectId: string | null; spaceId: string | null } | null = null;
   mutate((db) => {
     const s = db.signatures.find((x) => x.id === v.signatureId);
     const m = db.meetings.find((x) => x.id === v.meetingId);
     if (!s || !m) return;
-    projectId = m.projectId;
     s.status = v.decision;
     s.comment = v.comment;
     s.signedAt = v.decision === "approved" ? nowIso() : null;
-    pushActivity(db, {
-      projectId: m.projectId, meetingId: m.id, type: "signature_added", actorId: s.approverId, actorName: s.approverName,
-      entityLabel: `امضای «${m.title}»`, previousValue: "در انتظار", newValue: v.decision === "approved" ? "تأیید و امضا شد" : "نیازمند اصلاح",
-    });
+    if (m.projectId) {
+      pushActivity(db, {
+        projectId: m.projectId, meetingId: m.id, type: "signature_added", actorId: s.approverId, actorName: s.approverName,
+        entityLabel: `امضای «${m.title}»`, previousValue: "در انتظار", newValue: v.decision === "approved" ? "تأیید و امضا شد" : "نیازمند اصلاح",
+      });
+    }
     // If all signatures approved → meeting approved.
     const sigs = db.signatures.filter((x) => x.meetingId === m.id);
     if (allSignaturesApproved(sigs)) {
       m.status = "approved";
       m.updatedAt = nowIso();
-      pushActivity(db, { projectId: m.projectId, meetingId: m.id, type: "meeting_approved", entityLabel: m.title, previousValue: "در انتظار امضا", newValue: "تأییدشده" });
-    } else if (v.decision === "changes_requested") {
+      if (m.projectId) pushActivity(db, { projectId: m.projectId, meetingId: m.id, type: "meeting_approved", entityLabel: m.title, previousValue: "در انتظار امضا", newValue: "تأییدشده" });
+    } else if (v.decision === "changes_requested" && m.projectId) {
       pushActivity(db, { projectId: m.projectId, meetingId: m.id, type: "meeting_submitted", entityLabel: m.title, previousValue: "در انتظار امضا", newValue: "نیازمند اصلاح" });
     }
+    touched = { id: m.id, projectId: m.projectId, spaceId: m.spaceId };
   });
-  if (projectId) {
-    revalidatePath(`/projects/${projectId}/meetings/${v.meetingId}`);
+  if (touched) {
+    revalidateMeetingPaths(touched);
     revalidatePath(`/review/meeting/${v.meetingId}`);
   }
   return { ok: true };

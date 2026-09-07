@@ -92,6 +92,7 @@ const participantDraftSchema = z.object({
 });
 
 const decisionDraftSchema = z.object({
+  id: z.string().trim().optional(),
   text: req("عنوان تصمیم را وارد کنید").max(200),
   description: z.string().trim().max(500).optional().default(""),
   deciderId: req("مسئول تصمیم را انتخاب کنید"),
@@ -100,6 +101,7 @@ const decisionDraftSchema = z.object({
 export type DecisionDraft = z.infer<typeof decisionDraftSchema>;
 
 const actionDraftSchema = z.object({
+  id: z.string().trim().optional(),
   title: req("عنوان اقدام را وارد کنید").max(160),
   ownerId: req("مسئول اقدام را انتخاب کنید"),
   deadline: z.string().trim().optional().default(""),
@@ -109,7 +111,14 @@ const actionDraftSchema = z.object({
 });
 export type ActionDraft = z.infer<typeof actionDraftSchema>;
 
+/**
+ * Shared by project meetings and Meeting Space meetings — same fields, same
+ * validation, same sections, regardless of context. Exactly one of
+ * projectId/spaceId identifies where the meeting lives.
+ */
 const meetingCoreSchema = z.object({
+  projectId: z.string().trim().optional().default(""),
+  spaceId: z.string().trim().optional().default(""),
   title: req("عنوان جلسه را وارد کنید").max(120),
   date: req("تاریخ جلسه را وارد کنید"),
   time: z.string().trim().default("10:00"),
@@ -119,20 +128,20 @@ const meetingCoreSchema = z.object({
   discussion: z.string().trim().max(4000).optional().default(""),
   summaryPointsJson: jsonArray(z.string().trim().min(1).max(300), { min: 1, minMsg: "حداقل یک مورد برای خلاصهٔ جلسه اضافه کنید" }),
   nextSteps: z.string().trim().optional().default(""),
-  openQuestions: z.string().trim().optional().default(""),
-});
-
-export const createMeetingSchema = meetingCoreSchema.extend({
-  projectId: req("شناسهٔ پروژه لازم است"),
   decisionsJson: jsonArray(decisionDraftSchema),
   actionsJson: jsonArray(actionDraftSchema),
+}).refine((v) => !!v.projectId || !!v.spaceId, {
+  message: "زمینهٔ جلسه (پروژه یا دستهٔ جلسات) مشخص نیست",
+  path: ["projectId"],
 });
+
+export const createMeetingSchema = meetingCoreSchema;
 export type CreateMeetingInput = z.infer<typeof createMeetingSchema>;
 
-export const updateMeetingSchema = meetingCoreSchema.extend({
-  meetingId: req("شناسهٔ جلسه لازم است"),
-  projectId: req("شناسهٔ پروژه لازم است"),
-});
+export const updateMeetingSchema = z.intersection(
+  meetingCoreSchema,
+  z.object({ meetingId: req("شناسهٔ جلسه لازم است") }),
+);
 export type UpdateMeetingInput = z.infer<typeof updateMeetingSchema>;
 
 // ── Decisions / Actions / Dependencies ──────────────────────────────────────
@@ -211,17 +220,6 @@ export const createMeetingSpaceSchema = z.object({
   ownerId: req("مسئول دسته را انتخاب کنید"),
 });
 export type CreateMeetingSpaceInput = z.infer<typeof createMeetingSpaceSchema>;
-
-export const createSpaceMeetingSchema = z.object({
-  spaceId: req("شناسهٔ دستهٔ جلسات لازم است"),
-  title: req("عنوان جلسه را وارد کنید").max(120),
-  date: req("تاریخ جلسه را وارد کنید"),
-  time: z.string().trim().default("10:00"),
-  location: z.string().trim().max(120).optional().default(""),
-  participantIds: z.array(z.string()).min(1, "حداقل یک شرکت‌کننده انتخاب کنید"),
-  summary: req("خلاصهٔ جلسه را وارد کنید").max(2000),
-});
-export type CreateSpaceMeetingInput = z.infer<typeof createSpaceMeetingSchema>;
 
 export const closeProjectSchema = z.object({
   projectId: req("شناسهٔ پروژه لازم است"),

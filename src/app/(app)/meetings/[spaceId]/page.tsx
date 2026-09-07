@@ -5,8 +5,10 @@ import { Button } from "@/components/ui/button";
 import { AppIcon } from "@/components/icon";
 import { PageHeader, SectionHeader } from "@/components/domain/page-header";
 import { EmptyState } from "@/components/domain/empty-state";
-import { AvatarStack, PersonChip } from "@/components/domain/person";
-import { faDate, toFa } from "@/lib/utils";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { MeetingList } from "@/features/meetings/meeting-list";
+import { toFa } from "@/lib/utils";
+import { roleLabels } from "@/lib/labels";
 import { getMeetingSpace, getSpaceMeetings, getPerson } from "@/lib/queries";
 
 export default function MeetingSpaceDetailPage({ params }: { params: { spaceId: string } }) {
@@ -32,9 +34,21 @@ export default function MeetingSpaceDetailPage({ params }: { params: { spaceId: 
         }
       />
 
-      <Card className="mb-8 flex items-center justify-between gap-3 p-4">
-        <span className="text-sm text-muted-foreground">مسئول دسته</span>
-        <PersonChip person={owner} showRole />
+      <Card className="mb-8 flex items-center gap-4 p-4">
+        <Avatar className="h-11 w-11 shrink-0">
+          <AvatarFallback className="text-sm">{owner?.initials ?? "؟"}</AvatarFallback>
+        </Avatar>
+        <div className="min-w-0 flex-1">
+          <p className="text-xs text-muted-foreground">مسئول دسته</p>
+          {owner ? (
+            <>
+              <p className="truncate text-sm font-medium">{owner.name}</p>
+              <p className="truncate text-xs text-muted-foreground">{roleLabels[owner.role]}</p>
+            </>
+          ) : (
+            <p className="text-sm text-muted-foreground">بدون مسئول</p>
+          )}
+        </div>
       </Card>
 
       <SectionHeader title="جلسات ثبت‌شده" icon="meetings" description={`${toFa(meetings.length)} جلسه`} />
@@ -51,36 +65,7 @@ export default function MeetingSpaceDetailPage({ params }: { params: { spaceId: 
           }
         />
       ) : (
-        <div className="space-y-3">
-          {meetings.map((m) => {
-            const people = m.participantIds.map((id) => getPerson(id)).filter((p): p is NonNullable<typeof p> => !!p);
-            return (
-              <Card key={m.id} className="relative p-4 shadow-sm transition-shadow hover:shadow-md">
-                <Link
-                  href={`/meetings/${space.id}/${m.id}`}
-                  className="absolute inset-0 z-10 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                  aria-label={`باز کردن ${m.title}`}
-                />
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <div className="flex items-start gap-3">
-                    <span className="flex h-10 w-10 shrink-0 flex-col items-center justify-center rounded-lg bg-accent text-accent-foreground">
-                      <span className="text-[10px] leading-none text-muted-foreground">جلسه</span>
-                      <span className="text-sm font-semibold leading-none">{toFa(m.sequence)}</span>
-                    </span>
-                    <div>
-                      <p className="font-medium">{m.title}</p>
-                      <p className="mt-0.5 flex items-center gap-1.5 text-xs text-muted-foreground">
-                        <AppIcon name="calendar" size={13} />
-                        {faDate(m.date)} · {m.location || "بدون مکان"}
-                      </p>
-                    </div>
-                  </div>
-                  <AvatarStack people={people} max={4} />
-                </div>
-              </Card>
-            );
-          })}
-        </div>
+        <MeetingList meetings={meetings} basePath={`/meetings/${space.id}`} />
       )}
     </div>
   );

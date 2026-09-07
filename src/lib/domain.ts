@@ -218,7 +218,8 @@ export interface Participant {
 
 export interface Decision {
   id: string;
-  projectId: string;
+  /** null when the source meeting belongs to a Meeting Space, not a project. */
+  projectId: string | null;
   meetingId: string | null;
   text: string; // decision title
   description: string; // optional elaboration
@@ -231,7 +232,8 @@ export interface Decision {
 
 export interface ActionItem {
   id: string;
-  projectId: string;
+  /** null when the source meeting belongs to a Meeting Space, not a project. */
+  projectId: string | null;
   meetingId: string | null;
   title: string;
   description: string;
@@ -301,9 +303,14 @@ export interface Signature {
   revision: number; // meeting revision the signature attests to
 }
 
+/**
+ * A meeting is the same entity whether it belongs to a Project or an
+ * independent Meeting Space — exactly one of projectId/spaceId is set.
+ */
 export interface Meeting {
   id: string;
-  projectId: string;
+  projectId: string | null;
+  spaceId: string | null;
   sequence: number;
   title: string;
   date: string;
@@ -318,7 +325,6 @@ export interface Meeting {
   summary: string; // derived flat text (legacy display / review page)
   summaryPoints: string[]; // structured summary items shown/edited as a list
   nextSteps: string[];
-  openQuestions: string[];
   createdById: string;
   createdAt: string;
   updatedAt: string;
@@ -350,9 +356,10 @@ export interface Activity {
 
 /**
  * Meeting Space: an independent category of meetings that is not tied to a
- * project (e.g. "جلسات داخلی سازمان"). Deliberately lighter-weight than the
- * project Meeting record — no decisions/actions/signatures — since org
- * meetings are informational, not governance evidence for a project.
+ * project (e.g. "جلسات داخلی سازمان"). It is a container only — the meetings
+ * inside it are ordinary Meeting records (spaceId set, projectId null), so
+ * creation, editing, decisions, actions, and approval all behave identically
+ * to project meetings.
  */
 export interface MeetingSpace {
   id: string;
@@ -361,20 +368,6 @@ export interface MeetingSpace {
   ownerId: string;
   createdAt: string;
   updatedAt: string;
-}
-
-export interface SpaceMeeting {
-  id: string;
-  spaceId: string;
-  sequence: number;
-  title: string;
-  date: string;
-  time: string;
-  location: string;
-  participantIds: string[];
-  summary: string;
-  createdById: string;
-  createdAt: string;
 }
 
 // ── The persisted database shape ────────────────────────────────────────────
@@ -392,5 +385,4 @@ export interface Database {
   projectApprovals: ProjectApproval[];
   activities: Activity[];
   meetingSpaces: MeetingSpace[];
-  spaceMeetings: SpaceMeeting[];
 }
