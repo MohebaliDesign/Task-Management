@@ -45,6 +45,12 @@ import {
   ProfileCircle,
   ArchiveBook,
   Import,
+  Figma,
+  Code,
+  GoogleDrive,
+  Slack,
+  Global,
+  Copy,
 } from "iconsax-react";
 
 /**
@@ -101,6 +107,12 @@ export const icons = {
   profile: ProfileCircle,
   archive: ArchiveBook,
   import: Import,
+  figma: Figma,
+  repo: Code,
+  drive: GoogleDrive,
+  slack: Slack,
+  globe: Global,
+  copy: Copy,
 } satisfies Record<string, IconsaxComponent>;
 
 export type IconName = keyof typeof icons;

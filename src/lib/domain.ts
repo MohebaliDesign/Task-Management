@@ -80,6 +80,9 @@ export type BlockerStatus = (typeof BLOCKER_STATUS)[number];
 export const MILESTONE_STATUS = ["planned", "in_progress", "done", "at_risk"] as const;
 export type MilestoneStatus = (typeof MILESTONE_STATUS)[number];
 
+export const RESOURCE_KIND = ["figma", "repo", "docs", "drive", "slack", "other"] as const;
+export type ResourceKind = (typeof RESOURCE_KIND)[number];
+
 export const ROLE = ["pm", "po", "team_lead", "ceo", "member"] as const;
 export type Role = (typeof ROLE)[number];
 
@@ -149,10 +152,18 @@ export interface Workstream {
   summary: string;
 }
 
-export interface ImportantLink {
+/**
+ * A project resource is not just a URL — it's a pointer to somewhere the team
+ * actually works (a design file, a code repo, a shared drive…), so it carries
+ * enough context (kind for the icon, an optional access/usage note) for
+ * someone unfamiliar with the project to know what it is before opening it.
+ */
+export interface ProjectResource {
   id: string;
-  label: string;
+  kind: ResourceKind;
+  title: string; // human-readable, e.g. "فایل اصلی طراحی محصول"
   url: string;
+  description?: string; // access requirements, credentials notes, usage notes
 }
 
 export interface Project {
@@ -166,7 +177,8 @@ export interface Project {
   priority: Priority;
   phase: ProjectPhase;
   pmId: string;
-  poId: string;
+  /** Not every project has an assigned owner yet — null means "unassigned", never an empty string. */
+  poId: string | null;
   startDate: string;
   targetDate: string;
   deliveryDate: string | null;
@@ -181,7 +193,7 @@ export interface Project {
   milestones: Milestone[];
   workstreams: Workstream[];
   teamIds: string[];
-  links: ImportantLink[];
+  resources: ProjectResource[];
   finalResult: string | null;
   createdAt: string;
   updatedAt: string;

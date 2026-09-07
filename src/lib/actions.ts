@@ -107,7 +107,7 @@ export async function createProject(_prev: unknown, formData: FormData): Promise
       milestones: [],
       workstreams: [],
       teamIds: [],
-      links: [],
+      resources: [],
       finalResult: null,
       createdAt: nowIso(),
       updatedAt: nowIso(),

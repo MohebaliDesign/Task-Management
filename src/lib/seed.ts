@@ -93,7 +93,7 @@ const leili1: Project = {
   ],
   workstreams: [],
   teamIds: ["p_nima", "p_mina", "p_hassan"],
-  links: [],
+  resources: [],
   finalResult: "سند تحویل نهایی نسخه ۱ به همراه گزارش پوشش آزمون و تأییدیهٔ مدیرعامل بایگانی شد.",
   createdAt: daysAgo(400),
   updatedAt: daysAgo(110),
@@ -155,9 +155,21 @@ const leili2: Project = {
     { id: "ws_l2_3", title: "بازطراحی رابط کاربری", lead: "p_mina", progress: 35, summary: "به‌روزرسانی الگوهای داشبورد بر پایهٔ سیستم طراحی جدید." },
   ],
   teamIds: ["p_nima", "p_mina", "p_hassan", "p_omid", "p_leila"],
-  links: [
-    { id: "ln_l2_1", label: "مخزن کد", url: "https://git.algonet.ir/leili/v2" },
-    { id: "ln_l2_2", label: "فایل طراحی", url: "https://figma.com/algonet/leili-v2" },
+  resources: [
+    {
+      id: "res_l2_1",
+      kind: "repo",
+      title: "مخزن اصلی کد پروژه",
+      url: "https://git.algonet.ir/leili/v2",
+      description: "دسترسی با حساب سازمانی گیت‌لب؛ عضویت در تیم توسعهٔ لیلی لازم است.",
+    },
+    {
+      id: "res_l2_2",
+      kind: "figma",
+      title: "فایل اصلی طراحی محصول",
+      url: "https://figma.com/algonet/leili-v2",
+      description: "شامل سیستم طراحی و صفحات نسخهٔ ۲؛ دسترسی ویرایش فقط برای تیم طراحی.",
+    },
   ],
   finalResult: null,
   createdAt: daysAgo(75),
@@ -275,7 +287,7 @@ signatures.push(
   { id: "sig_l2_3a", meetingId: "mtg_l2_3", approverId: "p_nima", approverName: "نیما رستمی", role: "team_lead", status: "approved", comment: "تأیید می‌شود.", signedAt: daysAgo(3), revision: 1 },
   { id: "sig_l2_3b", meetingId: "mtg_l2_3", approverId: "p_mina", approverName: "مینا شریفی", role: "team_lead", status: "pending", comment: "", signedAt: null, revision: 1 },
 );
-logActivity({ projectId: "prj_leili2", meetingId: "mtg_l2_3", type: "meeting_created", actorId: "p_sara", actorName: "سارا احمدی", entityLabel: "جلسهٔ هفتگی هماهنگی", previousValue: null, newValue: "پیش‌نویس", createdAt: daysAgo(4) });
+logActivity({ projectId: "prj_leili2", meetingId: "mtg_l2_3", type: "meeting_created", actorId: "p_sara", actorName: "سارا احمدی", entityLabel: "جلسهٔ هفتگی هماهنگی با مسئولین پروژه", previousValue: null, newValue: "پیش‌نویس", createdAt: daysAgo(4) });
 logActivity({ projectId: "prj_leili2", meetingId: "mtg_l2_3", type: "meeting_submitted", actorId: "p_sara", actorName: "سارا احمدی", entityLabel: "جلسهٔ هفتگی هماهنگی", previousValue: "پیش‌نویس", newValue: "در انتظار امضا", createdAt: daysAgo(3) });
 logActivity({ projectId: "prj_leili2", meetingId: "mtg_l2_3", type: "decision_added", actorId: "p_sara", actorName: "سارا احمدی", entityLabel: "افزودن نیروی طراحی موقت", previousValue: null, newValue: null, createdAt: daysAgo(4) });
 logActivity({ projectId: "prj_leili2", meetingId: "mtg_l2_3", type: "signature_added", actorId: "p_nima", actorName: "نیما رستمی", entityLabel: "امضای جلسهٔ هفتگی", previousValue: "در انتظار", newValue: "تأیید و امضا شد", createdAt: daysAgo(3) });
@@ -329,7 +341,15 @@ const ava: Project = {
     { id: "ws_av_1", title: "طراحی تجربهٔ کاربری", lead: "p_mina", progress: 55, summary: "تدوین جریان‌ها و نمونهٔ اولیهٔ تعاملی." },
   ],
   teamIds: ["p_mina", "p_leila", "p_hassan"],
-  links: [{ id: "ln_av_1", label: "فایل طراحی", url: "https://figma.com/algonet/ava" }],
+  resources: [
+    {
+      id: "res_av_1",
+      kind: "figma",
+      title: "فایل اصلی طراحی محصول",
+      url: "https://figma.com/algonet/ava",
+      description: "نسخهٔ فعال طراحی آوا؛ برای دسترسی از حساب سازمانی فیگما استفاده کنید.",
+    },
+  ],
   finalResult: null,
   createdAt: daysAgo(40),
   updatedAt: daysAgo(6),
@@ -368,7 +388,7 @@ const sam: Project = {
   priority: "high",
   phase: "development",
   pmId: "p_sara",
-  poId: "p_reza",
+  poId: null, // مالک محصول هنوز برای این پروژه تعیین نشده است
   startDate: daysAgo(120),
   targetDate: daysAhead(8),
   deliveryDate: null,
@@ -392,7 +412,7 @@ const sam: Project = {
     { id: "ws_sm_1", title: "یکپارچه‌سازی پرداخت", lead: "p_omid", progress: 40, summary: "اتصال به درگاه بانکی و آزمون تراکنش." },
   ],
   teamIds: ["p_omid", "p_hassan"],
-  links: [],
+  resources: [],
   finalResult: null,
   createdAt: daysAgo(120),
   updatedAt: daysAgo(1),
