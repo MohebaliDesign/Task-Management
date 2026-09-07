@@ -322,6 +322,35 @@ export interface Activity {
   createdAt: string;
 }
 
+/**
+ * Meeting Space: an independent category of meetings that is not tied to a
+ * project (e.g. "جلسات داخلی سازمان"). Deliberately lighter-weight than the
+ * project Meeting record — no decisions/actions/signatures — since org
+ * meetings are informational, not governance evidence for a project.
+ */
+export interface MeetingSpace {
+  id: string;
+  name: string;
+  description: string;
+  ownerId: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SpaceMeeting {
+  id: string;
+  spaceId: string;
+  sequence: number;
+  title: string;
+  date: string;
+  time: string;
+  location: string;
+  participantIds: string[];
+  summary: string;
+  createdById: string;
+  createdAt: string;
+}
+
 // ── The persisted database shape ────────────────────────────────────────────
 export interface Database {
   people: Person[];
@@ -336,4 +365,6 @@ export interface Database {
   signatures: Signature[];
   projectApprovals: ProjectApproval[];
   activities: Activity[];
+  meetingSpaces: MeetingSpace[];
+  spaceMeetings: SpaceMeeting[];
 }

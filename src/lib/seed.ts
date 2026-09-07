@@ -12,6 +12,8 @@ import type {
   Signature,
   ProjectApproval,
   Activity,
+  MeetingSpace,
+  SpaceMeeting,
 } from "./domain";
 
 /**
@@ -423,6 +425,70 @@ risks.push({ id: "rsk_sm_1", projectId: "prj_sam", meetingId: "mtg_sm_1", title:
 logActivity({ projectId: "prj_sam", meetingId: "mtg_sm_1", type: "meeting_created", actorId: "p_sara", actorName: "سارا احمدی", entityLabel: "جلسهٔ اضطراری بررسی موانع", previousValue: null, newValue: "پیش‌نویس", createdAt: daysAgo(3) });
 logActivity({ projectId: "prj_sam", meetingId: "mtg_sm_1", type: "blocker_added", actorId: "p_omid", actorName: "امید صادقی", entityLabel: "خطای اعتبارسنجی گواهی درگاه بانکی", previousValue: null, newValue: "باز", createdAt: daysAgo(7) });
 
+// ───────────────────────────────────────────────────────────────────────────
+// MEETING SPACES: independent organization meeting categories (not project-tied)
+// ───────────────────────────────────────────────────────────────────────────
+const meetingSpaces: MeetingSpace[] = [
+  {
+    id: "spc_internal",
+    name: "جلسات داخلی سازمان",
+    description: "جلسات مربوط به هماهنگی‌های سازمانی",
+    ownerId: "p_sara",
+    createdAt: daysAgo(60),
+    updatedAt: daysAgo(2),
+  },
+  {
+    id: "spc_coord",
+    name: "هماهنگی بین‌تیمی",
+    description: "جلسات هماهنگی میان تیم مهندسی و تیم طراحی",
+    ownerId: "p_nima",
+    createdAt: daysAgo(20),
+    updatedAt: daysAgo(9),
+  },
+];
+
+const spaceMeetings: SpaceMeeting[] = [
+  {
+    id: "spm_internal_1",
+    spaceId: "spc_internal",
+    sequence: 1,
+    title: "جلسهٔ مدیریت هفتگی",
+    date: daysAgo(30),
+    time: "09:00",
+    location: "اتاق جلسات مرکزی",
+    participantIds: ["p_sara", "p_reza", "p_kaveh"],
+    summary: "مرور کلی وضعیت پروژه‌های جاری و اولویت‌های سازمانی هفتهٔ پیش‌رو.",
+    createdById: "p_sara",
+    createdAt: daysAgo(30),
+  },
+  {
+    id: "spm_internal_2",
+    spaceId: "spc_internal",
+    sequence: 2,
+    title: "هماهنگی سازمانی ماهانه",
+    date: daysAgo(2),
+    time: "11:30",
+    location: "آنلاین",
+    participantIds: ["p_sara", "p_reza", "p_nima", "p_mina", "p_kaveh"],
+    summary: "بررسی عملکرد ماهانهٔ تیم‌ها و جمع‌بندی موضوعات منابع انسانی.",
+    createdById: "p_sara",
+    createdAt: daysAgo(2),
+  },
+  {
+    id: "spm_coord_1",
+    spaceId: "spc_coord",
+    sequence: 1,
+    title: "هم‌راستاسازی طراحی و مهندسی",
+    date: daysAgo(9),
+    time: "14:00",
+    location: "آنلاین",
+    participantIds: ["p_nima", "p_mina", "p_omid"],
+    summary: "هماهنگی دربارهٔ تحویل کامپوننت‌های جدید سیستم طراحی به تیم مهندسی.",
+    createdById: "p_nima",
+    createdAt: daysAgo(9),
+  },
+];
+
 export function buildSeed(): Database {
   return {
     people,
@@ -437,5 +503,7 @@ export function buildSeed(): Database {
     signatures,
     projectApprovals,
     activities: activities.sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1)),
+    meetingSpaces,
+    spaceMeetings,
   };
 }

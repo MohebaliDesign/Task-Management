@@ -16,7 +16,7 @@ export function ProjectCard({ project }: { project: Project }) {
   const overdue = dLeft !== null && dLeft < 0 && project.lifecycle !== "closed";
 
   return (
-    <Card className="group relative flex flex-col p-5 transition-shadow hover:shadow-sm">
+    <Card className="group relative flex flex-col p-5 shadow-sm transition-shadow hover:shadow-md">
       <Link href={`/projects/${project.id}`} className="absolute inset-0 z-10 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" aria-label={`باز کردن ${project.name} ${project.versionLabel}`} />
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
