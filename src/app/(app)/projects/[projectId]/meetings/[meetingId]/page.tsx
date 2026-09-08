@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AppIcon } from "@/components/icon";
 import { PageHeader } from "@/components/domain/page-header";
 import { EmptyState } from "@/components/domain/empty-state";
-import { MeetingStatusBadge, ApprovalBadge } from "@/components/domain/status";
+import { MeetingStatusBadge, ApprovalBadge, RiskLevelBadge } from "@/components/domain/status";
 import { PersonChip } from "@/components/domain/person";
 import { ActionItemRow } from "@/features/actions/action-item-row";
 import { MeetingActionsBar } from "@/features/meetings/meeting-actions-bar";
@@ -19,6 +19,7 @@ import {
   getComments,
   getSignatures,
   getPeople,
+  getTeams,
   getPerson,
 } from "@/lib/queries";
 
@@ -32,6 +33,7 @@ export default function MeetingDetailPage({ params }: { params: { projectId: str
   const comments = getComments(meeting.id);
   const signatures = getSignatures(meeting.id);
   const people = getPeople();
+  const teams = getTeams();
   const readOnly = project.lifecycle === "closed";
 
   return (
@@ -80,11 +82,14 @@ export default function MeetingDetailPage({ params }: { params: { projectId: str
               ) : (
                 <ul className="divide-y divide-border">
                   {decisions.map((d) => (
-                    <li key={d.id} className="flex items-start gap-3 p-4">
+                    <li key={d.id} id={`decision-${d.id}`} className="flex items-start gap-3 p-4 scroll-mt-20">
                       <AppIcon name="decision" size={18} className="mt-0.5 shrink-0 text-primary" />
-                      <div>
-                        <p className="text-sm">{d.text}</p>
-                        <p className="mt-1 text-xs text-muted-foreground">{getPerson(d.deciderId)?.name} · حوزه: {d.area} · اثر: {d.impact}</p>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-start justify-between gap-2">
+                          <p className="text-sm">{d.text}</p>
+                          <RiskLevelBadge value={d.impact} />
+                        </div>
+                        <p className="mt-1 text-xs text-muted-foreground">{getPerson(d.deciderId)?.name} · حوزه: {d.area}</p>
                       </div>
                     </li>
                   ))}
@@ -97,7 +102,7 @@ export default function MeetingDetailPage({ params }: { params: { projectId: str
           <Card>
             <CardHeader className="flex-row items-center justify-between">
               <CardTitle className="flex items-center gap-2"><AppIcon name="actions" size={18} className="text-muted-foreground" />اقدامات ({toFa(actions.length)})</CardTitle>
-              {!readOnly && <AddActionDialog projectId={project.id} meetingId={meeting.id} people={people} decisions={decisions} />}
+              {!readOnly && <AddActionDialog projectId={project.id} meetingId={meeting.id} people={people} teams={teams} decisions={decisions} />}
             </CardHeader>
             <CardContent className="p-0">
               {actions.length === 0 ? (
@@ -106,7 +111,7 @@ export default function MeetingDetailPage({ params }: { params: { projectId: str
                 <ul className="divide-y divide-border">
                   {actions.map((a) => (
                     <li key={a.id}>
-                      <ActionItemRow action={a} decision={decisions.find((d) => d.id === a.relatedDecisionId)} />
+                      <ActionItemRow action={a} />
                     </li>
                   ))}
                 </ul>

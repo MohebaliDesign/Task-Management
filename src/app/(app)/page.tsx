@@ -97,7 +97,7 @@ export default function DashboardPage() {
                 {attention.map(({ project, blocker }) => (
                   <Link
                     key={blocker.id}
-                    href={`/projects/${project.id}/risks`}
+                    href={`/projects/${project.id}/actions`}
                     className="flex items-start gap-3 p-3 transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   >
                     <AppIcon name="blocker" size={18} className="mt-0.5 shrink-0 text-destructive-text" />

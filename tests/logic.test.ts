@@ -43,7 +43,7 @@ test("isOpenAction excludes done and canceled", () => {
   const base: ActionItem = {
     id: "a", projectId: "p", meetingId: "m", title: "t", description: "", ownerId: "o",
     deadline: null, status: "in_progress", priority: "low", relatedDecisionId: null,
-    createdAt: "", updatedAt: "", completedAt: null,
+    createdAt: "", updatedAt: "", completedAt: null, note: "",
   };
   assert.equal(isOpenAction({ ...base, status: "in_progress" }), true);
   assert.equal(isOpenAction({ ...base, status: "blocked" }), true);

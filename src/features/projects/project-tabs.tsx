@@ -12,8 +12,7 @@ export function ProjectTabs({ projectId }: { projectId: string }) {
     { href: base, label: "نمای کلی", icon: "overview", exact: true },
     { href: `${base}/meetings`, label: "جلسات", icon: "meetings" },
     { href: `${base}/decisions`, label: "تصمیم‌ها", icon: "decision" },
-    { href: `${base}/actions`, label: "اقدامات و وابستگی‌ها", icon: "actions" },
-    { href: `${base}/risks`, label: "ریسک‌ها و موانع", icon: "risk" },
+    { href: `${base}/actions`, label: "پیگیری‌ها", icon: "blocker" },
     { href: `${base}/activity`, label: "تاریخچه", icon: "activity" },
     { href: `${base}/settings`, label: "تنظیمات", icon: "settings" },
   ];

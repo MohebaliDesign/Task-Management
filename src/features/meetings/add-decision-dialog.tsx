@@ -15,11 +15,30 @@ import { Field } from "@/components/form/field";
 import { SubmitButton } from "@/components/form/submit-button";
 import { AppIcon } from "@/components/icon";
 import { addDecision, type ActionResult } from "@/lib/actions";
-import type { Person } from "@/lib/domain";
+import { RISK_LEVEL } from "@/lib/domain";
+import { riskLevelLabels } from "@/lib/labels";
+import type { Meeting, Person } from "@/lib/domain";
 
 const initial: ActionResult = { ok: false, error: "" };
 
-export function AddDecisionDialog({ projectId, meetingId, people }: { projectId: string; meetingId: string; people: Person[] }) {
+/**
+ * Used two ways: fixed to one meeting (from that meeting's page — meetingId
+ * is a hidden field), or with a meeting picker (from the project-wide
+ * Decisions tab, where the source meeting isn't implied by context).
+ */
+export function AddDecisionDialog({
+  projectId,
+  meetingId,
+  meetings,
+  people,
+  triggerLabel = "افزودن تصمیم",
+}: {
+  projectId: string;
+  meetingId?: string;
+  meetings?: Meeting[];
+  people: Person[];
+  triggerLabel?: string;
+}) {
   const router = useRouter();
   const [open, setOpen] = React.useState(false);
   const [state, formAction] = useFormState(addDecision, initial);
@@ -37,7 +56,7 @@ export function AddDecisionDialog({ projectId, meetingId, people }: { projectId:
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm">
-          <AppIcon name="add" size={16} /> افزودن تصمیم
+          <AppIcon name="add" size={16} /> {triggerLabel}
         </Button>
       </DialogTrigger>
       <DialogContent>
@@ -47,7 +66,18 @@ export function AddDecisionDialog({ projectId, meetingId, people }: { projectId:
         </DialogHeader>
         <form action={formAction} className="space-y-4">
           <input type="hidden" name="projectId" value={projectId} />
-          <input type="hidden" name="meetingId" value={meetingId} />
+          {meetingId ? (
+            <input type="hidden" name="meetingId" value={meetingId} />
+          ) : (
+            <Field label="جلسهٔ مرتبط" htmlFor="meetingId" error={errs.meetingId} required>
+              <Select name="meetingId">
+                <SelectTrigger id="meetingId"><SelectValue placeholder="انتخاب جلسه" /></SelectTrigger>
+                <SelectContent>
+                  {meetings?.map((m) => <SelectItem key={m.id} value={m.id}>{m.title}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </Field>
+          )}
           <Field label="متن تصمیم" htmlFor="text" error={errs.text} required>
             <Textarea id="text" name="text" rows={3} aria-invalid={!!errs.text} />
           </Field>
@@ -64,7 +94,10 @@ export function AddDecisionDialog({ projectId, meetingId, people }: { projectId:
               <Input id="area" name="area" defaultValue="عمومی" />
             </Field>
             <Field label="میزان اثر" htmlFor="impact" error={errs.impact}>
-              <Input id="impact" name="impact" defaultValue="متوسط" />
+              <Select name="impact" defaultValue="medium">
+                <SelectTrigger id="impact"><SelectValue /></SelectTrigger>
+                <SelectContent>{RISK_LEVEL.map((l) => <SelectItem key={l} value={l}>{riskLevelLabels[l].label}</SelectItem>)}</SelectContent>
+              </Select>
             </Field>
           </div>
           <DialogFooter>

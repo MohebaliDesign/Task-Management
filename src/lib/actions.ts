@@ -9,7 +9,9 @@ import type {
   ActivityType,
   Decision,
   Meeting,
+  Person,
   Project,
+  Team,
 } from "./domain";
 import {
   addActionSchema,
@@ -17,15 +19,19 @@ import {
   addCommentSchema,
   addDecisionSchema,
   addDependencySchema,
+  addPersonSchema,
   addRiskSchema,
+  addTeamSchema,
   closeProjectSchema,
   createMeetingSchema,
   createProjectSchema,
   signMeetingSchema,
   updateActionStatusSchema,
+  updateActionStatusWithNoteSchema,
+  updateBlockerStatusSchema,
   updateProjectStateSchema,
 } from "./schemas";
-import { actionStatusLabels, healthLabels } from "./labels";
+import { actionStatusLabels, blockerStatusLabels, healthLabels } from "./labels";
 import { allSignaturesApproved } from "./logic";
 
 /**
@@ -43,6 +49,11 @@ export type ActionResult =
 
 function nowIso() {
   return new Date().toISOString();
+}
+
+/** AssigneeSelect submits "none" for the explicit no-owner option; both that and "" mean unassigned. */
+function normalizeOwnerId(v: string): string | null {
+  return v && v !== "none" ? v : null;
 }
 
 function pushActivity(
@@ -272,9 +283,9 @@ export async function addAction(_prev: unknown, formData: FormData): Promise<Act
   mutate((db) => {
     const action: ActionItem = {
       id, projectId: v.projectId, meetingId: v.meetingId, title: v.title, description: v.description,
-      ownerId: v.ownerId, deadline: v.deadline ? new Date(v.deadline).toISOString() : null,
+      ownerId: normalizeOwnerId(v.ownerId), deadline: v.deadline ? new Date(v.deadline).toISOString() : null,
       status: "not_started", priority: v.priority, relatedDecisionId: v.relatedDecisionId || null,
-      createdAt: nowIso(), updatedAt: nowIso(), completedAt: null,
+      createdAt: nowIso(), updatedAt: nowIso(), completedAt: null, note: "",
     };
     db.actions.push(action);
     pushActivity(db, { projectId: v.projectId, meetingId: v.meetingId, type: "action_added", entityLabel: v.title });
@@ -297,6 +308,29 @@ export async function updateActionStatus(formData: FormData): Promise<ActionResu
     a.status = v.status;
     a.updatedAt = nowIso();
     a.completedAt = v.status === "done" ? nowIso() : null;
+    pushActivity(db, { projectId: a.projectId, meetingId: a.meetingId, type: "action_status_changed", entityLabel: a.title, previousValue: actionStatusLabels[prev].label, newValue: actionStatusLabels[v.status].label });
+  });
+  if (projectId) {
+    revalidatePath(`/projects/${projectId}/actions`);
+    revalidatePath(`/projects/${projectId}`);
+  }
+  return { ok: true };
+}
+
+export async function updateActionStatusWithNote(_prev: unknown, formData: FormData): Promise<ActionResult> {
+  const parsed = updateActionStatusWithNoteSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { ok: false, error: "لطفاً خطاهای فرم را برطرف کنید.", fieldErrors: fieldErrorsFrom(parsed.error) };
+  const v = parsed.data;
+  let projectId = "";
+  mutate((db) => {
+    const a = db.actions.find((x) => x.id === v.actionId);
+    if (!a) return;
+    projectId = a.projectId;
+    const prev = a.status;
+    a.status = v.status;
+    a.updatedAt = nowIso();
+    a.completedAt = v.status === "done" ? nowIso() : null;
+    a.note = v.note;
     pushActivity(db, { projectId: a.projectId, meetingId: a.meetingId, type: "action_status_changed", entityLabel: a.title, previousValue: actionStatusLabels[prev].label, newValue: actionStatusLabels[v.status].label });
   });
   if (projectId) {
@@ -338,11 +372,33 @@ export async function addBlocker(_prev: unknown, formData: FormData): Promise<Ac
   if (!parsed.success) return { ok: false, error: "لطفاً خطاهای فرم را برطرف کنید.", fieldErrors: fieldErrorsFrom(parsed.error) };
   const v = parsed.data;
   mutate((db) => {
-    db.blockers.push({ id: makeId("blk"), projectId: v.projectId, meetingId: null, title: v.title, description: v.description, status: "open", ownerId: v.ownerId || null, raisedDate: nowIso(), resolvedDate: null });
+    db.blockers.push({ id: makeId("blk"), projectId: v.projectId, meetingId: null, title: v.title, description: v.description, status: "open", ownerId: normalizeOwnerId(v.ownerId), raisedDate: nowIso(), resolvedDate: null, note: "" });
     pushActivity(db, { projectId: v.projectId, type: "blocker_added", entityLabel: v.title, newValue: "باز" });
   });
-  revalidatePath(`/projects/${v.projectId}/risks`);
+  revalidatePath(`/projects/${v.projectId}/actions`);
   revalidatePath(`/projects/${v.projectId}`);
+  return { ok: true };
+}
+
+export async function updateBlockerStatus(_prev: unknown, formData: FormData): Promise<ActionResult> {
+  const parsed = updateBlockerStatusSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { ok: false, error: "لطفاً خطاهای فرم را برطرف کنید.", fieldErrors: fieldErrorsFrom(parsed.error) };
+  const v = parsed.data;
+  let projectId = "";
+  mutate((db) => {
+    const b = db.blockers.find((x) => x.id === v.blockerId);
+    if (!b) return;
+    projectId = b.projectId;
+    const prev = b.status;
+    b.status = v.status;
+    b.resolvedDate = v.status === "resolved" ? nowIso() : null;
+    b.note = v.note;
+    pushActivity(db, { projectId: b.projectId, meetingId: b.meetingId, type: "blocker_status_changed", entityLabel: b.title, previousValue: blockerStatusLabels[prev].label, newValue: blockerStatusLabels[v.status].label });
+  });
+  if (projectId) {
+    revalidatePath(`/projects/${projectId}/actions`);
+    revalidatePath(`/projects/${projectId}`);
+  }
   return { ok: true };
 }
 
@@ -395,4 +451,39 @@ export async function signMeeting(_prev: unknown, formData: FormData): Promise<A
     revalidatePath(`/review/meeting/${v.meetingId}`);
   }
   return { ok: true };
+}
+
+// ── People & Teams ──────────────────────────────────────────────────────────
+function initialsFrom(name: string): string {
+  return name.trim().split(/\s+/).slice(0, 2).map((w) => w[0]).join("");
+}
+
+export async function addPerson(_prev: unknown, formData: FormData): Promise<ActionResult> {
+  const parsed = addPersonSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { ok: false, error: "لطفاً خطاهای فرم را برطرف کنید.", fieldErrors: fieldErrorsFrom(parsed.error) };
+  const v = parsed.data;
+  const id = makeId("p");
+  mutate((db) => {
+    const person: Person = { id, name: v.name, role: v.role, title: v.title, email: v.email, initials: initialsFrom(v.name) };
+    db.people.push(person);
+    if (v.teamId && v.teamId !== "none") {
+      const team = db.teams.find((t) => t.id === v.teamId);
+      if (team && !team.memberIds.includes(id)) team.memberIds.push(id);
+    }
+  });
+  revalidatePath("/people");
+  return { ok: true, id };
+}
+
+export async function addTeam(_prev: unknown, formData: FormData): Promise<ActionResult> {
+  const parsed = addTeamSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { ok: false, error: "لطفاً خطاهای فرم را برطرف کنید.", fieldErrors: fieldErrorsFrom(parsed.error) };
+  const v = parsed.data;
+  const id = makeId("tm");
+  mutate((db) => {
+    const team: Team = { id, name: v.name, description: v.description, leadId: v.leadId && v.leadId !== "none" ? v.leadId : null, memberIds: [] };
+    db.teams.push(team);
+  });
+  revalidatePath("/people");
+  return { ok: true, id };
 }

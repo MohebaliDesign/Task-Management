@@ -154,6 +154,7 @@ export const activityLabels: Record<ActivityType, string> = {
   dependency_added: "وابستگی افزوده شد",
   risk_added: "ریسک افزوده شد",
   blocker_added: "مانع افزوده شد",
+  blocker_status_changed: "وضعیت مانع تغییر کرد",
   comment_added: "بازخورد ثبت شد",
   signature_added: "امضا ثبت شد",
   ceo_approval: "تأیید نهایی مدیرعامل",

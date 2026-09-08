@@ -98,9 +98,28 @@ export function MeetingStatusBadge({ value }: { value: MeetingStatus }) {
   return <StatusPill label={e.label} tone={e.tone} />;
 }
 
+/**
+ * A lighter-weight alternative to StatusPill for dense lists (Follow-ups):
+ * dot + label with no border/background, so a table of many rows doesn't
+ * turn into a wall of colored boxes. Still text + color together.
+ */
+export function StatusDot({ label, tone, className }: { label: string; tone: Tone; className?: string }) {
+  return (
+    <span className={cn("inline-flex items-center gap-1.5 text-xs text-muted-foreground", className)}>
+      <span className={cn("h-1.5 w-1.5 shrink-0 rounded-full", toneDot[tone])} aria-hidden="true" />
+      {label}
+    </span>
+  );
+}
+
 export function ActionStatusBadge({ value }: { value: ActionStatus }) {
   const e = actionStatusLabels[value];
   return <StatusPill label={e.label} tone={e.tone} />;
+}
+
+export function ActionStatusDot({ value, className }: { value: ActionStatus; className?: string }) {
+  const e = actionStatusLabels[value];
+  return <StatusDot label={e.label} tone={e.tone} className={className} />;
 }
 
 export function ApprovalBadge({ value }: { value: ApprovalStatus }) {
@@ -134,6 +153,11 @@ export function RiskStatusBadge({ value }: { value: RiskStatus }) {
 export function BlockerStatusBadge({ value }: { value: BlockerStatus }) {
   const e = blockerStatusLabels[value];
   return <StatusPill label={e.label} tone={e.tone} />;
+}
+
+export function BlockerStatusDot({ value, className }: { value: BlockerStatus; className?: string }) {
+  const e = blockerStatusLabels[value];
+  return <StatusDot label={e.label} tone={e.tone} className={className} />;
 }
 
 export function MilestoneStatusBadge({ value }: { value: MilestoneStatus }) {

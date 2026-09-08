@@ -102,6 +102,7 @@ export const ACTIVITY_TYPE = [
   "dependency_added",
   "risk_added",
   "blocker_added",
+  "blocker_status_changed",
   "comment_added",
   "signature_added",
   "ceo_approval",
@@ -117,6 +118,20 @@ export interface Person {
   title: string; // organisational title, Persian
   email: string;
   initials: string;
+}
+
+/**
+ * An organizational team people belong to — distinct from `Project.teamIds`,
+ * which is a project's own roster of person ids, not a reference to this
+ * entity. Teams exist so ownership (of an action or blocker) can be assigned
+ * to a group rather than always forcing a single named individual.
+ */
+export interface Team {
+  id: string;
+  name: string;
+  description: string;
+  leadId: string | null; // personId
+  memberIds: string[]; // personIds
 }
 
 export interface HealthCheck {
@@ -212,7 +227,7 @@ export interface Decision {
   deciderId: string;
   date: string;
   area: string; // related topic/area, Persian
-  impact: string;
+  impact: RiskLevel; // reuses the same low/medium/high severity scale as Risk
   createdAt: string;
 }
 
@@ -222,7 +237,7 @@ export interface ActionItem {
   meetingId: string;
   title: string;
   description: string;
-  ownerId: string;
+  ownerId: string | null; // personId or teamId — see Assignee in queries.ts
   deadline: string | null;
   status: ActionStatus;
   priority: Priority;
@@ -230,6 +245,7 @@ export interface ActionItem {
   createdAt: string;
   updatedAt: string;
   completedAt: string | null;
+  note: string; // explanation captured with the latest status change
 }
 
 /** Directional dependency: `blockedActionId` is blocked by `blockingActionId`. */
@@ -262,9 +278,10 @@ export interface Blocker {
   title: string;
   description: string;
   status: BlockerStatus;
-  ownerId: string | null;
+  ownerId: string | null; // personId or teamId — see Assignee in queries.ts
   raisedDate: string;
   resolvedDate: string | null;
+  note: string; // explanation captured with the latest status change
 }
 
 export interface Comment {
@@ -337,6 +354,7 @@ export interface Activity {
 // ── The persisted database shape ────────────────────────────────────────────
 export interface Database {
   people: Person[];
+  teams: Team[];
   projects: Project[];
   meetings: Meeting[];
   decisions: Decision[];

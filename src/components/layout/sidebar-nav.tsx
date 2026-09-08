@@ -15,6 +15,7 @@ interface NavItem {
 const items: NavItem[] = [
   { href: "/", label: "داشبورد", icon: "dashboard", match: (p) => p === "/" },
   { href: "/projects", label: "پروژه‌ها", icon: "projects", match: (p) => p.startsWith("/projects") },
+  { href: "/people", label: "افراد و تیم‌ها", icon: "people", match: (p) => p.startsWith("/people") },
   { href: "/activity", label: "تاریخچه فعالیت", icon: "activity", match: (p) => p.startsWith("/activity") },
 ];
 

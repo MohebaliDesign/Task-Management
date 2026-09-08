@@ -12,12 +12,13 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Field } from "@/components/form/field";
+import { AssigneeSelect } from "@/components/form/assignee-select";
 import { SubmitButton } from "@/components/form/submit-button";
 import { AppIcon } from "@/components/icon";
 import { addAction, type ActionResult } from "@/lib/actions";
 import { PRIORITY } from "@/lib/domain";
 import { priorityLabels } from "@/lib/labels";
-import type { Person, Decision } from "@/lib/domain";
+import type { Person, Team, Decision } from "@/lib/domain";
 
 const initial: ActionResult = { ok: false, error: "" };
 
@@ -25,11 +26,13 @@ export function AddActionDialog({
   projectId,
   meetingId,
   people,
+  teams,
   decisions,
 }: {
   projectId: string;
   meetingId: string;
   people: Person[];
+  teams: Team[];
   decisions: Decision[];
 }) {
   const router = useRouter();
@@ -67,13 +70,8 @@ export function AddActionDialog({
             <Textarea id="description" name="description" rows={2} />
           </Field>
           <div className="grid grid-cols-2 gap-4">
-            <Field label="مسئول" htmlFor="ownerId" error={errs.ownerId} required>
-              <Select name="ownerId">
-                <SelectTrigger id="ownerId"><SelectValue placeholder="انتخاب" /></SelectTrigger>
-                <SelectContent>
-                  {people.map((p) => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
-                </SelectContent>
-              </Select>
+            <Field label="مسئول" htmlFor="ownerId" error={errs.ownerId}>
+              <AssigneeSelect id="ownerId" name="ownerId" people={people} teams={teams} />
             </Field>
             <Field label="اولویت" htmlFor="priority" error={errs.priority} required>
               <Select name="priority" defaultValue="medium">
