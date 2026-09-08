@@ -338,7 +338,7 @@ export async function createMeeting(_prev: unknown, formData: FormData): Promise
         deciderId: d.deciderId,
         date: meeting.date,
         area: d.area,
-        impact: "متوسط",
+        impact: "medium",
         createdAt: nowIso(),
       };
       db.decisions.push(decision);
@@ -363,6 +363,7 @@ export async function createMeeting(_prev: unknown, formData: FormData): Promise
         createdAt: nowIso(),
         updatedAt: nowIso(),
         completedAt: a.status === "done" ? nowIso() : null,
+        note: "",
       };
       db.actions.push(action);
       if (projectId) pushActivity(db, { projectId, meetingId: id, type: "action_added", entityLabel: a.title });
@@ -372,7 +373,7 @@ export async function createMeeting(_prev: unknown, formData: FormData): Promise
       const blockerId = makeId("blk");
       db.blockers.push({
         id: blockerId, projectId, meetingId: id, title: b.title, description: b.description,
-        status: "open", ownerId: b.ownerId || null, raisedDate: nowIso(), resolvedDate: null,
+        status: "open", ownerId: b.ownerId || null, raisedDate: nowIso(), resolvedDate: null, note: "",
       });
       if (projectId) pushActivity(db, { projectId, meetingId: id, type: "blocker_added", entityLabel: b.title, newValue: "باز" });
     }
@@ -418,7 +419,7 @@ export async function updateMeeting(_prev: unknown, formData: FormData): Promise
         keepDecisionIds.add(existing.id);
       } else {
         const newId = makeId("dec");
-        db.decisions.push({ id: newId, projectId: m.projectId, meetingId: m.id, text: d.text, description: d.description, deciderId: d.deciderId, date: m.date, area: d.area, impact: "متوسط", createdAt: nowIso() });
+        db.decisions.push({ id: newId, projectId: m.projectId, meetingId: m.id, text: d.text, description: d.description, deciderId: d.deciderId, date: m.date, area: d.area, impact: "medium", createdAt: nowIso() });
         decisionIds.push(newId);
         keepDecisionIds.add(newId);
       }
@@ -446,7 +447,7 @@ export async function updateMeeting(_prev: unknown, formData: FormData): Promise
           id: newId, projectId: m.projectId, meetingId: m.id, title: a.title, description: "",
           ownerId: a.ownerId, deadline: a.deadline ? new Date(a.deadline).toISOString() : null,
           status: a.status, priority: a.priority, relatedDecisionId,
-          createdAt: nowIso(), updatedAt: nowIso(), completedAt: a.status === "done" ? nowIso() : null,
+          createdAt: nowIso(), updatedAt: nowIso(), completedAt: a.status === "done" ? nowIso() : null, note: "",
         });
         keepActionIds.add(newId);
       }
@@ -464,7 +465,7 @@ export async function updateMeeting(_prev: unknown, formData: FormData): Promise
         keepBlockerIds.add(existing.id);
       } else {
         const newId = makeId("blk");
-        db.blockers.push({ id: newId, projectId: m.projectId, meetingId: m.id, title: b.title, description: b.description, status: "open", ownerId: b.ownerId || null, raisedDate: nowIso(), resolvedDate: null });
+        db.blockers.push({ id: newId, projectId: m.projectId, meetingId: m.id, title: b.title, description: b.description, status: "open", ownerId: b.ownerId || null, raisedDate: nowIso(), resolvedDate: null, note: "" });
         keepBlockerIds.add(newId);
       }
     }
@@ -580,7 +581,7 @@ export async function updateActionStatusWithNote(_prev: unknown, formData: FormD
   const parsed = updateActionStatusWithNoteSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { ok: false, error: "لطفاً خطاهای فرم را برطرف کنید.", fieldErrors: fieldErrorsFrom(parsed.error) };
   const v = parsed.data;
-  let projectId = "";
+  let projectId: string | null = null;
   mutate((db) => {
     const a = db.actions.find((x) => x.id === v.actionId);
     if (!a) return;
@@ -590,7 +591,7 @@ export async function updateActionStatusWithNote(_prev: unknown, formData: FormD
     a.updatedAt = nowIso();
     a.completedAt = v.status === "done" ? nowIso() : null;
     a.note = v.note;
-    pushActivity(db, { projectId: a.projectId, meetingId: a.meetingId, type: "action_status_changed", entityLabel: a.title, previousValue: actionStatusLabels[prev].label, newValue: actionStatusLabels[v.status].label });
+    if (a.projectId) pushActivity(db, { projectId: a.projectId, meetingId: a.meetingId, type: "action_status_changed", entityLabel: a.title, previousValue: actionStatusLabels[prev].label, newValue: actionStatusLabels[v.status].label });
   });
   if (projectId) {
     revalidatePath(`/projects/${projectId}/actions`);
@@ -643,7 +644,7 @@ export async function updateBlockerStatus(_prev: unknown, formData: FormData): P
   const parsed = updateBlockerStatusSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { ok: false, error: "لطفاً خطاهای فرم را برطرف کنید.", fieldErrors: fieldErrorsFrom(parsed.error) };
   const v = parsed.data;
-  let projectId = "";
+  let projectId: string | null = null;
   mutate((db) => {
     const b = db.blockers.find((x) => x.id === v.blockerId);
     if (!b) return;
@@ -652,7 +653,7 @@ export async function updateBlockerStatus(_prev: unknown, formData: FormData): P
     b.status = v.status;
     b.resolvedDate = v.status === "resolved" ? nowIso() : null;
     b.note = v.note;
-    pushActivity(db, { projectId: b.projectId, meetingId: b.meetingId, type: "blocker_status_changed", entityLabel: b.title, previousValue: blockerStatusLabels[prev].label, newValue: blockerStatusLabels[v.status].label });
+    if (b.projectId) pushActivity(db, { projectId: b.projectId, meetingId: b.meetingId, type: "blocker_status_changed", entityLabel: b.title, previousValue: blockerStatusLabels[prev].label, newValue: blockerStatusLabels[v.status].label });
   });
   if (projectId) {
     revalidatePath(`/projects/${projectId}/actions`);
@@ -736,10 +737,6 @@ export async function signMeeting(_prev: unknown, formData: FormData): Promise<A
 }
 
 // ── People & Teams ──────────────────────────────────────────────────────────
-function initialsFrom(name: string): string {
-  return name.trim().split(/\s+/).slice(0, 2).map((w) => w[0]).join("");
-}
-
 export async function addPerson(_prev: unknown, formData: FormData): Promise<ActionResult> {
   const parsed = addPersonSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { ok: false, error: "لطفاً خطاهای فرم را برطرف کنید.", fieldErrors: fieldErrorsFrom(parsed.error) };

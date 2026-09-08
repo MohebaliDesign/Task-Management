@@ -85,7 +85,7 @@ export function CreateMeetingForm({
   );
   const [actions, setActions] = React.useState<ActionDraftUI[]>(
     meetingActions.map((a) => ({
-      key: a.id, id: a.id, title: a.title, ownerId: a.ownerId,
+      key: a.id, id: a.id, title: a.title, ownerId: a.ownerId ?? "",
       deadline: a.deadline ? a.deadline.slice(0, 10) : "", priority: a.priority, status: a.status,
       relatedDecisionKey: a.relatedDecisionId,
     })),

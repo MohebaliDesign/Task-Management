@@ -96,6 +96,7 @@ export default function ActionsPage({ params }: { params: { projectId: string } 
                 projectId={project.id}
                 meetings={getMeetings(project.id)}
                 people={getPeople()}
+                teams={teams}
                 decisions={decisions}
                 blockableActions={openActions}
               />
