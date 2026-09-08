@@ -58,6 +58,36 @@ export function getMeeting(id: string | null | undefined): Meeting | undefined {
 export function getMeetingByToken(token: string): Meeting | undefined {
   return readDb().meetings.find((m) => m.reviewToken === token);
 }
+/** Every meeting across every project and Meeting Space, newest first. */
+export function getAllMeetings(): Meeting[] {
+  return [...readDb().meetings].sort((a, b) => (a.date < b.date ? 1 : -1));
+}
+
+export interface MeetingContext {
+  /** Project or Meeting Space display name (with version label for projects). */
+  label: string;
+  /** Link to the owning project or Meeting Space. */
+  href: string;
+  /** Link to this meeting's own detail page. */
+  meetingHref: string;
+}
+/** Resolves a meeting's context (which project or space it belongs to) for display. */
+export function getMeetingContext(meeting: Meeting): MeetingContext {
+  if (meeting.projectId) {
+    const project = getProject(meeting.projectId);
+    return {
+      label: project ? `${project.name} — ${project.versionLabel}` : "پروژهٔ حذف‌شده",
+      href: project ? `/projects/${project.id}` : "#",
+      meetingHref: `/projects/${meeting.projectId}/meetings/${meeting.id}`,
+    };
+  }
+  const space = getMeetingSpace(meeting.spaceId);
+  return {
+    label: space ? space.name : "دستهٔ حذف‌شده",
+    href: space ? `/meetings/${space.id}` : "#",
+    meetingHref: `/meetings/${meeting.spaceId}/${meeting.id}`,
+  };
+}
 
 export function getDecisions(projectId: string): Decision[] {
   return readDb()

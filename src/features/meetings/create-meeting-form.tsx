@@ -4,7 +4,7 @@ import * as React from "react";
 import { useFormState } from "react-dom";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -321,8 +321,11 @@ export function CreateMeetingForm({
       </Card>
 
       <Card>
-        <CardHeader className="flex-row items-center justify-between">
-          <CardTitle className="flex items-center gap-2"><AppIcon name="decision" size={18} className="text-muted-foreground" />تصمیم‌ها (اختیاری)</CardTitle>
+        <CardHeader className="flex-row items-start justify-between gap-3">
+          <div>
+            <CardTitle className="flex items-center gap-2"><AppIcon name="decision" size={18} className="text-muted-foreground" />تصمیم‌ها (اختیاری)</CardTitle>
+            <CardDescription className="mt-1.5">نتیجه‌ها و انتخاب‌هایی که در این جلسه دربارهٔ آن‌ها به توافق رسیدید را ثبت کنید.</CardDescription>
+          </div>
           <DecisionDraftDialog people={people} onPersonCreated={(p) => setPeople((prev) => [...prev, p])} onSubmit={addDecisionDraft} />
         </CardHeader>
         {decisions.length > 0 && (
@@ -357,8 +360,11 @@ export function CreateMeetingForm({
       </Card>
 
       <Card>
-        <CardHeader className="flex-row items-center justify-between">
-          <CardTitle className="flex items-center gap-2"><AppIcon name="actions" size={18} className="text-muted-foreground" />اقدامات (اختیاری)</CardTitle>
+        <CardHeader className="flex-row items-start justify-between gap-3">
+          <div>
+            <CardTitle className="flex items-center gap-2"><AppIcon name="actions" size={18} className="text-muted-foreground" />اقدامات (اختیاری)</CardTitle>
+            <CardDescription className="mt-1.5">کارهایی که پس از جلسه باید انجام شوند، همراه با مسئول و زمان انجام آن‌ها ثبت کنید.</CardDescription>
+          </div>
           <ActionDraftDialog
             people={people}
             decisionOptions={decisions.map((d) => ({ key: d.key, text: d.text }))}
@@ -402,8 +408,11 @@ export function CreateMeetingForm({
       </Card>
 
       <Card>
-        <CardHeader className="flex-row items-center justify-between">
-          <CardTitle className="flex items-center gap-2"><AppIcon name="blocker" size={18} className="text-muted-foreground" />موانع (اختیاری)</CardTitle>
+        <CardHeader className="flex-row items-start justify-between gap-3">
+          <div>
+            <CardTitle className="flex items-center gap-2"><AppIcon name="blocker" size={18} className="text-muted-foreground" />موانع (اختیاری)</CardTitle>
+            <CardDescription className="mt-1.5">مشکلات یا مواردی که باعث توقف یا کند شدن پیشرفت کار شده‌اند را ثبت کنید.</CardDescription>
+          </div>
           <BlockerDraftDialog people={people} onPersonCreated={(p) => setPeople((prev) => [...prev, p])} onSubmit={addBlockerDraft} />
         </CardHeader>
         <CardContent className="pt-0">

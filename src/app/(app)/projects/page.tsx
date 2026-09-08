@@ -5,7 +5,9 @@ import { Button } from "@/components/ui/button";
 import { AppIcon } from "@/components/icon";
 import { EmptyState } from "@/components/domain/empty-state";
 import { ProjectCard } from "@/features/projects/project-card";
+import { ProjectTable } from "@/features/projects/project-table";
 import { ProjectsFilterBar } from "@/features/projects/filter-bar";
+import { ViewSwitcher, type ViewMode } from "@/components/domain/view-switcher";
 import { getProjects } from "@/lib/queries";
 import { toFa } from "@/lib/utils";
 
@@ -16,6 +18,8 @@ interface SearchParams {
   health?: string;
   lifecycle?: string;
   phase?: string;
+  sort?: string;
+  view?: string;
 }
 
 export default function ProjectsPage({ searchParams }: { searchParams: SearchParams }) {
@@ -28,6 +32,8 @@ export default function ProjectsPage({ searchParams }: { searchParams: SearchPar
     if (searchParams.phase && p.phase !== searchParams.phase) return false;
     return true;
   });
+  if (searchParams.sort === "oldest") filtered.reverse();
+  const view: ViewMode = searchParams.view === "table" ? "table" : "card";
 
   return (
     <>
@@ -45,7 +51,10 @@ export default function ProjectsPage({ searchParams }: { searchParams: SearchPar
         }
       />
 
-      <ProjectsFilterBar />
+      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+        <ProjectsFilterBar />
+        <ViewSwitcher value={view} />
+      </div>
 
       {filtered.length === 0 ? (
         <EmptyState
@@ -53,6 +62,8 @@ export default function ProjectsPage({ searchParams }: { searchParams: SearchPar
           title="پروژه‌ای یافت نشد"
           description="هیچ پروژه‌ای با فیلترهای فعلی مطابقت ندارد. فیلترها را تغییر دهید یا پاک کنید."
         />
+      ) : view === "table" ? (
+        <ProjectTable projects={filtered} />
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {filtered.map((p) => (
