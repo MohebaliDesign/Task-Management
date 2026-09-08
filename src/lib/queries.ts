@@ -13,6 +13,7 @@ import type {
   ProjectApproval,
   Risk,
   Signature,
+  Team,
 } from "./domain";
 
 /** All read access goes through these helpers so pages never touch fs/db.ts. */
@@ -23,6 +24,58 @@ export function getPeople(): Person[] {
 export function getPerson(id: string | null | undefined): Person | undefined {
   if (!id) return undefined;
   return readDb().people.find((p) => p.id === id);
+}
+
+export function getTeams(): Team[] {
+  return readDb().teams;
+}
+export function getTeam(id: string | null | undefined): Team | undefined {
+  if (!id) return undefined;
+  return readDb().teams.find((t) => t.id === id);
+}
+export function getTeamsForPerson(personId: string): Team[] {
+  return readDb().teams.filter((t) => t.memberIds.includes(personId) || t.leadId === personId);
+}
+
+/** Everyone on a team, lead included, without duplicates. */
+export function getTeamMembers(team: Team): Person[] {
+  const ids = new Set([...team.memberIds, ...(team.leadId ? [team.leadId] : [])]);
+  return [...ids].map((id) => getPerson(id)).filter((p): p is Person => !!p);
+}
+
+/**
+ * A team has no dedicated PM/PO fields — those are individual roles (Person.role),
+ * so the team's PM/PO are simply whichever members carry that role. Kept as a
+ * derived read instead of adding pmId/poId to Team, since a person's role is
+ * already the single source of truth for "who is PM/PO".
+ */
+export function getTeamPmPo(team: Team): { pm: Person | undefined; po: Person | undefined } {
+  const members = getTeamMembers(team);
+  return { pm: members.find((p) => p.role === "pm"), po: members.find((p) => p.role === "po") };
+}
+
+/** Non-closed projects where this person is PM, PO, or on the roster — for the people directory's "Active projects" column. */
+export function getActiveProjectsForPerson(personId: string): Project[] {
+  return readDb().projects.filter(
+    (p) => p.lifecycle !== "closed" && (p.pmId === personId || p.poId === personId || p.teamIds.includes(personId)),
+  );
+}
+
+export type Assignee = { type: "person"; person: Person } | { type: "team"; team: Team };
+
+/**
+ * A single owner/assignee field (e.g. ActionItem.ownerId) can hold either a
+ * personId or a teamId — resolve whichever it actually is. Avoids adding a
+ * second "assigneeType" field to every ownable entity for what's ultimately
+ * just "which id namespace is this".
+ */
+export function getAssignee(id: string | null | undefined): Assignee | undefined {
+  if (!id) return undefined;
+  const team = getTeam(id);
+  if (team) return { type: "team", team };
+  const person = getPerson(id);
+  if (person) return { type: "person", person };
+  return undefined;
 }
 
 export function getProjects(): Project[] {
