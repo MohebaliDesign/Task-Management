@@ -12,6 +12,7 @@ import type {
   Person,
   Project,
   ProjectPhaseItem,
+  Team,
 } from "./domain";
 import {
   addActionSchema,
@@ -19,7 +20,9 @@ import {
   addCommentSchema,
   addDecisionSchema,
   addDependencySchema,
+  addPersonSchema,
   addRiskSchema,
+  addTeamSchema,
   closeProjectSchema,
   createMeetingSchema,
   createMeetingSpaceSchema,
@@ -27,11 +30,13 @@ import {
   createProjectSchema,
   signMeetingSchema,
   updateActionStatusSchema,
+  updateActionStatusWithNoteSchema,
+  updateBlockerStatusSchema,
   updateMeetingSchema,
   updateProjectInfoSchema,
   updateProjectStateSchema,
 } from "./schemas";
-import { actionStatusLabels, healthLabels, roleLabels } from "./labels";
+import { actionStatusLabels, blockerStatusLabels, healthLabels, roleLabels } from "./labels";
 import { allSignaturesApproved } from "./logic";
 
 /**
@@ -49,6 +54,11 @@ export type ActionResult =
 
 function nowIso() {
   return new Date().toISOString();
+}
+
+/** AssigneeSelect submits "none" for the explicit no-owner option; both that and "" mean unassigned. */
+function normalizeOwnerId(v: string): string | null {
+  return v && v !== "none" ? v : null;
 }
 
 function pushActivity(
@@ -328,7 +338,7 @@ export async function createMeeting(_prev: unknown, formData: FormData): Promise
         deciderId: d.deciderId,
         date: meeting.date,
         area: d.area,
-        impact: "متوسط",
+        impact: "medium",
         createdAt: nowIso(),
       };
       db.decisions.push(decision);
@@ -353,6 +363,7 @@ export async function createMeeting(_prev: unknown, formData: FormData): Promise
         createdAt: nowIso(),
         updatedAt: nowIso(),
         completedAt: a.status === "done" ? nowIso() : null,
+        note: "",
       };
       db.actions.push(action);
       if (projectId) pushActivity(db, { projectId, meetingId: id, type: "action_added", entityLabel: a.title });
@@ -362,7 +373,7 @@ export async function createMeeting(_prev: unknown, formData: FormData): Promise
       const blockerId = makeId("blk");
       db.blockers.push({
         id: blockerId, projectId, meetingId: id, title: b.title, description: b.description,
-        status: "open", ownerId: b.ownerId || null, raisedDate: nowIso(), resolvedDate: null,
+        status: "open", ownerId: b.ownerId || null, raisedDate: nowIso(), resolvedDate: null, note: "",
       });
       if (projectId) pushActivity(db, { projectId, meetingId: id, type: "blocker_added", entityLabel: b.title, newValue: "باز" });
     }
@@ -408,7 +419,7 @@ export async function updateMeeting(_prev: unknown, formData: FormData): Promise
         keepDecisionIds.add(existing.id);
       } else {
         const newId = makeId("dec");
-        db.decisions.push({ id: newId, projectId: m.projectId, meetingId: m.id, text: d.text, description: d.description, deciderId: d.deciderId, date: m.date, area: d.area, impact: "متوسط", createdAt: nowIso() });
+        db.decisions.push({ id: newId, projectId: m.projectId, meetingId: m.id, text: d.text, description: d.description, deciderId: d.deciderId, date: m.date, area: d.area, impact: "medium", createdAt: nowIso() });
         decisionIds.push(newId);
         keepDecisionIds.add(newId);
       }
@@ -436,7 +447,7 @@ export async function updateMeeting(_prev: unknown, formData: FormData): Promise
           id: newId, projectId: m.projectId, meetingId: m.id, title: a.title, description: "",
           ownerId: a.ownerId, deadline: a.deadline ? new Date(a.deadline).toISOString() : null,
           status: a.status, priority: a.priority, relatedDecisionId,
-          createdAt: nowIso(), updatedAt: nowIso(), completedAt: a.status === "done" ? nowIso() : null,
+          createdAt: nowIso(), updatedAt: nowIso(), completedAt: a.status === "done" ? nowIso() : null, note: "",
         });
         keepActionIds.add(newId);
       }
@@ -454,7 +465,7 @@ export async function updateMeeting(_prev: unknown, formData: FormData): Promise
         keepBlockerIds.add(existing.id);
       } else {
         const newId = makeId("blk");
-        db.blockers.push({ id: newId, projectId: m.projectId, meetingId: m.id, title: b.title, description: b.description, status: "open", ownerId: b.ownerId || null, raisedDate: nowIso(), resolvedDate: null });
+        db.blockers.push({ id: newId, projectId: m.projectId, meetingId: m.id, title: b.title, description: b.description, status: "open", ownerId: b.ownerId || null, raisedDate: nowIso(), resolvedDate: null, note: "" });
         keepBlockerIds.add(newId);
       }
     }
@@ -527,9 +538,9 @@ export async function addAction(_prev: unknown, formData: FormData): Promise<Act
   mutate((db) => {
     const action: ActionItem = {
       id, projectId: v.projectId, meetingId, title: v.title, description: v.description,
-      ownerId: v.ownerId, deadline: v.deadline ? new Date(v.deadline).toISOString() : null,
+      ownerId: normalizeOwnerId(v.ownerId), deadline: v.deadline ? new Date(v.deadline).toISOString() : null,
       status: "not_started", priority: v.priority, relatedDecisionId: v.relatedDecisionId || null,
-      createdAt: nowIso(), updatedAt: nowIso(), completedAt: null,
+      createdAt: nowIso(), updatedAt: nowIso(), completedAt: null, note: "",
     };
     db.actions.push(action);
     pushActivity(db, { projectId: v.projectId, meetingId, type: "action_added", entityLabel: v.title });
@@ -557,6 +568,29 @@ export async function updateActionStatus(formData: FormData): Promise<ActionResu
     a.status = v.status;
     a.updatedAt = nowIso();
     a.completedAt = v.status === "done" ? nowIso() : null;
+    if (a.projectId) pushActivity(db, { projectId: a.projectId, meetingId: a.meetingId, type: "action_status_changed", entityLabel: a.title, previousValue: actionStatusLabels[prev].label, newValue: actionStatusLabels[v.status].label });
+  });
+  if (projectId) {
+    revalidatePath(`/projects/${projectId}/actions`);
+    revalidatePath(`/projects/${projectId}`);
+  }
+  return { ok: true };
+}
+
+export async function updateActionStatusWithNote(_prev: unknown, formData: FormData): Promise<ActionResult> {
+  const parsed = updateActionStatusWithNoteSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { ok: false, error: "لطفاً خطاهای فرم را برطرف کنید.", fieldErrors: fieldErrorsFrom(parsed.error) };
+  const v = parsed.data;
+  let projectId: string | null = null;
+  mutate((db) => {
+    const a = db.actions.find((x) => x.id === v.actionId);
+    if (!a) return;
+    projectId = a.projectId;
+    const prev = a.status;
+    a.status = v.status;
+    a.updatedAt = nowIso();
+    a.completedAt = v.status === "done" ? nowIso() : null;
+    a.note = v.note;
     if (a.projectId) pushActivity(db, { projectId: a.projectId, meetingId: a.meetingId, type: "action_status_changed", entityLabel: a.title, previousValue: actionStatusLabels[prev].label, newValue: actionStatusLabels[v.status].label });
   });
   if (projectId) {
@@ -598,11 +632,33 @@ export async function addBlocker(_prev: unknown, formData: FormData): Promise<Ac
   if (!parsed.success) return { ok: false, error: "لطفاً خطاهای فرم را برطرف کنید.", fieldErrors: fieldErrorsFrom(parsed.error) };
   const v = parsed.data;
   mutate((db) => {
-    db.blockers.push({ id: makeId("blk"), projectId: v.projectId, meetingId: null, title: v.title, description: v.description, status: "open", ownerId: v.ownerId || null, raisedDate: nowIso(), resolvedDate: null });
+    db.blockers.push({ id: makeId("blk"), projectId: v.projectId, meetingId: null, title: v.title, description: v.description, status: "open", ownerId: normalizeOwnerId(v.ownerId), raisedDate: nowIso(), resolvedDate: null, note: "" });
     pushActivity(db, { projectId: v.projectId, type: "blocker_added", entityLabel: v.title, newValue: "باز" });
   });
-  revalidatePath(`/projects/${v.projectId}/risks`);
+  revalidatePath(`/projects/${v.projectId}/actions`);
   revalidatePath(`/projects/${v.projectId}`);
+  return { ok: true };
+}
+
+export async function updateBlockerStatus(_prev: unknown, formData: FormData): Promise<ActionResult> {
+  const parsed = updateBlockerStatusSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { ok: false, error: "لطفاً خطاهای فرم را برطرف کنید.", fieldErrors: fieldErrorsFrom(parsed.error) };
+  const v = parsed.data;
+  let projectId: string | null = null;
+  mutate((db) => {
+    const b = db.blockers.find((x) => x.id === v.blockerId);
+    if (!b) return;
+    projectId = b.projectId;
+    const prev = b.status;
+    b.status = v.status;
+    b.resolvedDate = v.status === "resolved" ? nowIso() : null;
+    b.note = v.note;
+    if (b.projectId) pushActivity(db, { projectId: b.projectId, meetingId: b.meetingId, type: "blocker_status_changed", entityLabel: b.title, previousValue: blockerStatusLabels[prev].label, newValue: blockerStatusLabels[v.status].label });
+  });
+  if (projectId) {
+    revalidatePath(`/projects/${projectId}/actions`);
+    revalidatePath(`/projects/${projectId}`);
+  }
   return { ok: true };
 }
 
@@ -678,4 +734,35 @@ export async function signMeeting(_prev: unknown, formData: FormData): Promise<A
     revalidatePath(`/review/meeting/${v.meetingId}`);
   }
   return { ok: true };
+}
+
+// ── People & Teams ──────────────────────────────────────────────────────────
+export async function addPerson(_prev: unknown, formData: FormData): Promise<ActionResult> {
+  const parsed = addPersonSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { ok: false, error: "لطفاً خطاهای فرم را برطرف کنید.", fieldErrors: fieldErrorsFrom(parsed.error) };
+  const v = parsed.data;
+  const id = makeId("p");
+  mutate((db) => {
+    const person: Person = { id, name: v.name, role: v.role, title: v.title, email: v.email, initials: initialsFrom(v.name) };
+    db.people.push(person);
+    if (v.teamId && v.teamId !== "none") {
+      const team = db.teams.find((t) => t.id === v.teamId);
+      if (team && !team.memberIds.includes(id)) team.memberIds.push(id);
+    }
+  });
+  revalidatePath("/people");
+  return { ok: true, id };
+}
+
+export async function addTeam(_prev: unknown, formData: FormData): Promise<ActionResult> {
+  const parsed = addTeamSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { ok: false, error: "لطفاً خطاهای فرم را برطرف کنید.", fieldErrors: fieldErrorsFrom(parsed.error) };
+  const v = parsed.data;
+  const id = makeId("tm");
+  mutate((db) => {
+    const team: Team = { id, name: v.name, description: v.description, leadId: v.leadId && v.leadId !== "none" ? v.leadId : null, memberIds: [] };
+    db.teams.push(team);
+  });
+  revalidatePath("/people");
+  return { ok: true, id };
 }

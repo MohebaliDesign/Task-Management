@@ -18,7 +18,15 @@ import type { ActionItem } from "@/lib/domain";
 
 const initial: ActionResult = { ok: false, error: "" };
 
-export function AddDependencyDialog({ projectId, actions }: { projectId: string; actions: ActionItem[] }) {
+export function AddDependencyDialog({
+  projectId,
+  actions,
+  triggerLabel = "ثبت وابستگی",
+}: {
+  projectId: string;
+  actions: ActionItem[];
+  triggerLabel?: string;
+}) {
   const router = useRouter();
   const [open, setOpen] = React.useState(false);
   const [state, formAction] = useFormState(addDependency, initial);
@@ -36,7 +44,7 @@ export function AddDependencyDialog({ projectId, actions }: { projectId: string;
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm">
-          <AppIcon name="dependency" size={16} /> افزودن وابستگی
+          <AppIcon name="dependency" size={16} /> {triggerLabel}
         </Button>
       </DialogTrigger>
       <DialogContent>

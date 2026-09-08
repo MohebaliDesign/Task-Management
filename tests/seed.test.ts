@@ -32,14 +32,31 @@ test("every decision references an existing (optional) meeting and an existing (
   }
 });
 
-test("every action references an existing owner, an existing (optional) meeting, and (optional) decision", () => {
+test("every action references an existing owner (person or team), an existing (optional) meeting, and (optional) decision", () => {
   const peopleIds = ids(db.people);
+  const teamIds = ids(db.teams);
   const meetingIds = ids(db.meetings);
   const decisionIds = ids(db.decisions);
   for (const a of db.actions) {
-    assert.ok(peopleIds.has(a.ownerId), `action ${a.id} owner`);
+    if (a.ownerId) assert.ok(peopleIds.has(a.ownerId) || teamIds.has(a.ownerId), `action ${a.id} owner`);
     assert.ok(a.meetingId === null || meetingIds.has(a.meetingId), `action ${a.id} meeting`);
     if (a.relatedDecisionId) assert.ok(decisionIds.has(a.relatedDecisionId), `action ${a.id} decision`);
+  }
+});
+
+test("every blocker's owner, when set, is an existing person or team", () => {
+  const peopleIds = ids(db.people);
+  const teamIds = ids(db.teams);
+  for (const b of db.blockers) {
+    if (b.ownerId) assert.ok(peopleIds.has(b.ownerId) || teamIds.has(b.ownerId), `blocker ${b.id} owner`);
+  }
+});
+
+test("every team's lead and members are existing people", () => {
+  const peopleIds = ids(db.people);
+  for (const t of db.teams) {
+    if (t.leadId) assert.ok(peopleIds.has(t.leadId), `team ${t.id} lead`);
+    for (const m of t.memberIds) assert.ok(peopleIds.has(m), `team ${t.id} member ${m}`);
   }
 });
 

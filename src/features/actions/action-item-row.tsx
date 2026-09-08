@@ -2,9 +2,9 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { AppIcon } from "@/components/icon";
 import { ActionStatusBadge, PriorityBadge } from "@/components/domain/status";
-import { PersonChip } from "@/components/domain/person";
+import { AssigneeChip } from "@/components/domain/person";
 import { faDate, daysUntil, toFa } from "@/lib/utils";
-import { getPerson, getAction } from "@/lib/queries";
+import { getAssignee, getAction } from "@/lib/queries";
 import type { ActionItem, Decision } from "@/lib/domain";
 
 export function ActionItemRow({
@@ -22,7 +22,7 @@ export function ActionItemRow({
   blockedBy?: string[]; // action ids blocking this one
   blocking?: string[]; // action ids this one blocks
 }) {
-  const owner = getPerson(action.ownerId);
+  const owner = getAssignee(action.ownerId);
   const dLeft = daysUntil(action.deadline);
   const overdue = dLeft !== null && dLeft < 0 && action.status !== "done" && action.status !== "canceled";
 
@@ -33,7 +33,7 @@ export function ActionItemRow({
           <p className="font-medium">{action.title}</p>
           {action.description && <p className="mt-0.5 text-sm text-muted-foreground">{action.description}</p>}
           <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-muted-foreground">
-            <span className="flex items-center gap-1.5"><AppIcon name="profile" size={14} /><PersonChip person={owner} variant="compact" /></span>
+            <span className="flex items-center gap-1.5"><AppIcon name="profile" size={14} /><AssigneeChip assignee={owner} /></span>
             {action.deadline && (
               <span className={`flex items-center gap-1 ${overdue ? "text-destructive-text" : ""}`}>
                 <AppIcon name="calendar" size={14} />
@@ -55,7 +55,7 @@ export function ActionItemRow({
           </div>
 
           {(blockedBy?.length || blocking?.length) ? (
-            <div className="mt-2 flex flex-col gap-1">
+            <div className="mt-1.5 flex flex-col gap-1">
               {blockedBy && blockedBy.length > 0 && (
                 <p className="flex items-start gap-1.5 text-xs text-destructive-text">
                   <AppIcon name="dependency" size={14} className="mt-0.5 shrink-0" />

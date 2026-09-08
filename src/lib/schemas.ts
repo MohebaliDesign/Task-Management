@@ -5,6 +5,7 @@ import {
   PROJECT_HEALTH,
   ACTION_STATUS,
   RISK_LEVEL,
+  BLOCKER_STATUS,
   ROLE,
 } from "./domain";
 
@@ -162,7 +163,7 @@ export const addDecisionSchema = z.object({
   deciderId: req("تصمیم‌گیرنده را انتخاب کنید"),
   date: req("تاریخ تصمیم را وارد کنید"),
   area: z.string().trim().max(60).optional().default("عمومی"),
-  impact: z.string().trim().max(60).optional().default("متوسط"),
+  impact: z.enum(RISK_LEVEL).optional().default("medium"),
   relatedActionIds: z.array(z.string()).optional().default([]),
 });
 
@@ -171,7 +172,7 @@ export const addActionSchema = z.object({
   meetingId: z.string().trim().optional().default(""),
   title: req("عنوان اقدام را وارد کنید").max(160),
   description: z.string().trim().max(600).optional().default(""),
-  ownerId: req("مسئول اقدام را انتخاب کنید"),
+  ownerId: z.string().trim().optional().default(""),
   deadline: z.string().trim().optional().default(""),
   priority: z.enum(PRIORITY),
   relatedDecisionId: z.string().trim().optional().default(""),
@@ -181,6 +182,13 @@ export const addActionSchema = z.object({
 export const updateActionStatusSchema = z.object({
   actionId: req("شناسهٔ اقدام لازم است"),
   status: z.enum(ACTION_STATUS),
+});
+
+/** Same update, driven from the Follow-ups tab's modal instead of the inline select on a meeting page — captures a note too. */
+export const updateActionStatusWithNoteSchema = z.object({
+  actionId: req("شناسهٔ اقدام لازم است"),
+  status: z.enum(ACTION_STATUS),
+  note: z.string().trim().max(400).optional().default(""),
 });
 
 export const addDependencySchema = z.object({
@@ -209,6 +217,12 @@ export const addBlockerSchema = z.object({
   ownerId: z.string().trim().optional().default(""),
 });
 
+export const updateBlockerStatusSchema = z.object({
+  blockerId: req("شناسهٔ مانع لازم است"),
+  status: z.enum(BLOCKER_STATUS),
+  note: z.string().trim().max(400).optional().default(""),
+});
+
 export const addCommentSchema = z.object({
   meetingId: req("شناسهٔ جلسه لازم است"),
   authorName: req("نام خود را وارد کنید").max(80),
@@ -234,4 +248,18 @@ export const closeProjectSchema = z.object({
   projectId: req("شناسهٔ پروژه لازم است"),
   comment: z.string().trim().max(600).optional().default(""),
   finalResult: req("خلاصهٔ نتیجهٔ نهایی را وارد کنید").max(1000),
+});
+
+export const addPersonSchema = z.object({
+  name: req("نام را وارد کنید").max(80),
+  title: req("سمت سازمانی را وارد کنید").max(80),
+  role: z.enum(ROLE),
+  email: z.string().trim().email("ایمیل معتبر نیست").optional().or(z.literal("")).default(""),
+  teamId: z.string().trim().optional().default(""),
+});
+
+export const addTeamSchema = z.object({
+  name: req("نام تیم را وارد کنید").max(80),
+  description: z.string().trim().max(300).optional().default(""),
+  leadId: z.string().trim().optional().default(""),
 });

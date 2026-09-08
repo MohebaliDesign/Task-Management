@@ -15,6 +15,8 @@ import { Field } from "@/components/form/field";
 import { SubmitButton } from "@/components/form/submit-button";
 import { AppIcon } from "@/components/icon";
 import { addDecision, type ActionResult } from "@/lib/actions";
+import { RISK_LEVEL } from "@/lib/domain";
+import { riskLevelLabels } from "@/lib/labels";
 import type { ActionItem, Meeting, Person } from "@/lib/domain";
 
 const initial: ActionResult = { ok: false, error: "" };
@@ -23,20 +25,25 @@ function todayIso() {
   return new Date().toISOString().slice(0, 10);
 }
 
+/**
+ * Used two ways: fixed to one meeting (from that meeting's page — meetingId
+ * is a hidden field), or with a meeting picker (from the project-wide
+ * Decisions tab, where the source meeting isn't implied by context).
+ */
 export function AddDecisionDialog({
   projectId,
   meetingId,
   meetings,
   people,
   unlinkedActions,
+  triggerLabel = "افزودن تصمیم",
 }: {
   projectId: string;
-  /** Fixed meeting context (embedded in a meeting-detail page). */
   meetingId?: string;
-  /** Project meetings, used to render a meeting picker when `meetingId` is not fixed. */
   meetings?: Meeting[];
   people: Person[];
   unlinkedActions?: ActionItem[];
+  triggerLabel?: string;
 }) {
   const router = useRouter();
   const [open, setOpen] = React.useState(false);
@@ -55,7 +62,7 @@ export function AddDecisionDialog({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm">
-          <AppIcon name="add" size={16} /> افزودن تصمیم
+          <AppIcon name="add" size={16} /> {triggerLabel}
         </Button>
       </DialogTrigger>
       <DialogContent>
@@ -65,9 +72,20 @@ export function AddDecisionDialog({
         </DialogHeader>
         <form action={formAction} className="space-y-4">
           <input type="hidden" name="projectId" value={projectId} />
-          {meetingId && <input type="hidden" name="meetingId" value={meetingId} />}
-          <Field label="عنوان تصمیم" htmlFor="text" error={errs.text} required>
-            <Textarea id="text" name="text" rows={2} aria-invalid={!!errs.text} />
+          {meetingId ? (
+            <input type="hidden" name="meetingId" value={meetingId} />
+          ) : (
+            <Field label="جلسهٔ مرتبط" htmlFor="meetingId" error={errs.meetingId} required>
+              <Select name="meetingId">
+                <SelectTrigger id="meetingId"><SelectValue placeholder="انتخاب جلسه" /></SelectTrigger>
+                <SelectContent>
+                  {meetings?.map((m) => <SelectItem key={m.id} value={m.id}>{m.title}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </Field>
+          )}
+          <Field label="متن تصمیم" htmlFor="text" error={errs.text} required>
+            <Textarea id="text" name="text" rows={3} aria-invalid={!!errs.text} />
           </Field>
           <Field label="توضیحات (اختیاری)" htmlFor="description" error={errs.description}>
             <Textarea id="description" name="description" rows={2} />
@@ -85,22 +103,15 @@ export function AddDecisionDialog({
               <Input id="date" name="date" type="date" defaultValue={todayIso()} className="latin-nums" />
             </Field>
           </div>
-          {!meetingId && (
-            <Field label="جلسهٔ مرتبط" htmlFor="meetingId" error={errs.meetingId} hint="در صورت وجود، جلسهٔ منبع این تصمیم را انتخاب کنید.">
-              <Select name="meetingId">
-                <SelectTrigger id="meetingId"><SelectValue placeholder="بدون جلسهٔ مرتبط" /></SelectTrigger>
-                <SelectContent>
-                  {(meetings ?? []).map((m) => <SelectItem key={m.id} value={m.id}>{m.title}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </Field>
-          )}
           <div className="grid grid-cols-2 gap-4">
             <Field label="حوزهٔ مرتبط" htmlFor="area" error={errs.area}>
               <Input id="area" name="area" defaultValue="عمومی" />
             </Field>
             <Field label="میزان اثر" htmlFor="impact" error={errs.impact}>
-              <Input id="impact" name="impact" defaultValue="متوسط" />
+              <Select name="impact" defaultValue="medium">
+                <SelectTrigger id="impact"><SelectValue /></SelectTrigger>
+                <SelectContent>{RISK_LEVEL.map((l) => <SelectItem key={l} value={l}>{riskLevelLabels[l].label}</SelectItem>)}</SelectContent>
+              </Select>
             </Field>
           </div>
           {unlinkedActions && unlinkedActions.length > 0 && (

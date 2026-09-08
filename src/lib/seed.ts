@@ -1,6 +1,7 @@
 import type {
   Database,
   Person,
+  Team,
   Project,
   Meeting,
   Decision,
@@ -42,6 +43,11 @@ const people: Person[] = [
   { id: "p_hassan", name: "حسن نوری", role: "member", title: "کارشناس تضمین کیفیت", email: "hassan.nouri@algonet.ir", initials: "حن" },
   { id: "p_leila", name: "لیلا فتحی", role: "member", title: "کارشناس محصول", email: "leila.fathi@algonet.ir", initials: "لف" },
   { id: "p_omid", name: "امید صادقی", role: "member", title: "مهندس بک‌اند", email: "omid.sadeghi@algonet.ir", initials: "اص" },
+];
+
+const teams: Team[] = [
+  { id: "tm_eng", name: "تیم مهندسی", description: "توسعهٔ بک‌اند، زیرساخت و یکپارچه‌سازی سرویس‌ها.", leadId: "p_nima", memberIds: ["p_nima", "p_omid", "p_hassan"] },
+  { id: "tm_design", name: "تیم طراحی و محصول", description: "طراحی تجربهٔ کاربری و تعریف محصول.", leadId: "p_mina", memberIds: ["p_mina", "p_leila", "p_reza"] },
 ];
 
 const meetings: Meeting[] = [];
@@ -207,13 +213,13 @@ const l2m1: Meeting = {
 };
 meetings.push(l2m1);
 decisions.push(
-  { id: "dec_l2_1", projectId: "prj_leili2", meetingId: "mtg_l2_1", text: "دامنهٔ نسخه ۲ به گزارش‌گیری پیشرفته و دسترسی نقش‌محور محدود می‌شود.", description: "", deciderId: "p_reza", date: daysAgo(70), area: "دامنه", impact: "زیاد", createdAt: daysAgo(70) },
-  { id: "dec_l2_2", projectId: "prj_leili2", meetingId: "mtg_l2_1", text: "بازطراحی رابط کاربری بر پایهٔ سیستم طراحی جدید سازمان انجام می‌شود.", description: "", deciderId: "p_mina", date: daysAgo(70), area: "طراحی", impact: "متوسط", createdAt: daysAgo(70) },
+  { id: "dec_l2_1", projectId: "prj_leili2", meetingId: "mtg_l2_1", text: "دامنهٔ نسخه ۲ به گزارش‌گیری پیشرفته و دسترسی نقش‌محور محدود می‌شود.", description: "", deciderId: "p_reza", date: daysAgo(70), area: "دامنه", impact: "high", createdAt: daysAgo(70) },
+  { id: "dec_l2_2", projectId: "prj_leili2", meetingId: "mtg_l2_1", text: "بازطراحی رابط کاربری بر پایهٔ سیستم طراحی جدید سازمان انجام می‌شود.", description: "", deciderId: "p_mina", date: daysAgo(70), area: "طراحی", impact: "medium", createdAt: daysAgo(70) },
 );
 actions.push(
-  { id: "act_l2_1", projectId: "prj_leili2", meetingId: "mtg_l2_1", title: "تهیهٔ سند معماری موتور گزارش", description: "طراحی معماری تجمیع داده و لایهٔ خروجی.", ownerId: "p_nima", deadline: daysAgo(45), status: "done", priority: "high", relatedDecisionId: "dec_l2_1", createdAt: daysAgo(70), updatedAt: daysAgo(46), completedAt: daysAgo(46) },
-  { id: "act_l2_2", projectId: "prj_leili2", meetingId: "mtg_l2_1", title: "پیاده‌سازی مدل نقش و دسترسی", description: "مدل‌سازی نقش‌ها و مجوزها در بک‌اند.", ownerId: "p_omid", deadline: daysAhead(6), status: "in_progress", priority: "high", relatedDecisionId: "dec_l2_1", createdAt: daysAgo(70), updatedAt: daysAgo(3), completedAt: null },
-  { id: "act_l2_3", projectId: "prj_leili2", meetingId: "mtg_l2_1", title: "طرح اولیهٔ داشبورد گزارش", description: "تهیهٔ وایرفریم و طرح بصری داشبورد.", ownerId: "p_mina", deadline: daysAgo(2), status: "in_progress", priority: "medium", relatedDecisionId: "dec_l2_2", createdAt: daysAgo(70), updatedAt: daysAgo(5), completedAt: null },
+  { id: "act_l2_1", projectId: "prj_leili2", meetingId: "mtg_l2_1", title: "تهیهٔ سند معماری موتور گزارش", description: "طراحی معماری تجمیع داده و لایهٔ خروجی.", ownerId: "p_nima", deadline: daysAgo(45), status: "done", priority: "high", relatedDecisionId: "dec_l2_1", createdAt: daysAgo(70), updatedAt: daysAgo(46), completedAt: daysAgo(46), note: "" },
+  { id: "act_l2_2", projectId: "prj_leili2", meetingId: "mtg_l2_1", title: "پیاده‌سازی مدل نقش و دسترسی", description: "مدل‌سازی نقش‌ها و مجوزها در بک‌اند.", ownerId: "p_omid", deadline: daysAhead(6), status: "in_progress", priority: "high", relatedDecisionId: "dec_l2_1", createdAt: daysAgo(70), updatedAt: daysAgo(3), completedAt: null, note: "" },
+  { id: "act_l2_3", projectId: "prj_leili2", meetingId: "mtg_l2_1", title: "طرح اولیهٔ داشبورد گزارش", description: "تهیهٔ وایرفریم و طرح بصری داشبورد.", ownerId: "p_mina", deadline: daysAgo(2), status: "in_progress", priority: "medium", relatedDecisionId: "dec_l2_2", createdAt: daysAgo(70), updatedAt: daysAgo(5), completedAt: null, note: "" },
 );
 signatures.push(
   { id: "sig_l2_1a", meetingId: "mtg_l2_1", approverId: "p_nima", approverName: "نیما رستمی", role: "team_lead", status: "approved", comment: "مورد تأیید است.", signedAt: daysAgo(67), revision: 2 },
@@ -241,10 +247,10 @@ const l2m2: Meeting = {
   createdById: "p_sara", createdAt: daysAgo(28), updatedAt: daysAgo(27), reviewToken: "rev-l2m2-2c19",
 };
 meetings.push(l2m2);
-decisions.push({ id: "dec_l2_3", projectId: "prj_leili2", meetingId: "mtg_l2_2", text: "برای کاهش ریسک، یک راهکار جایگزین برای سرویس احراز هویت بررسی و آماده‌سازی می‌شود.", description: "", deciderId: "p_sara", date: daysAgo(28), area: "وابستگی‌ها", impact: "زیاد", createdAt: daysAgo(28) });
+decisions.push({ id: "dec_l2_3", projectId: "prj_leili2", meetingId: "mtg_l2_2", text: "برای کاهش ریسک، یک راهکار جایگزین برای سرویس احراز هویت بررسی و آماده‌سازی می‌شود.", description: "", deciderId: "p_sara", date: daysAgo(28), area: "وابستگی‌ها", impact: "high", createdAt: daysAgo(28) });
 actions.push(
-  { id: "act_l2_4", projectId: "prj_leili2", meetingId: "mtg_l2_2", title: "پیاده‌سازی هستهٔ موتور گزارش", description: "توسعهٔ منطق تجمیع و خروجی تحلیلی.", ownerId: "p_nima", deadline: daysAhead(10), status: "in_progress", priority: "critical", relatedDecisionId: "dec_l2_3", createdAt: daysAgo(28), updatedAt: daysAgo(1), completedAt: null },
-  { id: "act_l2_5", projectId: "prj_leili2", meetingId: "mtg_l2_2", title: "ارزیابی راهکار جایگزین احراز هویت", description: "مقایسهٔ دو سرویس جایگزین و ارائهٔ پیشنهاد.", ownerId: "p_omid", deadline: daysAhead(3), status: "blocked", priority: "high", relatedDecisionId: "dec_l2_3", createdAt: daysAgo(28), updatedAt: daysAgo(2), completedAt: null },
+  { id: "act_l2_4", projectId: "prj_leili2", meetingId: "mtg_l2_2", title: "پیاده‌سازی هستهٔ موتور گزارش", description: "توسعهٔ منطق تجمیع و خروجی تحلیلی.", ownerId: "tm_eng", deadline: daysAhead(10), status: "in_progress", priority: "critical", relatedDecisionId: "dec_l2_3", createdAt: daysAgo(28), updatedAt: daysAgo(1), completedAt: null, note: "" },
+  { id: "act_l2_5", projectId: "prj_leili2", meetingId: "mtg_l2_2", title: "ارزیابی راهکار جایگزین احراز هویت", description: "مقایسهٔ دو سرویس جایگزین و ارائهٔ پیشنهاد.", ownerId: "p_omid", deadline: daysAhead(3), status: "blocked", priority: "high", relatedDecisionId: "dec_l2_3", createdAt: daysAgo(28), updatedAt: daysAgo(2), completedAt: null, note: "" },
 );
 signatures.push(
   { id: "sig_l2_2a", meetingId: "mtg_l2_2", approverId: "p_nima", approverName: "نیما رستمی", role: "team_lead", status: "approved", comment: "", signedAt: daysAgo(26), revision: 1 },
@@ -276,12 +282,12 @@ const l2m3: Meeting = {
 };
 meetings.push(l2m3);
 decisions.push(
-  { id: "dec_l2_4", projectId: "prj_leili2", meetingId: "mtg_l2_3", text: "یک نیروی طراحی موقت برای جبران عقب‌ماندگی جریان بازطراحی رابط کاربری اضافه می‌شود.", description: "", deciderId: "p_sara", date: daysAgo(4), area: "منابع", impact: "زیاد", createdAt: daysAgo(4) },
-  { id: "dec_l2_5", projectId: "prj_leili2", meetingId: "mtg_l2_3", text: "مهلت نقطه‌عطف «انتشار نسخهٔ آزمایشی داخلی» به دلیل وابستگی احراز هویت بازنگری می‌شود.", description: "", deciderId: "p_reza", date: daysAgo(4), area: "زمان‌بندی", impact: "زیاد", createdAt: daysAgo(4) },
+  { id: "dec_l2_4", projectId: "prj_leili2", meetingId: "mtg_l2_3", text: "یک نیروی طراحی موقت برای جبران عقب‌ماندگی جریان بازطراحی رابط کاربری اضافه می‌شود.", description: "", deciderId: "p_sara", date: daysAgo(4), area: "منابع", impact: "high", createdAt: daysAgo(4) },
+  { id: "dec_l2_5", projectId: "prj_leili2", meetingId: "mtg_l2_3", text: "مهلت نقطه‌عطف «انتشار نسخهٔ آزمایشی داخلی» به دلیل وابستگی احراز هویت بازنگری می‌شود.", description: "", deciderId: "p_reza", date: daysAgo(4), area: "زمان‌بندی", impact: "high", createdAt: daysAgo(4) },
 );
 actions.push(
-  { id: "act_l2_6", projectId: "prj_leili2", meetingId: "mtg_l2_3", title: "جذب نیروی طراحی موقت", description: "هماهنگی با منابع انسانی برای یک قرارداد کوتاه‌مدت طراحی.", ownerId: "p_mina", deadline: daysAhead(7), status: "not_started", priority: "high", relatedDecisionId: "dec_l2_4", createdAt: daysAgo(4), updatedAt: daysAgo(4), completedAt: null },
-  { id: "act_l2_7", projectId: "prj_leili2", meetingId: "mtg_l2_3", title: "نهایی‌سازی طرح بصری داشبورد", description: "تکمیل طرح داشبورد پس از افزودن نیروی طراحی.", ownerId: "p_mina", deadline: daysAhead(20), status: "not_started", priority: "medium", relatedDecisionId: "dec_l2_4", createdAt: daysAgo(4), updatedAt: daysAgo(4), completedAt: null },
+  { id: "act_l2_6", projectId: "prj_leili2", meetingId: "mtg_l2_3", title: "جذب نیروی طراحی موقت", description: "هماهنگی با منابع انسانی برای یک قرارداد کوتاه‌مدت طراحی.", ownerId: "p_mina", deadline: daysAhead(7), status: "not_started", priority: "high", relatedDecisionId: "dec_l2_4", createdAt: daysAgo(4), updatedAt: daysAgo(4), completedAt: null, note: "" },
+  { id: "act_l2_7", projectId: "prj_leili2", meetingId: "mtg_l2_3", title: "نهایی‌سازی طرح بصری داشبورد", description: "تکمیل طرح داشبورد پس از افزودن نیروی طراحی.", ownerId: "p_mina", deadline: daysAhead(20), status: "not_started", priority: "medium", relatedDecisionId: "dec_l2_4", createdAt: daysAgo(4), updatedAt: daysAgo(4), completedAt: null, note: "" },
 );
 // Dependencies: act_l2_5 (auth eval) is blocked by nothing internal but it itself blocks report engine progress.
 dependencies.push(
@@ -306,7 +312,7 @@ risks.push(
   { id: "rsk_l2_2", projectId: "prj_leili2", meetingId: "mtg_l2_3", title: "کمبود منابع تیم طراحی می‌تواند کیفیت رابط کاربری را کاهش دهد.", impact: "medium", probability: "high", status: "open", ownerId: "p_mina", mitigation: "افزودن نیروی طراحی موقت.", createdAt: daysAgo(4) },
 );
 blockers.push(
-  { id: "blk_l2_1", projectId: "prj_leili2", meetingId: "mtg_l2_3", title: "سرویس احراز هویت خارجی در دسترس نیست", description: "دسترسی به محیط آزمایشی سرویس احراز هویت قطع است و ارزیابی جایگزین را متوقف کرده.", status: "open", ownerId: "p_omid", raisedDate: daysAgo(6), resolvedDate: null },
+  { id: "blk_l2_1", projectId: "prj_leili2", meetingId: "mtg_l2_3", title: "سرویس احراز هویت خارجی در دسترس نیست", description: "دسترسی به محیط آزمایشی سرویس احراز هویت قطع است و ارزیابی جایگزین را متوقف کرده.", status: "open", ownerId: "p_omid", raisedDate: daysAgo(6), resolvedDate: null, note: "" },
 );
 logActivity({ projectId: "prj_leili2", meetingId: "mtg_l2_3", type: "blocker_added", actorId: "p_sara", actorName: "سارا احمدی", entityLabel: "سرویس احراز هویت خارجی در دسترس نیست", previousValue: null, newValue: "باز", createdAt: daysAgo(6) });
 logActivity({ projectId: "prj_leili2", meetingId: "mtg_l2_2", type: "risk_added", actorId: "p_sara", actorName: "سارا احمدی", entityLabel: "وابستگی به سرویس احراز هویت خارجی", previousValue: null, newValue: "در حال کاهش", createdAt: daysAgo(28) });
@@ -378,8 +384,8 @@ const avm1: Meeting = {
   createdById: "p_reza", createdAt: daysAgo(38), updatedAt: daysAgo(37), reviewToken: "rev-avm1-77d0",
 };
 meetings.push(avm1);
-decisions.push({ id: "dec_av_1", projectId: "prj_ava", meetingId: "mtg_av_1", text: "آوا در فاز اول تنها بر مدیریت وظایف فردی تمرکز می‌کند.", description: "", deciderId: "p_reza", date: daysAgo(38), area: "دامنه", impact: "متوسط", createdAt: daysAgo(38) });
-actions.push({ id: "act_av_1", projectId: "prj_ava", meetingId: "mtg_av_1", title: "تهیهٔ نمونهٔ اولیهٔ تعاملی", description: "ساخت پروتوتایپ سه جریان اصلی.", ownerId: "p_mina", deadline: daysAhead(12), status: "in_progress", priority: "medium", relatedDecisionId: "dec_av_1", createdAt: daysAgo(38), updatedAt: daysAgo(7), completedAt: null });
+decisions.push({ id: "dec_av_1", projectId: "prj_ava", meetingId: "mtg_av_1", text: "آوا در فاز اول تنها بر مدیریت وظایف فردی تمرکز می‌کند.", description: "", deciderId: "p_reza", date: daysAgo(38), area: "دامنه", impact: "medium", createdAt: daysAgo(38) });
+actions.push({ id: "act_av_1", projectId: "prj_ava", meetingId: "mtg_av_1", title: "تهیهٔ نمونهٔ اولیهٔ تعاملی", description: "ساخت پروتوتایپ سه جریان اصلی.", ownerId: "p_mina", deadline: daysAhead(12), status: "in_progress", priority: "medium", relatedDecisionId: "dec_av_1", createdAt: daysAgo(38), updatedAt: daysAgo(7), completedAt: null, note: "" });
 signatures.push({ id: "sig_av_1", meetingId: "mtg_av_1", approverId: "p_mina", approverName: "مینا شریفی", role: "team_lead", status: "approved", comment: "", signedAt: daysAgo(36), revision: 1 });
 logActivity({ projectId: "prj_ava", meetingId: "mtg_av_1", type: "meeting_created", actorId: "p_reza", actorName: "رضا کاظمی", entityLabel: "جلسهٔ تعیین دامنه", previousValue: null, newValue: "پیش‌نویس", createdAt: daysAgo(38) });
 
@@ -443,11 +449,11 @@ const smm1: Meeting = {
   createdById: "p_sara", createdAt: daysAgo(3), updatedAt: daysAgo(3), reviewToken: "rev-smm1-a4e1",
 };
 meetings.push(smm1);
-decisions.push({ id: "dec_sm_1", projectId: "prj_sam", meetingId: "mtg_sm_1", text: "پیشنهاد بازتعریف مهلت پروژه برای تصمیم‌گیری به جلسهٔ مدیریت ارجاع می‌شود.", description: "", deciderId: "p_sara", date: daysAgo(3), area: "زمان‌بندی", impact: "زیاد", createdAt: daysAgo(3) });
-actions.push({ id: "act_sm_1", projectId: "prj_sam", meetingId: "mtg_sm_1", title: "پیگیری رفع موانع درگاه پرداخت", description: "هماهنگی با تیم فنی بانک برای رفع دو خطای اتصال.", ownerId: "p_omid", deadline: daysAhead(4), status: "blocked", priority: "critical", relatedDecisionId: "dec_sm_1", createdAt: daysAgo(3), updatedAt: daysAgo(1), completedAt: null });
+decisions.push({ id: "dec_sm_1", projectId: "prj_sam", meetingId: "mtg_sm_1", text: "پیشنهاد بازتعریف مهلت پروژه برای تصمیم‌گیری به جلسهٔ مدیریت ارجاع می‌شود.", description: "", deciderId: "p_sara", date: daysAgo(3), area: "زمان‌بندی", impact: "high", createdAt: daysAgo(3) });
+actions.push({ id: "act_sm_1", projectId: "prj_sam", meetingId: "mtg_sm_1", title: "پیگیری رفع موانع درگاه پرداخت", description: "هماهنگی با تیم فنی بانک برای رفع دو خطای اتصال.", ownerId: "p_omid", deadline: daysAhead(4), status: "blocked", priority: "critical", relatedDecisionId: "dec_sm_1", createdAt: daysAgo(3), updatedAt: daysAgo(1), completedAt: null, note: "" });
 blockers.push(
-  { id: "blk_sm_1", projectId: "prj_sam", meetingId: "mtg_sm_1", title: "خطای اعتبارسنجی گواهی درگاه بانکی", description: "گواهی TLS درگاه بانکی در محیط آزمایشی نامعتبر است.", status: "open", ownerId: "p_omid", raisedDate: daysAgo(7), resolvedDate: null },
-  { id: "blk_sm_2", projectId: "prj_sam", meetingId: "mtg_sm_1", title: "نبود مستندات نسخهٔ جدید API بانک", description: "مستندات نسخهٔ جدید API پرداخت هنوز منتشر نشده است.", status: "open", ownerId: "p_hassan", raisedDate: daysAgo(4), resolvedDate: null },
+  { id: "blk_sm_1", projectId: "prj_sam", meetingId: "mtg_sm_1", title: "خطای اعتبارسنجی گواهی درگاه بانکی", description: "گواهی TLS درگاه بانکی در محیط آزمایشی نامعتبر است.", status: "open", ownerId: "p_omid", raisedDate: daysAgo(7), resolvedDate: null, note: "درخواست صدور گواهی جدید برای محیط آزمایشی ارسال شد." },
+  { id: "blk_sm_2", projectId: "prj_sam", meetingId: "mtg_sm_1", title: "نبود مستندات نسخهٔ جدید API بانک", description: "مستندات نسخهٔ جدید API پرداخت هنوز منتشر نشده است.", status: "open", ownerId: "p_hassan", raisedDate: daysAgo(4), resolvedDate: null, note: "" },
 );
 risks.push({ id: "rsk_sm_1", projectId: "prj_sam", meetingId: "mtg_sm_1", title: "عدم تمدید مهلت می‌تواند به تحویل ناقص منجر شود.", impact: "high", probability: "medium", status: "open", ownerId: "p_sara", mitigation: "ارائهٔ برنامهٔ زمان‌بندی جایگزین به مدیریت.", createdAt: daysAgo(3) });
 logActivity({ projectId: "prj_sam", meetingId: "mtg_sm_1", type: "meeting_created", actorId: "p_sara", actorName: "سارا احمدی", entityLabel: "جلسهٔ اضطراری بررسی موانع", previousValue: null, newValue: "پیش‌نویس", createdAt: daysAgo(3) });
@@ -528,6 +534,7 @@ meetings.push(spm1, spm2, spm3);
 export function buildSeed(): Database {
   return {
     people,
+    teams,
     projects: [leili2, leili1, ava, sam],
     meetings,
     decisions,

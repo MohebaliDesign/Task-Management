@@ -9,9 +9,10 @@ import { EmptyState } from "@/components/domain/empty-state";
 import { MetricTile } from "@/features/shared/metric-tile";
 import { TeamWorkstreams } from "@/features/projects/team-workstreams";
 import { ProjectResources } from "@/features/projects/project-resources";
+import { DecisionCard } from "@/features/decisions/decision-card";
 import { MilestoneStatusBadge, PhaseBadge, PriorityBadge } from "@/components/domain/status";
 import { faDate, toFa } from "@/lib/utils";
-import { getProject, getPerson, getDecisions } from "@/lib/queries";
+import { getProject, getDecisions } from "@/lib/queries";
 
 export default function OverviewPage({ params }: { params: { projectId: string } }) {
   const project = getProject(params.projectId);
@@ -163,23 +164,11 @@ export default function OverviewPage({ params }: { params: { projectId: string }
         {decisions.length === 0 ? (
           <EmptyState icon="decision" title="تصمیمی ثبت نشده است" />
         ) : (
-          <Card className="divide-y divide-border">
+          <div className="grid items-start gap-4 sm:grid-cols-2">
             {decisions.map((d) => (
-              <div key={d.id} className="flex items-start gap-3 p-4">
-                <AppIcon name="decision" size={18} className="mt-0.5 shrink-0 text-muted-foreground" />
-                <div className="min-w-0 space-y-1.5">
-                  <p className="text-sm leading-6">{d.text}</p>
-                  <p className="flex flex-wrap items-center gap-x-1.5 text-xs text-muted-foreground">
-                    <span>{getPerson(d.deciderId)?.name}</span>
-                    <span aria-hidden="true">·</span>
-                    <span>{faDate(d.date)}</span>
-                    <span aria-hidden="true">·</span>
-                    <span>{d.area}</span>
-                  </p>
-                </div>
-              </div>
+              <DecisionCard key={d.id} decision={d} projectId={project.id} />
             ))}
-          </Card>
+          </div>
         )}
       </section>
 

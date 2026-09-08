@@ -40,6 +40,7 @@ function seedIfMissing() {
 function withCollectionDefaults(db: Partial<Database>): Database {
   return {
     people: db.people ?? [],
+    teams: db.teams ?? [],
     projects: db.projects ?? [],
     meetings: db.meetings ?? [],
     decisions: db.decisions ?? [],
