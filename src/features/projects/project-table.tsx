@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "@/components/ui/table";
 import { HealthBadge, LifecycleBadge, PhaseBadge } from "@/components/domain/status";
 import { PersonChip } from "@/components/domain/person";
+import { RowActions } from "@/components/domain/row-actions";
 import { faDate, faRelative } from "@/lib/utils";
 import { getPerson } from "@/lib/queries";
 import type { Project } from "@/lib/domain";
@@ -19,13 +20,14 @@ export function ProjectTable({ projects }: { projects: Project[] }) {
             <TableHead>فاز</TableHead>
             <TableHead>مهلت</TableHead>
             <TableHead>آخرین به‌روزرسانی</TableHead>
+            <TableHead className="w-12 text-end"><span className="sr-only">عملیات</span></TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {projects.map((p) => {
             const pm = getPerson(p.pmId);
             return (
-              <TableRow key={p.id}>
+              <TableRow key={p.id} className="group">
                 <TableCell>
                   <Link
                     href={`/projects/${p.id}`}
@@ -38,8 +40,17 @@ export function ProjectTable({ projects }: { projects: Project[] }) {
                 <TableCell><PersonChip person={pm} variant="compact" /></TableCell>
                 <TableCell>{p.lifecycle === "closed" ? <LifecycleBadge value={p.lifecycle} /> : <HealthBadge value={p.health} />}</TableCell>
                 <TableCell><PhaseBadge value={p.phase} /></TableCell>
-                <TableCell className="text-sm text-muted-foreground">{faDate(p.targetDate)}</TableCell>
+                <TableCell className="text-sm text-muted-foreground">{p.targetDate ? faDate(p.targetDate) : "—"}</TableCell>
                 <TableCell className="text-sm text-muted-foreground">{faRelative(p.updatedAt)}</TableCell>
+                <TableCell className="text-end">
+                  <RowActions
+                    label={`عملیات ${p.name}`}
+                    actions={[
+                      { label: "مشاهدهٔ جزئیات", icon: "overview", href: `/projects/${p.id}` },
+                      { label: "ویرایش", icon: "edit", href: `/projects/${p.id}/settings` },
+                    ]}
+                  />
+                </TableCell>
               </TableRow>
             );
           })}

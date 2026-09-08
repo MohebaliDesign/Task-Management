@@ -62,7 +62,16 @@ export default function DashboardPage() {
       </section>
 
       <section aria-label="پروژه‌ها" className="mb-8">
-        <SectionHeader title="پروژه‌های فعال" icon="projects" description="مرتب‌شده بر اساس آخرین به‌روزرسانی" />
+        <SectionHeader
+          title="پروژه‌های فعال"
+          icon="projects"
+          description="مرتب‌شده بر اساس آخرین به‌روزرسانی"
+          actions={
+            <Button asChild variant="ghost" size="sm">
+              <Link href="/projects">مشاهدهٔ همه</Link>
+            </Button>
+          }
+        />
         {active.length === 0 ? (
           <EmptyState
             icon="projects"
@@ -90,7 +99,7 @@ export default function DashboardPage() {
           description="جلسات سازمانی مستقل از پروژه"
           actions={
             <Button asChild variant="ghost" size="sm">
-              <Link href="/meetings/spaces">مشاهدهٔ همه</Link>
+              <Link href="/meetings">مشاهدهٔ همه</Link>
             </Button>
           }
         />

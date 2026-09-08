@@ -4,47 +4,42 @@ import { PageHeader } from "@/components/domain/page-header";
 import { Button } from "@/components/ui/button";
 import { AppIcon } from "@/components/icon";
 import { EmptyState } from "@/components/domain/empty-state";
-import { MeetingCard } from "@/features/meetings/meeting-card";
-import { MeetingTable } from "@/features/meetings/meeting-table";
-import { MeetingsFilterBar, type ContextOption } from "@/features/meetings/meetings-filter-bar";
-import { ViewSwitcher, type ViewMode } from "@/components/domain/view-switcher";
-import { getAllMeetings, getProjects, getMeetingSpaces } from "@/lib/queries";
-import { toFa } from "@/lib/utils";
-import type { MeetingStatus } from "@/lib/domain";
+import { MeetingSpaceCard } from "@/features/meeting-spaces/meeting-space-card";
+import { MeetingCategoryTable } from "@/features/meeting-spaces/meeting-category-table";
+import { MeetingCategoriesToolbar } from "@/features/meeting-spaces/meeting-categories-toolbar";
+import { ResponsiveDataView } from "@/components/domain/responsive-data-view";
+import { type ViewMode } from "@/components/domain/view-switcher";
+import type { FilterOption } from "@/components/domain/filter-control";
+import { getMeetingSpaces, getPerson } from "@/lib/queries";
 
-export const metadata: Metadata = { title: "جلسات" };
+export const metadata: Metadata = { title: "دسته‌های جلسات" };
 
 interface SearchParams {
   q?: string;
-  context?: string;
-  status?: string;
-  period?: string;
+  owner?: string;
   sort?: string;
   view?: string;
 }
 
-export default function AllMeetingsPage({ searchParams }: { searchParams: SearchParams }) {
-  const all = getAllMeetings();
-  const projects = getProjects();
-  const spaces = getMeetingSpaces();
+/**
+ * The global «جلسات» area lists Meeting *Categories* (دسته‌های جلسات), never
+ * individual meetings — those live one level deeper, inside a category
+ * (/meetings/[spaceId]). This keeps organizational meetings, which are
+ * independent of projects, grouped by the space they belong to.
+ */
+export default function MeetingsPage({ searchParams }: { searchParams: SearchParams }) {
+  const all = getMeetingSpaces();
 
-  const projectOptions: ContextOption[] = projects.map((p) => ({ value: `project:${p.id}`, label: `${p.name} — ${p.versionLabel}` }));
-  const spaceOptions: ContextOption[] = spaces.map((s) => ({ value: `space:${s.id}`, label: s.name }));
+  // Owner filter options — only owners that actually own a category.
+  const ownerOptions: FilterOption[] = Array.from(new Set(all.map((s) => s.ownerId)))
+    .map((id) => getPerson(id))
+    .filter((p): p is NonNullable<typeof p> => !!p)
+    .map((p) => ({ value: p.id, label: p.name }));
 
   const q = (searchParams.q ?? "").trim();
-  const filtered = all.filter((m) => {
-    if (q && !m.title.includes(q)) return false;
-    if (searchParams.context && searchParams.context !== "all") {
-      const [kind, id] = searchParams.context.split(":");
-      if (kind === "project" && m.projectId !== id) return false;
-      if (kind === "space" && m.spaceId !== id) return false;
-    }
-    if (searchParams.status && m.status !== (searchParams.status as MeetingStatus)) return false;
-    if (searchParams.period === "7d" || searchParams.period === "30d") {
-      const days = searchParams.period === "7d" ? 7 : 30;
-      const diffDays = (Date.now() - new Date(m.date).getTime()) / 86_400_000;
-      if (diffDays > days) return false;
-    }
+  const filtered = all.filter((s) => {
+    if (q && !`${s.name} ${s.description}`.includes(q)) return false;
+    if (searchParams.owner && s.ownerId !== searchParams.owner) return false;
     return true;
   });
   if (searchParams.sort === "oldest") filtered.reverse();
@@ -53,38 +48,53 @@ export default function AllMeetingsPage({ searchParams }: { searchParams: Search
   return (
     <>
       <PageHeader
-        title="جلسات"
-        description={`${toFa(all.length)} جلسه در پروژه‌ها و دسته‌های جلسات ثبت شده است.`}
+        title="دسته‌های جلسات"
+        description="دسته‌های جلسات سازمانی را مدیریت کنید و به سوابق جلسات هر دسته دسترسی داشته باشید."
         icon="meetings"
         actions={
-          <Button asChild variant="outline">
-            <Link href="/meetings/spaces">
-              <AppIcon name="meetings" size={18} />
-              دسته‌های جلسات
+          <Button asChild>
+            <Link href="/meetings/new">
+              <AppIcon name="add" size={18} />
+              ایجاد دسته جلسات
             </Link>
           </Button>
         }
       />
 
-      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
-        <MeetingsFilterBar projectOptions={projectOptions} spaceOptions={spaceOptions} />
-        <ViewSwitcher value={view} />
-      </div>
-
-      {filtered.length === 0 ? (
+      {all.length === 0 ? (
         <EmptyState
-          icon="search"
-          title="جلسه‌ای یافت نشد"
-          description="هیچ جلسه‌ای با فیلترهای فعلی مطابقت ندارد. فیلترها را تغییر دهید یا پاک کنید."
+          icon="meetings"
+          title="هنوز دسته‌ای از جلسات ثبت نشده است"
+          description="یک دسته بسازید (مثلاً «جلسات داخلی سازمان») تا بتوانید جلسات سازمانی مستقل از پروژه را در آن ثبت کنید."
+          action={
+            <Button asChild size="sm">
+              <Link href="/meetings/new">ایجاد دسته جلسات</Link>
+            </Button>
+          }
         />
-      ) : view === "table" ? (
-        <MeetingTable meetings={filtered} />
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {filtered.map((m) => (
-            <MeetingCard key={m.id} meeting={m} />
-          ))}
-        </div>
+        <>
+          <MeetingCategoriesToolbar view={view} ownerOptions={ownerOptions} />
+          {filtered.length === 0 ? (
+            <EmptyState
+              icon="search"
+              title="دسته‌ای یافت نشد"
+              description="هیچ دسته‌ای با فیلترهای فعلی مطابقت ندارد. فیلترها را تغییر دهید یا پاک کنید."
+            />
+          ) : (
+            <ResponsiveDataView
+              view={view}
+              table={<MeetingCategoryTable spaces={filtered} />}
+              cards={
+                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                  {filtered.map((s) => (
+                    <MeetingSpaceCard key={s.id} space={s} />
+                  ))}
+                </div>
+              }
+            />
+          )}
+        </>
       )}
     </>
   );
