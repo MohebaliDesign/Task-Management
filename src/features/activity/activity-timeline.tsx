@@ -11,6 +11,7 @@ const iconFor: Record<ActivityType, IconName> = {
   deadline_changed: "calendar",
   milestone_updated: "milestone",
   meeting_created: "meetings",
+  meeting_updated: "edit",
   meeting_submitted: "send",
   meeting_approved: "approval",
   decision_added: "decision",
@@ -25,6 +26,7 @@ const iconFor: Record<ActivityType, IconName> = {
   signature_added: "approval",
   ceo_approval: "verify",
   project_closed: "archive",
+  person_added: "profile",
 };
 
 /** Groups already-sorted (newest first) activities by calendar day, keyed by their formatted Persian date. */

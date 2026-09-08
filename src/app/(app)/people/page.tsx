@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card";
 import { PageHeader } from "@/components/domain/page-header";
 import { EmptyState } from "@/components/domain/empty-state";
 import { AppIcon } from "@/components/icon";
-import { AddPersonDialog } from "@/features/people/add-person-dialog";
+import { CreatePersonDialog } from "@/features/people/create-person-dialog";
 import { AddTeamDialog } from "@/features/people/add-team-dialog";
 import { PeopleTable } from "@/features/people/people-table";
 import { PeopleToolbar } from "@/features/people/people-toolbar";
@@ -64,7 +64,7 @@ export default function PeoplePage({
         actions={
           <>
             <AddTeamDialog people={allPeople} />
-            <AddPersonDialog teams={teams} />
+            <CreatePersonDialog teams={teams} />
           </>
         }
       />
@@ -93,7 +93,7 @@ export default function PeoplePage({
           <TeamsView rows={teamRows} />
         )
       ) : allPeople.length === 0 ? (
-        <EmptyState icon="people" title="فردی ثبت نشده است" description="نخستین فرد سازمان را ثبت کنید." action={<AddPersonDialog teams={teams} />} />
+        <EmptyState icon="people" title="فردی ثبت نشده است" description="نخستین فرد سازمان را ثبت کنید." action={<CreatePersonDialog teams={teams} />} />
       ) : (
         <>
           <PeopleToolbar teams={teams} resultCount={people.length} />

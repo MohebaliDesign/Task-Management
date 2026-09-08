@@ -145,6 +145,7 @@ export const activityLabels: Record<ActivityType, string> = {
   deadline_changed: "مهلت پروژه تغییر کرد",
   milestone_updated: "نقطه‌عطف به‌روزرسانی شد",
   meeting_created: "جلسه ثبت شد",
+  meeting_updated: "جلسه ویرایش شد",
   meeting_submitted: "جلسه برای بازبینی ارسال شد",
   meeting_approved: "جلسه تأیید شد",
   decision_added: "تصمیم افزوده شد",
@@ -159,6 +160,7 @@ export const activityLabels: Record<ActivityType, string> = {
   signature_added: "امضا ثبت شد",
   ceo_approval: "تأیید نهایی مدیرعامل",
   project_closed: "نسخه پروژه بسته شد",
+  person_added: "فرد جدید افزوده شد",
 };
 
 /** Tailwind classes per tone for the shared Badge/StatusDot components. */

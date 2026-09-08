@@ -9,8 +9,9 @@ import { ActionsTable } from "@/features/actions/actions-table";
 import { AddBlockerDialog } from "@/features/actions/add-blocker-dialog";
 import { UpdateBlockerStatusDialog } from "@/features/actions/update-blocker-status-dialog";
 import { AddDependencyDialog } from "@/features/dependencies/add-dependency-dialog";
+import { AddActionDialog } from "@/features/meetings/add-action-dialog";
 import {
-  getProject, getActions, getDependencyViews, getBlockers, getPeople, getTeams, getAssignee,
+  getProject, getActions, getDecisions, getDependencyViews, getBlockers, getPeople, getTeams, getAssignee, getMeetings,
 } from "@/lib/queries";
 import { faDate, toFa } from "@/lib/utils";
 
@@ -19,6 +20,7 @@ export default function ActionsPage({ params }: { params: { projectId: string } 
   if (!project) notFound();
 
   const actions = getActions(project.id);
+  const decisions = getDecisions(project.id);
   const deps = getDependencyViews(project.id);
   const blockers = getBlockers(project.id);
   const people = getPeople();
@@ -88,9 +90,20 @@ export default function ActionsPage({ params }: { params: { projectId: string } 
           title="اقدامات"
           description="کارهایی که باید انجام شوند: مسئول، مهلت و ارتباط با اقدامات دیگر."
           icon="actions"
+          actions={
+            !readOnly && (
+              <AddActionDialog
+                projectId={project.id}
+                meetings={getMeetings(project.id)}
+                people={getPeople()}
+                decisions={decisions}
+                blockableActions={openActions}
+              />
+            )
+          }
         />
         {actions.length === 0 ? (
-          <EmptyState icon="actions" title="اقدامی ثبت نشده است" description="اقدامات هنگام ثبت جلسه اضافه می‌شوند." />
+          <EmptyState icon="actions" title="اقدامی ثبت نشده است" description="اقدامات را می‌توانید هنگام ثبت جلسه یا مستقیماً از همین‌جا اضافه کنید." />
         ) : (
           <div className="space-y-6">
             {openActions.length > 0 && (
@@ -116,14 +129,18 @@ export default function ActionsPage({ params }: { params: { projectId: string } 
           title="وابستگی‌ها"
           description="چه چیزی منتظر چه چیزی است."
           icon="dependency"
-          actions={!readOnly && actions.length >= 2 && <AddDependencyDialog projectId={project.id} actions={actions} />}
+          actions={!readOnly && actions.length >= 2 && deps.length > 0 && <AddDependencyDialog projectId={project.id} actions={actions} />}
         />
         {deps.length === 0 ? (
           <EmptyState
             icon="dependency"
-            title="وابستگی‌ای ثبت نشده است"
-            description="اگر اقدامی منتظر اقدام دیگری است، آن را به‌صورت وابستگی ثبت کنید."
-            action={!readOnly && actions.length >= 2 && <AddDependencyDialog projectId={project.id} actions={actions} />}
+            title="هنوز وابستگی‌ای ثبت نشده است"
+            description={
+              !readOnly && actions.length >= 2
+                ? "وابستگی‌ها مشخص می‌کنند کدام اقدام منتظر اقدام دیگری است و کار مسدودشده را زودتر شناسایی کنید."
+                : "برای ثبت وابستگی، ابتدا حداقل دو اقدام ایجاد کنید."
+            }
+            action={!readOnly && actions.length >= 2 ? <AddDependencyDialog projectId={project.id} actions={actions} /> : undefined}
           />
         ) : (
           <div className="grid gap-3 md:grid-cols-2">

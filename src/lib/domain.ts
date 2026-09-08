@@ -93,6 +93,7 @@ export const ACTIVITY_TYPE = [
   "deadline_changed",
   "milestone_updated",
   "meeting_created",
+  "meeting_updated",
   "meeting_submitted",
   "meeting_approved",
   "decision_added",
@@ -107,6 +108,7 @@ export const ACTIVITY_TYPE = [
   "signature_added",
   "ceo_approval",
   "project_closed",
+  "person_added",
 ] as const;
 export type ActivityType = (typeof ACTIVITY_TYPE)[number];
 
@@ -159,6 +161,14 @@ export interface Milestone {
   progress: number; // 0..100
 }
 
+/** A user-defined phase of a project's roadmap (name is free text, not an enum). */
+export interface ProjectPhaseItem {
+  id: string;
+  name: string;
+  startDate: string;
+  deadline: string | null;
+}
+
 export interface Workstream {
   id: string;
   title: string;
@@ -191,11 +201,13 @@ export interface Project {
   health: ProjectHealth;
   priority: Priority;
   phase: ProjectPhase;
+  /** User-defined roadmap phases (name/start/deadline) — see ProjectPhaseItem. */
+  phases: ProjectPhaseItem[];
   pmId: string;
   /** Not every project has an assigned owner yet — null means "unassigned", never an empty string. */
   poId: string | null;
   startDate: string;
-  targetDate: string;
+  targetDate: string | null;
   deliveryDate: string | null;
   closedDate: string | null;
   completion: number; // 0..100
@@ -221,9 +233,11 @@ export interface Participant {
 
 export interface Decision {
   id: string;
-  projectId: string;
-  meetingId: string;
-  text: string;
+  /** null when the source meeting belongs to a Meeting Space, not a project. */
+  projectId: string | null;
+  meetingId: string | null;
+  text: string; // decision title
+  description: string; // optional elaboration
   deciderId: string;
   date: string;
   area: string; // related topic/area, Persian
@@ -233,8 +247,9 @@ export interface Decision {
 
 export interface ActionItem {
   id: string;
-  projectId: string;
-  meetingId: string;
+  /** null when the source meeting belongs to a Meeting Space, not a project. */
+  projectId: string | null;
+  meetingId: string | null;
   title: string;
   description: string;
   ownerId: string | null; // personId or teamId — see Assignee in queries.ts
@@ -273,7 +288,8 @@ export interface Risk {
 
 export interface Blocker {
   id: string;
-  projectId: string;
+  /** null when the source meeting belongs to a Meeting Space, not a project. */
+  projectId: string | null;
   meetingId: string | null;
   title: string;
   description: string;
@@ -305,9 +321,14 @@ export interface Signature {
   revision: number; // meeting revision the signature attests to
 }
 
+/**
+ * A meeting is the same entity whether it belongs to a Project or an
+ * independent Meeting Space — exactly one of projectId/spaceId is set.
+ */
 export interface Meeting {
   id: string;
-  projectId: string;
+  projectId: string | null;
+  spaceId: string | null;
   sequence: number;
   title: string;
   date: string;
@@ -319,9 +340,9 @@ export interface Meeting {
   participants: Participant[];
   agenda: string[];
   discussion: string;
-  summary: string;
+  summary: string; // derived flat text (legacy display / review page)
+  summaryPoints: string[]; // structured summary items shown/edited as a list
   nextSteps: string[];
-  openQuestions: string[];
   createdById: string;
   createdAt: string;
   updatedAt: string;
@@ -351,6 +372,22 @@ export interface Activity {
   createdAt: string;
 }
 
+/**
+ * Meeting Space: an independent category of meetings that is not tied to a
+ * project (e.g. "جلسات داخلی سازمان"). It is a container only — the meetings
+ * inside it are ordinary Meeting records (spaceId set, projectId null), so
+ * creation, editing, decisions, actions, and approval all behave identically
+ * to project meetings.
+ */
+export interface MeetingSpace {
+  id: string;
+  name: string;
+  description: string;
+  ownerId: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 // ── The persisted database shape ────────────────────────────────────────────
 export interface Database {
   people: Person[];
@@ -366,4 +403,5 @@ export interface Database {
   signatures: Signature[];
   projectApprovals: ProjectApproval[];
   activities: Activity[];
+  meetingSpaces: MeetingSpace[];
 }

@@ -51,6 +51,8 @@ import {
   Slack,
   Global,
   Copy,
+  Element3,
+  RowVertical,
 } from "iconsax-react";
 
 /**
@@ -113,6 +115,8 @@ export const icons = {
   slack: Slack,
   globe: Global,
   copy: Copy,
+  grid: Element3,
+  table: RowVertical,
 } satisfies Record<string, IconsaxComponent>;
 
 export type IconName = keyof typeof icons;

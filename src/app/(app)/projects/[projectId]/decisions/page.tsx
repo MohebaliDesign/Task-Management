@@ -6,7 +6,7 @@ import { AddDecisionDialog } from "@/features/meetings/add-decision-dialog";
 import { DecisionCard } from "@/features/decisions/decision-card";
 import { DecisionsTable } from "@/features/decisions/decisions-table";
 import { DecisionsToolbar } from "@/features/decisions/decisions-toolbar";
-import { getProject, getDecisions, getMeetings, getPeople } from "@/lib/queries";
+import { getProject, getDecisions, getMeetings, getPeople, getActions } from "@/lib/queries";
 import type { RiskLevel } from "@/lib/domain";
 
 export default function DecisionsPage({
@@ -21,6 +21,7 @@ export default function DecisionsPage({
   const allDecisions = getDecisions(project.id); // newest first
   const meetings = getMeetings(project.id);
   const people = getPeople();
+  const actions = getActions(project.id);
   const readOnly = project.lifecycle === "closed";
 
   const q = (searchParams.q ?? "").trim();
@@ -40,7 +41,13 @@ export default function DecisionsPage({
         icon="decision"
         actions={
           !readOnly && meetings.length > 0 && (
-            <AddDecisionDialog projectId={project.id} meetings={meetings} people={people} triggerLabel="افزودن تصمیم جدید" />
+            <AddDecisionDialog
+              projectId={project.id}
+              meetings={meetings}
+              people={people}
+              unlinkedActions={actions.filter((a) => !a.relatedDecisionId)}
+              triggerLabel="افزودن تصمیم جدید"
+            />
           )
         }
       />
@@ -52,7 +59,13 @@ export default function DecisionsPage({
           action={
             !readOnly &&
             meetings.length > 0 && (
-              <AddDecisionDialog projectId={project.id} meetings={meetings} people={people} triggerLabel="ثبت تصمیم جدید" />
+              <AddDecisionDialog
+                projectId={project.id}
+                meetings={meetings}
+                people={people}
+                unlinkedActions={actions.filter((a) => !a.relatedDecisionId)}
+                triggerLabel="ثبت تصمیم جدید"
+              />
             )
           }
         />

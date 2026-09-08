@@ -17,9 +17,13 @@ import { AppIcon } from "@/components/icon";
 import { addDecision, type ActionResult } from "@/lib/actions";
 import { RISK_LEVEL } from "@/lib/domain";
 import { riskLevelLabels } from "@/lib/labels";
-import type { Meeting, Person } from "@/lib/domain";
+import type { ActionItem, Meeting, Person } from "@/lib/domain";
 
 const initial: ActionResult = { ok: false, error: "" };
+
+function todayIso() {
+  return new Date().toISOString().slice(0, 10);
+}
 
 /**
  * Used two ways: fixed to one meeting (from that meeting's page — meetingId
@@ -31,12 +35,14 @@ export function AddDecisionDialog({
   meetingId,
   meetings,
   people,
+  unlinkedActions,
   triggerLabel = "افزودن تصمیم",
 }: {
   projectId: string;
   meetingId?: string;
   meetings?: Meeting[];
   people: Person[];
+  unlinkedActions?: ActionItem[];
   triggerLabel?: string;
 }) {
   const router = useRouter();
@@ -81,14 +87,22 @@ export function AddDecisionDialog({
           <Field label="متن تصمیم" htmlFor="text" error={errs.text} required>
             <Textarea id="text" name="text" rows={3} aria-invalid={!!errs.text} />
           </Field>
-          <Field label="تصمیم‌گیرنده" htmlFor="deciderId" error={errs.deciderId} required>
-            <Select name="deciderId">
-              <SelectTrigger id="deciderId"><SelectValue placeholder="انتخاب کنید" /></SelectTrigger>
-              <SelectContent>
-                {people.map((p) => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
-              </SelectContent>
-            </Select>
+          <Field label="توضیحات (اختیاری)" htmlFor="description" error={errs.description}>
+            <Textarea id="description" name="description" rows={2} />
           </Field>
+          <div className="grid grid-cols-2 gap-4">
+            <Field label="تصمیم‌گیرنده" htmlFor="deciderId" error={errs.deciderId} required>
+              <Select name="deciderId">
+                <SelectTrigger id="deciderId"><SelectValue placeholder="انتخاب کنید" /></SelectTrigger>
+                <SelectContent>
+                  {people.map((p) => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </Field>
+            <Field label="تاریخ" htmlFor="date" error={errs.date} required>
+              <Input id="date" name="date" type="date" defaultValue={todayIso()} className="latin-nums" />
+            </Field>
+          </div>
           <div className="grid grid-cols-2 gap-4">
             <Field label="حوزهٔ مرتبط" htmlFor="area" error={errs.area}>
               <Input id="area" name="area" defaultValue="عمومی" />
@@ -100,6 +114,18 @@ export function AddDecisionDialog({
               </Select>
             </Field>
           </div>
+          {unlinkedActions && unlinkedActions.length > 0 && (
+            <Field label="اقدامات مرتبط (اختیاری)" hint="اقدام‌های موجود بدون تصمیم مرتبط را می‌توانید به این تصمیم پیوند دهید.">
+              <div className="max-h-32 space-y-2 overflow-y-auto rounded-md border border-input p-2.5">
+                {unlinkedActions.map((a) => (
+                  <label key={a.id} className="flex items-center gap-2 text-sm">
+                    <input type="checkbox" name="relatedActionIds" value={a.id} className="h-4 w-4 rounded border-input accent-primary" />
+                    <span className="truncate">{a.title}</span>
+                  </label>
+                ))}
+              </div>
+            </Field>
+          )}
           <DialogFooter>
             <DialogClose asChild>
               <Button type="button" variant="ghost">انصراف</Button>

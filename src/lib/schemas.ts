@@ -11,15 +11,46 @@ import {
 
 const req = (msg: string) => z.string().trim().min(1, msg);
 
+/** Parse a JSON-encoded array (submitted via a hidden input) into a validated list. */
+function jsonArray<T extends z.ZodTypeAny>(
+  itemSchema: T,
+  opts?: { min?: number; minMsg?: string },
+) {
+  let arr = z.array(itemSchema);
+  if (opts?.min) arr = arr.min(opts.min, opts.minMsg ?? "حداقل یک مورد اضافه کنید");
+  return z
+    .string()
+    .optional()
+    .default("[]")
+    .transform((s, ctx) => {
+      try {
+        return JSON.parse(s && s.length > 0 ? s : "[]");
+      } catch {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: "قالب داده نامعتبر است" });
+        return z.NEVER;
+      }
+    })
+    .pipe(arr);
+}
+
+// ── Projects ────────────────────────────────────────────────────────────────
+const projectPhaseItemSchema = z.object({
+  name: req("نام فاز را وارد کنید").max(80),
+  startDate: req("تاریخ شروع فاز را وارد کنید"),
+  deadline: z.string().trim().optional().default(""),
+});
+
 export const createProjectSchema = z.object({
   name: req("نام پروژه را وارد کنید").max(80, "نام پروژه طولانی است"),
   versionNumber: z.coerce.number().int().min(1).max(99),
+  previousVersionId: z.string().trim().optional().default(""),
   pmId: req("مدیر پروژه را انتخاب کنید"),
-  poId: req("مالک محصول را انتخاب کنید"),
+  poId: z.string().trim().optional().default(""),
   priority: z.enum(PRIORITY),
-  phase: z.enum(PROJECT_PHASE),
+  phase: z.enum(PROJECT_PHASE).optional().default("discovery"),
+  phasesJson: jsonArray(projectPhaseItemSchema),
   startDate: req("تاریخ شروع را وارد کنید"),
-  targetDate: req("مهلت هدف را وارد کنید"),
+  targetDate: z.string().trim().optional().default(""),
   statusSummary: z.string().trim().max(400).optional().default(""),
   executiveSummary: z.string().trim().max(1000).optional().default(""),
   currentFocus: z.string().trim().max(300).optional().default(""),
@@ -34,43 +65,118 @@ export const updateProjectStateSchema = z.object({
   statusSummary: z.string().trim().max(400),
   currentFocus: z.string().trim().max(300),
   nextMilestone: z.string().trim().max(200),
-  targetDate: req("مهلت هدف را وارد کنید"),
+  targetDate: z.string().trim().optional().default(""),
 });
 export type UpdateProjectStateInput = z.infer<typeof updateProjectStateSchema>;
 
-export const createMeetingSchema = z.object({
+export const updateProjectInfoSchema = z.object({
   projectId: req("شناسهٔ پروژه لازم است"),
+  name: req("نام پروژه را وارد کنید").max(80, "نام پروژه طولانی است"),
+  pmId: req("مدیر پروژه را انتخاب کنید"),
+  poId: z.string().trim().optional().default(""),
+  phase: z.enum(PROJECT_PHASE),
+  priority: z.enum(PRIORITY),
+});
+export type UpdateProjectInfoInput = z.infer<typeof updateProjectInfoSchema>;
+
+// ── People (inline "+ افزودن فرد جدید" creation) ────────────────────────────
+export const createPersonSchema = z.object({
+  name: req("نام فرد را وارد کنید").max(80),
+  role: z.enum(ROLE),
+});
+export type CreatePersonInput = z.infer<typeof createPersonSchema>;
+
+// ── Meetings ────────────────────────────────────────────────────────────────
+const participantDraftSchema = z.object({
+  personId: req("شرکت‌کننده نامعتبر است"),
+  attended: z.boolean().optional().default(true),
+});
+
+const decisionDraftSchema = z.object({
+  id: z.string().trim().optional(),
+  text: req("عنوان تصمیم را وارد کنید").max(200),
+  description: z.string().trim().max(500).optional().default(""),
+  deciderId: req("مسئول تصمیم را انتخاب کنید"),
+  area: z.string().trim().max(60).optional().default("عمومی"),
+});
+export type DecisionDraft = z.infer<typeof decisionDraftSchema>;
+
+const actionDraftSchema = z.object({
+  id: z.string().trim().optional(),
+  title: req("عنوان اقدام را وارد کنید").max(160),
+  ownerId: req("مسئول اقدام را انتخاب کنید"),
+  deadline: z.string().trim().optional().default(""),
+  priority: z.enum(PRIORITY),
+  status: z.enum(ACTION_STATUS).optional().default("not_started"),
+  relatedDecisionIndex: z.number().int().min(0).optional(),
+});
+export type ActionDraft = z.infer<typeof actionDraftSchema>;
+
+const blockerDraftSchema = z.object({
+  id: z.string().trim().optional(),
+  title: req("عنوان مانع را وارد کنید").max(240),
+  description: z.string().trim().max(500).optional().default(""),
+  ownerId: z.string().trim().optional().default(""),
+});
+export type BlockerDraft = z.infer<typeof blockerDraftSchema>;
+
+/**
+ * Shared by project meetings and Meeting Space meetings — same fields, same
+ * validation, same sections, regardless of context. Exactly one of
+ * projectId/spaceId identifies where the meeting lives.
+ */
+const meetingCoreSchema = z.object({
+  projectId: z.string().trim().optional().default(""),
+  spaceId: z.string().trim().optional().default(""),
   title: req("عنوان جلسه را وارد کنید").max(120),
   date: req("تاریخ جلسه را وارد کنید"),
   time: z.string().trim().default("10:00"),
   location: z.string().trim().max(120).optional().default(""),
-  participantIds: z.array(z.string()).min(1, "حداقل یک شرکت‌کننده انتخاب کنید"),
+  participantsJson: jsonArray(participantDraftSchema, { min: 1, minMsg: "حداقل یک شرکت‌کننده انتخاب کنید" }),
   agenda: z.string().trim().optional().default(""),
   discussion: z.string().trim().max(4000).optional().default(""),
-  summary: req("خلاصهٔ جلسه را وارد کنید").max(2000),
+  summaryPointsJson: jsonArray(z.string().trim().min(1).max(300), { min: 1, minMsg: "حداقل یک مورد برای خلاصهٔ جلسه اضافه کنید" }),
   nextSteps: z.string().trim().optional().default(""),
-  openQuestions: z.string().trim().optional().default(""),
+  decisionsJson: jsonArray(decisionDraftSchema),
+  actionsJson: jsonArray(actionDraftSchema),
+  blockersJson: jsonArray(blockerDraftSchema),
+}).refine((v) => !!v.projectId || !!v.spaceId, {
+  message: "زمینهٔ جلسه (پروژه یا دستهٔ جلسات) مشخص نیست",
+  path: ["projectId"],
 });
+
+export const createMeetingSchema = meetingCoreSchema;
 export type CreateMeetingInput = z.infer<typeof createMeetingSchema>;
 
+export const updateMeetingSchema = z.intersection(
+  meetingCoreSchema,
+  z.object({ meetingId: req("شناسهٔ جلسه لازم است") }),
+);
+export type UpdateMeetingInput = z.infer<typeof updateMeetingSchema>;
+
+// ── Decisions / Actions / Dependencies ──────────────────────────────────────
 export const addDecisionSchema = z.object({
   projectId: req("شناسهٔ پروژه لازم است"),
-  meetingId: req("شناسهٔ جلسه لازم است"),
+  meetingId: z.string().trim().optional().default(""),
   text: req("متن تصمیم را وارد کنید").max(500),
+  description: z.string().trim().max(500).optional().default(""),
   deciderId: req("تصمیم‌گیرنده را انتخاب کنید"),
+  date: req("تاریخ تصمیم را وارد کنید"),
   area: z.string().trim().max(60).optional().default("عمومی"),
   impact: z.enum(RISK_LEVEL).optional().default("medium"),
+  relatedActionIds: z.array(z.string()).optional().default([]),
 });
 
 export const addActionSchema = z.object({
   projectId: req("شناسهٔ پروژه لازم است"),
-  meetingId: req("شناسهٔ جلسه لازم است"),
+  meetingId: z.string().trim().optional().default(""),
   title: req("عنوان اقدام را وارد کنید").max(160),
   description: z.string().trim().max(600).optional().default(""),
   ownerId: z.string().trim().optional().default(""),
   deadline: z.string().trim().optional().default(""),
   priority: z.enum(PRIORITY),
   relatedDecisionId: z.string().trim().optional().default(""),
+  blockingActionId: z.string().trim().optional().default(""),
 });
 
 export const updateActionStatusSchema = z.object({
@@ -129,6 +235,14 @@ export const signMeetingSchema = z.object({
   decision: z.enum(["approved", "changes_requested"]),
   comment: z.string().trim().max(600).optional().default(""),
 });
+
+// ── Meeting Spaces (organization meetings, independent of a project) ───────
+export const createMeetingSpaceSchema = z.object({
+  name: req("نام دستهٔ جلسات را وارد کنید").max(80, "نام دستهٔ جلسات طولانی است"),
+  description: z.string().trim().max(400).optional().default(""),
+  ownerId: req("مسئول دسته را انتخاب کنید"),
+});
+export type CreateMeetingSpaceInput = z.infer<typeof createMeetingSpaceSchema>;
 
 export const closeProjectSchema = z.object({
   projectId: req("شناسهٔ پروژه لازم است"),

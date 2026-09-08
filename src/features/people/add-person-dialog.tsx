@@ -1,77 +1,80 @@
 "use client";
 
 import * as React from "react";
-import { useFormState } from "react-dom";
-import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
-  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogClose,
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogClose,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Field } from "@/components/form/field";
-import { SubmitButton } from "@/components/form/submit-button";
-import { AppIcon } from "@/components/icon";
-import { addPerson, type ActionResult } from "@/lib/actions";
-import { ROLE, type Team } from "@/lib/domain";
+import { createPerson } from "@/lib/actions";
+import { ROLE } from "@/lib/domain";
 import { roleLabels } from "@/lib/labels";
+import type { Person } from "@/lib/domain";
 
-const initial: ActionResult = { ok: false, error: "" };
-const NO_TEAM = "none";
+/**
+ * Lightweight "add a new person" dialog reused wherever a person select
+ * offers "+ افزودن فرد جدید" (project responsibility, meeting participants…).
+ * Fully client-driven: calls createPerson directly and hands the new Person
+ * back to the caller, which is responsible for making it selectable.
+ */
+export function AddPersonDialog({
+  open,
+  onOpenChange,
+  onCreated,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onCreated: (person: Person) => void;
+}) {
+  const [pending, setPending] = React.useState(false);
+  const [error, setError] = React.useState("");
+  const [role, setRole] = React.useState<string>("member");
+  const nameRef = React.useRef<HTMLInputElement>(null);
 
-export function AddPersonDialog({ teams }: { teams: Team[] }) {
-  const router = useRouter();
-  const [open, setOpen] = React.useState(false);
-  const [state, formAction] = useFormState(addPerson, initial);
-  const errs = state.ok ? {} : state.fieldErrors ?? {};
-
-  React.useEffect(() => {
-    if (state.ok) { toast.success("فرد ثبت شد."); setOpen(false); router.refresh(); }
-  }, [state, router]);
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setError("");
+    setPending(true);
+    const fd = new FormData(e.currentTarget);
+    const res = await createPerson(fd);
+    setPending(false);
+    if (res.ok) {
+      toast.success("فرد جدید افزوده شد.");
+      onCreated(res.person);
+      setRole("member");
+    } else {
+      setError(res.error);
+    }
+  }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button size="sm"><AppIcon name="add" size={16} /> افزودن فرد</Button>
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>افزودن فرد</DialogTitle>
-          <DialogDescription>فرد جدید به فهرست افراد سازمان اضافه می‌شود.</DialogDescription>
+          <DialogTitle>افزودن فرد جدید</DialogTitle>
+          <DialogDescription>فرد افزوده‌شده بلافاصله در فهرست انتخاب قابل‌دسترس خواهد بود.</DialogDescription>
         </DialogHeader>
-        <form action={formAction} className="space-y-4">
-          <Field label="نام کامل" htmlFor="name" error={errs.name} required>
-            <Input id="name" name="name" aria-invalid={!!errs.name} />
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <Field label="نام" htmlFor="new-person-name" required>
+            <Input id="new-person-name" name="name" ref={nameRef} autoFocus placeholder="نام و نام خانوادگی" required />
           </Field>
-          <div className="grid grid-cols-2 gap-4">
-            <Field label="سمت سازمانی" htmlFor="title" error={errs.title} required>
-              <Input id="title" name="title" placeholder="مثلاً مهندس بک‌اند" aria-invalid={!!errs.title} />
-            </Field>
-            <Field label="نقش" htmlFor="role" error={errs.role} required>
-              <Select name="role" defaultValue="member">
-                <SelectTrigger id="role"><SelectValue /></SelectTrigger>
-                <SelectContent>{ROLE.map((r) => <SelectItem key={r} value={r}>{roleLabels[r]}</SelectItem>)}</SelectContent>
-              </Select>
-            </Field>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <Field label="ایمیل" htmlFor="email" error={errs.email}>
-              <Input id="email" name="email" type="email" dir="ltr" className="text-end" />
-            </Field>
-            <Field label="تیم" htmlFor="teamId" error={errs.teamId}>
-              <Select name="teamId" defaultValue={NO_TEAM}>
-                <SelectTrigger id="teamId"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={NO_TEAM}>بدون تیم</SelectItem>
-                  {teams.map((t) => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </Field>
-          </div>
+          <Field label="نقش" htmlFor="new-person-role" required>
+            <Select name="role" value={role} onValueChange={setRole}>
+              <SelectTrigger id="new-person-role"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {ROLE.map((r) => <SelectItem key={r} value={r}>{roleLabels[r]}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </Field>
+          {error && <p className="text-xs font-medium text-destructive-text">{error}</p>}
           <DialogFooter>
-            <DialogClose asChild><Button type="button" variant="ghost">انصراف</Button></DialogClose>
-            <SubmitButton icon="add">ثبت فرد</SubmitButton>
+            <DialogClose asChild>
+              <Button type="button" variant="ghost">انصراف</Button>
+            </DialogClose>
+            <Button type="submit" disabled={pending}>{pending ? "در حال افزودن…" : "افزودن فرد"}</Button>
           </DialogFooter>
         </form>
       </DialogContent>

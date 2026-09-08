@@ -13,6 +13,8 @@ import type {
   Signature,
   ProjectApproval,
   Activity,
+  MeetingSpace,
+  Participant,
 } from "./domain";
 
 /**
@@ -77,6 +79,7 @@ const leili1: Project = {
   health: "on_track",
   priority: "high",
   phase: "maintenance",
+  phases: [],
   pmId: "p_sara",
   poId: "p_reza",
   startDate: daysAgo(400),
@@ -129,6 +132,7 @@ const leili2: Project = {
   health: "at_risk",
   priority: "critical",
   phase: "development",
+  phases: [],
   pmId: "p_sara",
   poId: "p_reza",
   startDate: daysAgo(75),
@@ -191,7 +195,7 @@ function faShort(iso: string): string {
 
 // Meeting 1 — approved
 const l2m1: Meeting = {
-  id: "mtg_l2_1", projectId: "prj_leili2", sequence: 1,
+  id: "mtg_l2_1", projectId: "prj_leili2", spaceId: null, sequence: 1,
   title: "جلسهٔ آغازین نسخه ۲", date: daysAgo(70), time: "10:00", location: "اتاق جلسات مرکزی",
   status: "approved", revision: 2, source: "manual",
   participants: [
@@ -203,14 +207,14 @@ const l2m1: Meeting = {
   discussion:
     "دامنهٔ نسخهٔ دوم شامل گزارش‌گیری پیشرفته و دسترسی نقش‌محور تأیید شد. تیم دربارهٔ اولویت‌بندی قابلیت‌ها و ظرفیت تیم طراحی گفت‌وگو کرد.",
   summary: "دامنه و نقاط‌عطف نسخه ۲ نهایی شد و مسئولیت جریان‌های کاری مشخص گردید.",
+  summaryPoints: ["دامنهٔ نسخه ۲ نهایی شد.", "نقاط‌عطف کلان تعیین شد.", "مسئولیت جریان‌های کاری مشخص گردید."],
   nextSteps: ["آماده‌سازی معماری فنی", "تهیهٔ طرح اولیهٔ داشبورد"],
-  openQuestions: ["آیا خروجی گزارش باید از قالب PDF نیز پشتیبانی کند؟"],
   createdById: "p_sara", createdAt: daysAgo(70), updatedAt: daysAgo(68), reviewToken: "rev-l2m1-8f3a",
 };
 meetings.push(l2m1);
 decisions.push(
-  { id: "dec_l2_1", projectId: "prj_leili2", meetingId: "mtg_l2_1", text: "دامنهٔ نسخه ۲ به گزارش‌گیری پیشرفته و دسترسی نقش‌محور محدود می‌شود.", deciderId: "p_reza", date: daysAgo(70), area: "دامنه", impact: "high", createdAt: daysAgo(70) },
-  { id: "dec_l2_2", projectId: "prj_leili2", meetingId: "mtg_l2_1", text: "بازطراحی رابط کاربری بر پایهٔ سیستم طراحی جدید سازمان انجام می‌شود.", deciderId: "p_mina", date: daysAgo(70), area: "طراحی", impact: "medium", createdAt: daysAgo(70) },
+  { id: "dec_l2_1", projectId: "prj_leili2", meetingId: "mtg_l2_1", text: "دامنهٔ نسخه ۲ به گزارش‌گیری پیشرفته و دسترسی نقش‌محور محدود می‌شود.", description: "", deciderId: "p_reza", date: daysAgo(70), area: "دامنه", impact: "high", createdAt: daysAgo(70) },
+  { id: "dec_l2_2", projectId: "prj_leili2", meetingId: "mtg_l2_1", text: "بازطراحی رابط کاربری بر پایهٔ سیستم طراحی جدید سازمان انجام می‌شود.", description: "", deciderId: "p_mina", date: daysAgo(70), area: "طراحی", impact: "medium", createdAt: daysAgo(70) },
 );
 actions.push(
   { id: "act_l2_1", projectId: "prj_leili2", meetingId: "mtg_l2_1", title: "تهیهٔ سند معماری موتور گزارش", description: "طراحی معماری تجمیع داده و لایهٔ خروجی.", ownerId: "p_nima", deadline: daysAgo(45), status: "done", priority: "high", relatedDecisionId: "dec_l2_1", createdAt: daysAgo(70), updatedAt: daysAgo(46), completedAt: daysAgo(46), note: "" },
@@ -226,7 +230,7 @@ logActivity({ projectId: "prj_leili2", meetingId: "mtg_l2_1", type: "meeting_app
 
 // Meeting 2 — approved
 const l2m2: Meeting = {
-  id: "mtg_l2_2", projectId: "prj_leili2", sequence: 2,
+  id: "mtg_l2_2", projectId: "prj_leili2", spaceId: null, sequence: 2,
   title: "بازبینی میان‌دوره‌ای پیشرفت", date: daysAgo(28), time: "14:30", location: "آنلاین",
   status: "approved", revision: 1, source: "manual",
   participants: [
@@ -238,12 +242,12 @@ const l2m2: Meeting = {
   discussion:
     "معماری موتور گزارش تکمیل شد. تیم دربارهٔ ریسک وابستگی به سرویس احراز هویت خارجی هشدار داد و تصمیم به تهیهٔ راهکار جایگزین گرفت.",
   summary: "پیشرفت جریان‌های کاری بررسی و ریسک وابستگی احراز هویت به‌عنوان اولویت شناسایی شد.",
+  summaryPoints: ["پیشرفت جریان‌های کاری بررسی شد.", "ریسک وابستگی احراز هویت به‌عنوان اولویت شناسایی شد."],
   nextSteps: ["بررسی راهکار جایگزین احراز هویت", "آغاز پیاده‌سازی موتور گزارش"],
-  openQuestions: [],
   createdById: "p_sara", createdAt: daysAgo(28), updatedAt: daysAgo(27), reviewToken: "rev-l2m2-2c19",
 };
 meetings.push(l2m2);
-decisions.push({ id: "dec_l2_3", projectId: "prj_leili2", meetingId: "mtg_l2_2", text: "برای کاهش ریسک، یک راهکار جایگزین برای سرویس احراز هویت بررسی و آماده‌سازی می‌شود.", deciderId: "p_sara", date: daysAgo(28), area: "وابستگی‌ها", impact: "high", createdAt: daysAgo(28) });
+decisions.push({ id: "dec_l2_3", projectId: "prj_leili2", meetingId: "mtg_l2_2", text: "برای کاهش ریسک، یک راهکار جایگزین برای سرویس احراز هویت بررسی و آماده‌سازی می‌شود.", description: "", deciderId: "p_sara", date: daysAgo(28), area: "وابستگی‌ها", impact: "high", createdAt: daysAgo(28) });
 actions.push(
   { id: "act_l2_4", projectId: "prj_leili2", meetingId: "mtg_l2_2", title: "پیاده‌سازی هستهٔ موتور گزارش", description: "توسعهٔ منطق تجمیع و خروجی تحلیلی.", ownerId: "tm_eng", deadline: daysAhead(10), status: "in_progress", priority: "critical", relatedDecisionId: "dec_l2_3", createdAt: daysAgo(28), updatedAt: daysAgo(1), completedAt: null, note: "" },
   { id: "act_l2_5", projectId: "prj_leili2", meetingId: "mtg_l2_2", title: "ارزیابی راهکار جایگزین احراز هویت", description: "مقایسهٔ دو سرویس جایگزین و ارائهٔ پیشنهاد.", ownerId: "p_omid", deadline: daysAhead(3), status: "blocked", priority: "high", relatedDecisionId: "dec_l2_3", createdAt: daysAgo(28), updatedAt: daysAgo(2), completedAt: null, note: "" },
@@ -255,7 +259,7 @@ logActivity({ projectId: "prj_leili2", meetingId: "mtg_l2_2", type: "meeting_app
 
 // Meeting 3 — awaiting signatures (the review-flow demo)
 const l2m3: Meeting = {
-  id: "mtg_l2_3", projectId: "prj_leili2", sequence: 3,
+  id: "mtg_l2_3", projectId: "prj_leili2", spaceId: null, sequence: 3,
   title: "جلسهٔ هفتگی هماهنگی", date: daysAgo(4), time: "11:00", location: "اتاق جلسات مرکزی",
   status: "awaiting_signatures", revision: 1, source: "manual",
   participants: [
@@ -268,14 +272,18 @@ const l2m3: Meeting = {
     "سرویس احراز هویت خارجی همچنان مسدودکننده است و اقدام ارزیابی جایگزین را متوقف کرده. تیم طراحی به دلیل کمبود نیرو از زمان‌بندی عقب است. تصمیم گرفته شد یک نیروی طراحی موقت اضافه شود و مهلت نقطه‌عطف انتشار آزمایشی بازنگری گردد.",
   summary:
     "برای جبران عقب‌ماندگی طراحی، افزودن نیروی موقت تصویب شد و مهلت انتشار آزمایشی داخلی بازنگری گردید. رفع وابستگی احراز هویت به بالاترین اولویت ارتقا یافت.",
+  summaryPoints: [
+    "برای جبران عقب‌ماندگی طراحی، افزودن نیروی موقت تصویب شد.",
+    "مهلت انتشار آزمایشی داخلی بازنگری گردید.",
+    "رفع وابستگی احراز هویت به بالاترین اولویت ارتقا یافت.",
+  ],
   nextSteps: ["افزودن نیروی طراحی موقت", "پیگیری فوری رفع وابستگی احراز هویت"],
-  openQuestions: ["آیا بودجهٔ نیروی موقت از محل نسخه ۲ تأمین می‌شود؟"],
   createdById: "p_sara", createdAt: daysAgo(4), updatedAt: daysAgo(3), reviewToken: "rev-l2m3-review",
 };
 meetings.push(l2m3);
 decisions.push(
-  { id: "dec_l2_4", projectId: "prj_leili2", meetingId: "mtg_l2_3", text: "یک نیروی طراحی موقت برای جبران عقب‌ماندگی جریان بازطراحی رابط کاربری اضافه می‌شود.", deciderId: "p_sara", date: daysAgo(4), area: "منابع", impact: "high", createdAt: daysAgo(4) },
-  { id: "dec_l2_5", projectId: "prj_leili2", meetingId: "mtg_l2_3", text: "مهلت نقطه‌عطف «انتشار نسخهٔ آزمایشی داخلی» به دلیل وابستگی احراز هویت بازنگری می‌شود.", deciderId: "p_reza", date: daysAgo(4), area: "زمان‌بندی", impact: "high", createdAt: daysAgo(4) },
+  { id: "dec_l2_4", projectId: "prj_leili2", meetingId: "mtg_l2_3", text: "یک نیروی طراحی موقت برای جبران عقب‌ماندگی جریان بازطراحی رابط کاربری اضافه می‌شود.", description: "", deciderId: "p_sara", date: daysAgo(4), area: "منابع", impact: "high", createdAt: daysAgo(4) },
+  { id: "dec_l2_5", projectId: "prj_leili2", meetingId: "mtg_l2_3", text: "مهلت نقطه‌عطف «انتشار نسخهٔ آزمایشی داخلی» به دلیل وابستگی احراز هویت بازنگری می‌شود.", description: "", deciderId: "p_reza", date: daysAgo(4), area: "زمان‌بندی", impact: "high", createdAt: daysAgo(4) },
 );
 actions.push(
   { id: "act_l2_6", projectId: "prj_leili2", meetingId: "mtg_l2_3", title: "جذب نیروی طراحی موقت", description: "هماهنگی با منابع انسانی برای یک قرارداد کوتاه‌مدت طراحی.", ownerId: "p_mina", deadline: daysAhead(7), status: "not_started", priority: "high", relatedDecisionId: "dec_l2_4", createdAt: daysAgo(4), updatedAt: daysAgo(4), completedAt: null, note: "" },
@@ -322,6 +330,7 @@ const ava: Project = {
   health: "on_track",
   priority: "medium",
   phase: "design",
+  phases: [],
   pmId: "p_reza",
   poId: "p_sara",
   startDate: daysAgo(40),
@@ -363,20 +372,20 @@ const ava: Project = {
 logActivity({ projectId: "prj_ava", meetingId: null, type: "project_created", actorId: "p_reza", actorName: "رضا کاظمی", entityLabel: "آوا — نسخه ۱", previousValue: null, newValue: "فعال", createdAt: daysAgo(40) });
 
 const avm1: Meeting = {
-  id: "mtg_av_1", projectId: "prj_ava", sequence: 1,
+  id: "mtg_av_1", projectId: "prj_ava", spaceId: null, sequence: 1,
   title: "جلسهٔ تعیین دامنه", date: daysAgo(38), time: "09:30", location: "آنلاین",
   status: "approved", revision: 1, source: "manual",
   participants: [{ personId: "p_reza", attended: true }, { personId: "p_mina", attended: true }, { personId: "p_leila", attended: true }],
   agenda: ["تعریف شخصیت‌های کاربری", "تعیین جریان‌های اصلی"],
   discussion: "شخصیت‌های کاربری و سه جریان اصلی کاربری تعریف شد.",
   summary: "دامنهٔ اولیهٔ آوا و جریان‌های اصلی کاربری مشخص شد.",
+  summaryPoints: ["دامنهٔ اولیهٔ آوا مشخص شد.", "جریان‌های اصلی کاربری تعریف شد."],
   nextSteps: ["تهیهٔ نمونهٔ اولیهٔ تعاملی"],
-  openQuestions: [],
   createdById: "p_reza", createdAt: daysAgo(38), updatedAt: daysAgo(37), reviewToken: "rev-avm1-77d0",
 };
 meetings.push(avm1);
-decisions.push({ id: "dec_av_1", projectId: "prj_ava", meetingId: "mtg_av_1", text: "آوا در فاز اول تنها بر مدیریت وظایف فردی تمرکز می‌کند.", deciderId: "p_reza", date: daysAgo(38), area: "دامنه", impact: "medium", createdAt: daysAgo(38) });
-actions.push({ id: "act_av_1", projectId: "prj_ava", meetingId: "mtg_av_1", title: "تهیهٔ نمونهٔ اولیهٔ تعاملی", description: "ساخت پروتوتایپ سه جریان اصلی.", ownerId: "p_mina", deadline: daysAhead(12), status: "in_progress", priority: "medium", relatedDecisionId: "dec_av_1", createdAt: daysAgo(38), updatedAt: daysAgo(7), completedAt: null , note: ""});
+decisions.push({ id: "dec_av_1", projectId: "prj_ava", meetingId: "mtg_av_1", text: "آوا در فاز اول تنها بر مدیریت وظایف فردی تمرکز می‌کند.", description: "", deciderId: "p_reza", date: daysAgo(38), area: "دامنه", impact: "medium", createdAt: daysAgo(38) });
+actions.push({ id: "act_av_1", projectId: "prj_ava", meetingId: "mtg_av_1", title: "تهیهٔ نمونهٔ اولیهٔ تعاملی", description: "ساخت پروتوتایپ سه جریان اصلی.", ownerId: "p_mina", deadline: daysAhead(12), status: "in_progress", priority: "medium", relatedDecisionId: "dec_av_1", createdAt: daysAgo(38), updatedAt: daysAgo(7), completedAt: null, note: "" });
 signatures.push({ id: "sig_av_1", meetingId: "mtg_av_1", approverId: "p_mina", approverName: "مینا شریفی", role: "team_lead", status: "approved", comment: "", signedAt: daysAgo(36), revision: 1 });
 logActivity({ projectId: "prj_ava", meetingId: "mtg_av_1", type: "meeting_created", actorId: "p_reza", actorName: "رضا کاظمی", entityLabel: "جلسهٔ تعیین دامنه", previousValue: null, newValue: "پیش‌نویس", createdAt: daysAgo(38) });
 
@@ -393,6 +402,7 @@ const sam: Project = {
   health: "off_track",
   priority: "high",
   phase: "development",
+  phases: [],
   pmId: "p_sara",
   poId: null, // مالک محصول هنوز برای این پروژه تعیین نشده است
   startDate: daysAgo(120),
@@ -427,20 +437,20 @@ logActivity({ projectId: "prj_sam", meetingId: null, type: "project_created", ac
 logActivity({ projectId: "prj_sam", meetingId: null, type: "health_changed", actorId: "p_sara", actorName: "سارا احمدی", entityLabel: "سلامت پروژه", previousValue: "در معرض خطر", newValue: "خارج از مسیر", createdAt: daysAgo(5) });
 
 const smm1: Meeting = {
-  id: "mtg_sm_1", projectId: "prj_sam", sequence: 1,
+  id: "mtg_sm_1", projectId: "prj_sam", spaceId: null, sequence: 1,
   title: "جلسهٔ اضطراری بررسی موانع", date: daysAgo(3), time: "16:00", location: "اتاق جلسات مرکزی",
   status: "ready_for_review", revision: 1, source: "manual",
   participants: [{ personId: "p_sara", attended: true }, { personId: "p_omid", attended: true }, { personId: "p_hassan", attended: true }],
   agenda: ["بررسی موانع یکپارچه‌سازی", "تصمیم دربارهٔ مهلت"],
   discussion: "دو مانع فنی در اتصال به درگاه بانکی شناسایی شد. تیم پیشنهاد بازتعریف مهلت را مطرح کرد.",
   summary: "موانع یکپارچه‌سازی پرداخت بررسی و پیشنهاد بازتعریف مهلت برای تأیید مدیریت آماده شد.",
+  summaryPoints: ["موانع یکپارچه‌سازی پرداخت بررسی شد.", "پیشنهاد بازتعریف مهلت برای تأیید مدیریت آماده شد."],
   nextSteps: ["پیگیری رفع موانع با تیم بانک", "ارائهٔ مهلت جدید پیشنهادی"],
-  openQuestions: ["آیا امکان تمدید مهلت وجود دارد؟"],
   createdById: "p_sara", createdAt: daysAgo(3), updatedAt: daysAgo(3), reviewToken: "rev-smm1-a4e1",
 };
 meetings.push(smm1);
-decisions.push({ id: "dec_sm_1", projectId: "prj_sam", meetingId: "mtg_sm_1", text: "پیشنهاد بازتعریف مهلت پروژه برای تصمیم‌گیری به جلسهٔ مدیریت ارجاع می‌شود.", deciderId: "p_sara", date: daysAgo(3), area: "زمان‌بندی", impact: "high", createdAt: daysAgo(3) });
-actions.push({ id: "act_sm_1", projectId: "prj_sam", meetingId: "mtg_sm_1", title: "پیگیری رفع موانع درگاه پرداخت", description: "هماهنگی با تیم فنی بانک برای رفع دو خطای اتصال.", ownerId: "p_omid", deadline: daysAhead(4), status: "blocked", priority: "critical", relatedDecisionId: "dec_sm_1", createdAt: daysAgo(3), updatedAt: daysAgo(1), completedAt: null , note: ""});
+decisions.push({ id: "dec_sm_1", projectId: "prj_sam", meetingId: "mtg_sm_1", text: "پیشنهاد بازتعریف مهلت پروژه برای تصمیم‌گیری به جلسهٔ مدیریت ارجاع می‌شود.", description: "", deciderId: "p_sara", date: daysAgo(3), area: "زمان‌بندی", impact: "high", createdAt: daysAgo(3) });
+actions.push({ id: "act_sm_1", projectId: "prj_sam", meetingId: "mtg_sm_1", title: "پیگیری رفع موانع درگاه پرداخت", description: "هماهنگی با تیم فنی بانک برای رفع دو خطای اتصال.", ownerId: "p_omid", deadline: daysAhead(4), status: "blocked", priority: "critical", relatedDecisionId: "dec_sm_1", createdAt: daysAgo(3), updatedAt: daysAgo(1), completedAt: null, note: "" });
 blockers.push(
   { id: "blk_sm_1", projectId: "prj_sam", meetingId: "mtg_sm_1", title: "خطای اعتبارسنجی گواهی درگاه بانکی", description: "گواهی TLS درگاه بانکی در محیط آزمایشی نامعتبر است.", status: "open", ownerId: "p_omid", raisedDate: daysAgo(7), resolvedDate: null, note: "درخواست صدور گواهی جدید برای محیط آزمایشی ارسال شد." },
   { id: "blk_sm_2", projectId: "prj_sam", meetingId: "mtg_sm_1", title: "نبود مستندات نسخهٔ جدید API بانک", description: "مستندات نسخهٔ جدید API پرداخت هنوز منتشر نشده است.", status: "open", ownerId: "p_hassan", raisedDate: daysAgo(4), resolvedDate: null, note: "" },
@@ -448,6 +458,78 @@ blockers.push(
 risks.push({ id: "rsk_sm_1", projectId: "prj_sam", meetingId: "mtg_sm_1", title: "عدم تمدید مهلت می‌تواند به تحویل ناقص منجر شود.", impact: "high", probability: "medium", status: "open", ownerId: "p_sara", mitigation: "ارائهٔ برنامهٔ زمان‌بندی جایگزین به مدیریت.", createdAt: daysAgo(3) });
 logActivity({ projectId: "prj_sam", meetingId: "mtg_sm_1", type: "meeting_created", actorId: "p_sara", actorName: "سارا احمدی", entityLabel: "جلسهٔ اضطراری بررسی موانع", previousValue: null, newValue: "پیش‌نویس", createdAt: daysAgo(3) });
 logActivity({ projectId: "prj_sam", meetingId: "mtg_sm_1", type: "blocker_added", actorId: "p_omid", actorName: "امید صادقی", entityLabel: "خطای اعتبارسنجی گواهی درگاه بانکی", previousValue: null, newValue: "باز", createdAt: daysAgo(7) });
+
+// ───────────────────────────────────────────────────────────────────────────
+// MEETING SPACES: independent organization meeting categories (not project-tied)
+// ───────────────────────────────────────────────────────────────────────────
+const meetingSpaces: MeetingSpace[] = [
+  {
+    id: "spc_internal",
+    name: "جلسات داخلی سازمان",
+    description: "جلسات مربوط به هماهنگی‌های سازمانی",
+    ownerId: "p_sara",
+    createdAt: daysAgo(60),
+    updatedAt: daysAgo(2),
+  },
+  {
+    id: "spc_coord",
+    name: "هماهنگی بین‌تیمی",
+    description: "جلسات هماهنگی میان تیم مهندسی و تیم طراحی",
+    ownerId: "p_nima",
+    createdAt: daysAgo(20),
+    updatedAt: daysAgo(9),
+  },
+];
+
+// Space meetings are ordinary Meeting records (spaceId set, projectId null) —
+// same shape, same lifecycle as project meetings.
+function attendAll(personIds: string[]): Participant[] {
+  return personIds.map((personId) => ({ personId, attended: true }));
+}
+
+const spm1: Meeting = {
+  id: "mtg_spc_1", projectId: null, spaceId: "spc_internal", sequence: 1,
+  title: "جلسهٔ مدیریت هفتگی", date: daysAgo(30), time: "09:00", location: "اتاق جلسات مرکزی",
+  status: "approved", revision: 1, source: "manual",
+  participants: attendAll(["p_sara", "p_reza", "p_kaveh"]),
+  agenda: ["مرور وضعیت پروژه‌های جاری", "اولویت‌های سازمانی هفتهٔ پیش‌رو"],
+  discussion: "وضعیت کلی پروژه‌های جاری مرور شد و اولویت‌های سازمانی هفتهٔ پیش‌رو تعیین گردید.",
+  summary: "مرور کلی وضعیت پروژه‌های جاری و اولویت‌های سازمانی هفتهٔ پیش‌رو.",
+  summaryPoints: ["وضعیت پروژه‌های جاری مرور شد.", "اولویت‌های سازمانی هفتهٔ پیش‌رو تعیین شد."],
+  nextSteps: [],
+  createdById: "p_sara", createdAt: daysAgo(30), updatedAt: daysAgo(29), reviewToken: "rev-spm1-9a1c",
+};
+signatures.push({ id: "sig_spm1_a", meetingId: "mtg_spc_1", approverId: "p_kaveh", approverName: "کاوه مرادی", role: "ceo", status: "approved", comment: "", signedAt: daysAgo(29), revision: 1 });
+
+const spm2: Meeting = {
+  id: "mtg_spc_2", projectId: null, spaceId: "spc_internal", sequence: 2,
+  title: "هماهنگی سازمانی ماهانه", date: daysAgo(2), time: "11:30", location: "آنلاین",
+  status: "awaiting_signatures", revision: 1, source: "manual",
+  participants: attendAll(["p_sara", "p_reza", "p_nima", "p_mina", "p_kaveh"]),
+  agenda: ["عملکرد ماهانهٔ تیم‌ها", "موضوعات منابع انسانی"],
+  discussion: "عملکرد ماهانهٔ تیم‌ها بررسی و موضوعات منابع انسانی جمع‌بندی شد.",
+  summary: "بررسی عملکرد ماهانهٔ تیم‌ها و جمع‌بندی موضوعات منابع انسانی.",
+  summaryPoints: ["عملکرد ماهانهٔ تیم‌ها بررسی شد.", "موضوعات منابع انسانی جمع‌بندی شد."],
+  nextSteps: ["پیگیری موضوعات منابع انسانی مطرح‌شده"],
+  createdById: "p_sara", createdAt: daysAgo(2), updatedAt: daysAgo(2), reviewToken: "rev-spm2-4e7b",
+};
+signatures.push({ id: "sig_spm2_a", meetingId: "mtg_spc_2", approverId: "p_kaveh", approverName: "کاوه مرادی", role: "ceo", status: "pending", comment: "", signedAt: null, revision: 1 });
+
+const spm3: Meeting = {
+  id: "mtg_spc_3", projectId: null, spaceId: "spc_coord", sequence: 1,
+  title: "هم‌راستاسازی طراحی و مهندسی", date: daysAgo(9), time: "14:00", location: "آنلاین",
+  status: "approved", revision: 1, source: "manual",
+  participants: attendAll(["p_nima", "p_mina", "p_omid"]),
+  agenda: ["تحویل کامپوننت‌های جدید سیستم طراحی"],
+  discussion: "کامپوننت‌های جدید سیستم طراحی برای تحویل به تیم مهندسی بررسی شد.",
+  summary: "هماهنگی دربارهٔ تحویل کامپوننت‌های جدید سیستم طراحی به تیم مهندسی.",
+  summaryPoints: ["کامپوننت‌های جدید سیستم طراحی معرفی شد.", "زمان‌بندی تحویل به تیم مهندسی مشخص شد."],
+  nextSteps: [],
+  createdById: "p_nima", createdAt: daysAgo(9), updatedAt: daysAgo(8), reviewToken: "rev-spm3-1d5f",
+};
+signatures.push({ id: "sig_spm3_a", meetingId: "mtg_spc_3", approverId: "p_mina", approverName: "مینا شریفی", role: "team_lead", status: "approved", comment: "", signedAt: daysAgo(8), revision: 1 });
+
+meetings.push(spm1, spm2, spm3);
 
 export function buildSeed(): Database {
   return {
@@ -464,5 +546,6 @@ export function buildSeed(): Database {
     signatures,
     projectApprovals,
     activities: activities.sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1)),
+    meetingSpaces,
   };
 }

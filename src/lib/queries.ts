@@ -1,5 +1,7 @@
 import "server-only";
 import { readDb } from "./db";
+import { PROJECT_PHASE } from "./domain";
+import { phaseLabels } from "./labels";
 import type {
   ActionItem,
   Activity,
@@ -8,6 +10,7 @@ import type {
   Decision,
   Dependency,
   Meeting,
+  MeetingSpace,
   Person,
   Project,
   ProjectApproval,
@@ -96,11 +99,47 @@ export function getMeetings(projectId: string): Meeting[] {
     .meetings.filter((m) => m.projectId === projectId)
     .sort((a, b) => b.sequence - a.sequence);
 }
-export function getMeeting(id: string): Meeting | undefined {
+export function getSpaceMeetings(spaceId: string): Meeting[] {
+  return readDb()
+    .meetings.filter((m) => m.spaceId === spaceId)
+    .sort((a, b) => b.sequence - a.sequence);
+}
+export function getMeeting(id: string | null | undefined): Meeting | undefined {
+  if (!id) return undefined;
   return readDb().meetings.find((m) => m.id === id);
 }
 export function getMeetingByToken(token: string): Meeting | undefined {
   return readDb().meetings.find((m) => m.reviewToken === token);
+}
+/** Every meeting across every project and Meeting Space, newest first. */
+export function getAllMeetings(): Meeting[] {
+  return [...readDb().meetings].sort((a, b) => (a.date < b.date ? 1 : -1));
+}
+
+export interface MeetingContext {
+  /** Project or Meeting Space display name (with version label for projects). */
+  label: string;
+  /** Link to the owning project or Meeting Space. */
+  href: string;
+  /** Link to this meeting's own detail page. */
+  meetingHref: string;
+}
+/** Resolves a meeting's context (which project or space it belongs to) for display. */
+export function getMeetingContext(meeting: Meeting): MeetingContext {
+  if (meeting.projectId) {
+    const project = getProject(meeting.projectId);
+    return {
+      label: project ? `${project.name} — ${project.versionLabel}` : "پروژهٔ حذف‌شده",
+      href: project ? `/projects/${project.id}` : "#",
+      meetingHref: `/projects/${meeting.projectId}/meetings/${meeting.id}`,
+    };
+  }
+  const space = getMeetingSpace(meeting.spaceId);
+  return {
+    label: space ? space.name : "دستهٔ حذف‌شده",
+    href: space ? `/meetings/${space.id}` : "#",
+    meetingHref: `/meetings/${meeting.spaceId}/${meeting.id}`,
+  };
 }
 
 export function getDecisions(projectId: string): Decision[] {
@@ -131,6 +170,9 @@ export function getRisks(projectId: string): Risk[] {
 }
 export function getBlockers(projectId: string): Blocker[] {
   return readDb().blockers.filter((b) => b.projectId === projectId);
+}
+export function getMeetingBlockers(meetingId: string): Blocker[] {
+  return readDb().blockers.filter((b) => b.meetingId === meetingId);
 }
 export function getComments(meetingId: string): Comment[] {
   return readDb()
@@ -191,4 +233,34 @@ export function getDependencyViews(projectId: string): DependencyView[] {
 export function getSignatureProgress(meetingId: string): { signed: number; total: number } {
   const sigs = readDb().signatures.filter((s) => s.meetingId === meetingId);
   return { signed: sigs.filter((s) => s.status === "approved").length, total: sigs.length };
+}
+
+// ── Meeting Spaces (organization meetings, independent of a project) ───────
+export function getMeetingSpaces(): MeetingSpace[] {
+  return [...readDb().meetingSpaces].sort((a, b) => (a.updatedAt < b.updatedAt ? 1 : -1));
+}
+export function getMeetingSpace(id: string | null | undefined): MeetingSpace | undefined {
+  if (!id) return undefined;
+  return readDb().meetingSpaces.find((s) => s.id === id);
+}
+
+export interface MeetingSpaceStats {
+  meetingCount: number;
+  lastMeetingDate: string | null;
+}
+export function getMeetingSpaceStats(spaceId: string): MeetingSpaceStats {
+  const meetings = readDb().meetings.filter((m) => m.spaceId === spaceId);
+  const lastMeetingDate = meetings.reduce<string | null>(
+    (latest, m) => (!latest || m.date > latest ? m.date : latest),
+    null,
+  );
+  return { meetingCount: meetings.length, lastMeetingDate };
+}
+
+// ── Phase name suggestions (searchable phase picker) ────────────────────────
+/** Canonical phase labels plus every free-text phase name already used across projects. */
+export function getPhaseNameSuggestions(): string[] {
+  const canonical = PROJECT_PHASE.map((p) => phaseLabels[p].label);
+  const used = readDb().projects.flatMap((p) => p.phases.map((ph) => ph.name));
+  return [...new Set([...canonical, ...used])];
 }

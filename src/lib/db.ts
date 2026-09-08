@@ -52,6 +52,7 @@ function withCollectionDefaults(db: Partial<Database>): Database {
     signatures: db.signatures ?? [],
     projectApprovals: db.projectApprovals ?? [],
     activities: db.activities ?? [],
+    meetingSpaces: db.meetingSpaces ?? [],
   };
 }
 

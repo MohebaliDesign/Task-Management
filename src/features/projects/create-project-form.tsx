@@ -7,22 +7,44 @@ import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Field } from "@/components/form/field";
 import { SubmitButton } from "@/components/form/submit-button";
 import { AppIcon } from "@/components/icon";
+import { PersonSelect } from "@/features/people/person-select";
+import { PhaseSelect } from "@/features/projects/phase-select";
 import { createProject, type ActionResult } from "@/lib/actions";
-import { PRIORITY, PROJECT_PHASE } from "@/lib/domain";
-import { priorityLabels, phaseLabels, roleLabels } from "@/lib/labels";
-import type { Person } from "@/lib/domain";
+import { PRIORITY } from "@/lib/domain";
+import { priorityLabels } from "@/lib/labels";
+import { makeId } from "@/lib/utils";
+import type { Person, Project } from "@/lib/domain";
 
 const initial: ActionResult = { ok: false, error: "" };
 const today = new Date().toISOString().slice(0, 10);
 
-export function CreateProjectForm({ people }: { people: Person[] }) {
+interface PhaseDraft {
+  key: string;
+  name: string;
+  startDate: string;
+  deadline: string;
+}
+
+export function CreateProjectForm({
+  people: initialPeople,
+  projects,
+  phaseNameSuggestions,
+}: {
+  people: Person[];
+  projects: Project[];
+  phaseNameSuggestions: string[];
+}) {
   const router = useRouter();
   const [state, formAction] = useFormState(createProject, initial);
   const errs = state.ok ? {} : state.fieldErrors ?? {};
+  const [people, setPeople] = React.useState(initialPeople);
+  const [previousVersionId, setPreviousVersionId] = React.useState<string>("");
+  const [phases, setPhases] = React.useState<PhaseDraft[]>([]);
 
   React.useEffect(() => {
     if (state.ok && state.id) {
@@ -31,8 +53,28 @@ export function CreateProjectForm({ people }: { people: Person[] }) {
     }
   }, [state, router]);
 
+  function addPhase() {
+    setPhases((prev) => [...prev, { key: makeId("phz"), name: "", startDate: today, deadline: "" }]);
+  }
+  function updatePhase(key: string, patch: Partial<PhaseDraft>) {
+    setPhases((prev) => prev.map((p) => (p.key === key ? { ...p, ...patch } : p)));
+  }
+  function removePhase(key: string) {
+    setPhases((prev) => prev.filter((p) => p.key !== key));
+  }
+
+  const phasesJson = JSON.stringify(
+    phases.filter((p) => p.name.trim()).map((p) => ({ name: p.name, startDate: p.startDate, deadline: p.deadline })),
+  );
+  const phaseSuggestions = React.useMemo(
+    () => [...new Set([...phaseNameSuggestions, ...phases.map((p) => p.name).filter(Boolean)])],
+    [phaseNameSuggestions, phases],
+  );
+
   return (
     <form action={formAction} className="space-y-6">
+      <input type="hidden" name="phasesJson" value={phasesJson} />
+
       <Card>
         <CardHeader>
           <CardTitle>اطلاعات پایه</CardTitle>
@@ -52,6 +94,20 @@ export function CreateProjectForm({ people }: { people: Person[] }) {
               </SelectContent>
             </Select>
           </Field>
+          <Field
+            label="نسخهٔ قبلی (اختیاری)"
+            htmlFor="previousVersionId"
+            error={errs.previousVersionId}
+            hint="اگر این نسخه ادامه نسخه قبلی است، پروژه مرتبط را انتخاب کنید."
+            className="sm:col-span-2"
+          >
+            <Select name="previousVersionId" value={previousVersionId} onValueChange={setPreviousVersionId}>
+              <SelectTrigger id="previousVersionId"><SelectValue placeholder="بدون نسخهٔ قبلی" /></SelectTrigger>
+              <SelectContent>
+                {projects.map((p) => <SelectItem key={p.id} value={p.id}>{p.name} — {p.versionLabel}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </Field>
         </CardContent>
       </Card>
 
@@ -61,37 +117,67 @@ export function CreateProjectForm({ people }: { people: Person[] }) {
         </CardHeader>
         <CardContent className="grid gap-4 sm:grid-cols-2">
           <Field label="مدیر پروژه" htmlFor="pmId" error={errs.pmId} required>
-            <Select name="pmId">
-              <SelectTrigger id="pmId"><SelectValue placeholder="انتخاب مدیر پروژه" /></SelectTrigger>
-              <SelectContent>
-                {people.map((p) => <SelectItem key={p.id} value={p.id}>{p.name} — {roleLabels[p.role]}</SelectItem>)}
-              </SelectContent>
-            </Select>
+            <PersonSelect id="pmId" name="pmId" people={people} placeholder="انتخاب مدیر پروژه" onPersonCreated={(p) => setPeople((prev) => [...prev, p])} />
           </Field>
-          <Field label="مالک محصول" htmlFor="poId" error={errs.poId} required>
-            <Select name="poId">
-              <SelectTrigger id="poId"><SelectValue placeholder="انتخاب مالک محصول" /></SelectTrigger>
-              <SelectContent>
-                {people.map((p) => <SelectItem key={p.id} value={p.id}>{p.name} — {roleLabels[p.role]}</SelectItem>)}
-              </SelectContent>
-            </Select>
+          <Field label="مالک محصول" htmlFor="poId" error={errs.poId} hint="در صورت نیاز، بعداً هم قابل تعیین است.">
+            <PersonSelect id="poId" name="poId" people={people} placeholder="بدون مالک محصول" onPersonCreated={(p) => setPeople((prev) => [...prev, p])} />
           </Field>
-          <Field label="فاز فعلی" htmlFor="phase" error={errs.phase} required>
-            <Select name="phase" defaultValue="discovery">
-              <SelectTrigger id="phase"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {PROJECT_PHASE.map((p) => <SelectItem key={p} value={p}>{phaseLabels[p].label}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </Field>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-4 sm:col-span-2">
             <Field label="تاریخ شروع" htmlFor="startDate" error={errs.startDate} required>
               <Input id="startDate" name="startDate" type="date" defaultValue={today} className="latin-nums" aria-invalid={!!errs.startDate} />
             </Field>
-            <Field label="مهلت هدف" htmlFor="targetDate" error={errs.targetDate} required>
+            <Field label="مهلت هدف (اختیاری)" htmlFor="targetDate" error={errs.targetDate}>
               <Input id="targetDate" name="targetDate" type="date" className="latin-nums" aria-invalid={!!errs.targetDate} />
             </Field>
           </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="flex-row items-center justify-between">
+          <CardTitle>مدیریت فازها</CardTitle>
+          <Button type="button" variant="outline" size="sm" onClick={addPhase}>
+            <AppIcon name="add" size={16} />
+            افزودن فاز جدید
+          </Button>
+        </CardHeader>
+        <CardContent className="p-0">
+          {phases.length === 0 ? (
+            <p className="p-5 text-sm text-muted-foreground">هنوز فازی اضافه نشده است. فازها اختیاری‌اند و بعداً هم قابل افزودن‌اند.</p>
+          ) : (
+            <div className="divide-y divide-border">
+              {phases.map((phase, i) => (
+                <div key={phase.key} className="flex flex-wrap items-end gap-3 px-5 py-4">
+                  <div className="min-w-[180px] flex-1">
+                    <Field label={`نام فاز ${i + 1}`} htmlFor={`phase-name-${phase.key}`}>
+                      <PhaseSelect value={phase.name} onChange={(name) => updatePhase(phase.key, { name })} suggestions={phaseSuggestions} />
+                    </Field>
+                  </div>
+                  <Field label="تاریخ شروع" htmlFor={`phase-start-${phase.key}`} className="w-36">
+                    <Input
+                      id={`phase-start-${phase.key}`}
+                      type="date"
+                      className="latin-nums"
+                      value={phase.startDate}
+                      onChange={(e) => updatePhase(phase.key, { startDate: e.target.value })}
+                    />
+                  </Field>
+                  <Field label="مهلت" htmlFor={`phase-deadline-${phase.key}`} className="w-36">
+                    <Input
+                      id={`phase-deadline-${phase.key}`}
+                      type="date"
+                      className="latin-nums"
+                      value={phase.deadline}
+                      onChange={(e) => updatePhase(phase.key, { deadline: e.target.value })}
+                    />
+                  </Field>
+                  <Button type="button" variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive-text" onClick={() => removePhase(phase.key)} aria-label={`حذف فاز ${i + 1}`}>
+                    <AppIcon name="trash" size={16} />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -100,20 +186,12 @@ export function CreateProjectForm({ people }: { people: Person[] }) {
           <CardTitle>شرح وضعیت</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <Field label="خلاصهٔ وضعیت فعلی" htmlFor="statusSummary" error={errs.statusSummary} hint="یک جملهٔ کوتاه که وضعیت کنونی پروژه را توصیف می‌کند.">
+          <Field label="وضعیت فعلی پروژه" htmlFor="statusSummary" error={errs.statusSummary} hint="یک جملهٔ کوتاه که وضعیت کنونی پروژه را توصیف می‌کند.">
             <Textarea id="statusSummary" name="statusSummary" rows={2} />
           </Field>
-          <Field label="خلاصهٔ اجرایی" htmlFor="executiveSummary" error={errs.executiveSummary}>
-            <Textarea id="executiveSummary" name="executiveSummary" rows={3} />
+          <Field label="تمرکز فعلی" htmlFor="currentFocus" error={errs.currentFocus}>
+            <Input id="currentFocus" name="currentFocus" />
           </Field>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="تمرکز فعلی" htmlFor="currentFocus" error={errs.currentFocus}>
-              <Input id="currentFocus" name="currentFocus" />
-            </Field>
-            <Field label="نقطه‌عطف بعدی" htmlFor="nextMilestone" error={errs.nextMilestone}>
-              <Input id="nextMilestone" name="nextMilestone" />
-            </Field>
-          </div>
         </CardContent>
       </Card>
 
@@ -124,7 +202,7 @@ export function CreateProjectForm({ people }: { people: Person[] }) {
       )}
 
       <div className="flex items-center gap-2">
-        <SubmitButton icon="add" pendingText="در حال ایجاد…">ثبت پروژه</SubmitButton>
+        <SubmitButton icon="add" pendingText="در حال ایجاد…">ایجاد پروژه</SubmitButton>
         <SubmitButtonCancel />
       </div>
     </form>

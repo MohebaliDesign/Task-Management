@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { Card, CardContent } from "@/components/ui/card";
 import { PageHeader } from "@/components/domain/page-header";
 import { EmptyState } from "@/components/domain/empty-state";
 import { ActivityTimeline } from "@/features/activity/activity-timeline";
@@ -22,11 +21,7 @@ export default function ActivityPage() {
       {activities.length === 0 ? (
         <EmptyState icon="activity" title="فعالیتی ثبت نشده است" />
       ) : (
-        <Card>
-          <CardContent className="pt-5">
-            <ActivityTimeline activities={activities} projectName={nameOf} showProjectLink />
-          </CardContent>
-        </Card>
+        <ActivityTimeline activities={activities} projectName={nameOf} showProjectLink />
       )}
     </>
   );

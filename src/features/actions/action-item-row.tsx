@@ -5,16 +5,18 @@ import { ActionStatusBadge, PriorityBadge } from "@/components/domain/status";
 import { AssigneeChip } from "@/components/domain/person";
 import { faDate, daysUntil, toFa } from "@/lib/utils";
 import { getAssignee, getAction } from "@/lib/queries";
-import type { ActionItem } from "@/lib/domain";
+import type { ActionItem, Decision } from "@/lib/domain";
 
 export function ActionItemRow({
   action,
+  decision,
   meetingHref,
   statusControl,
   blockedBy,
   blocking,
 }: {
   action: ActionItem;
+  decision?: Decision;
   meetingHref?: string;
   statusControl?: ReactNode;
   blockedBy?: string[]; // action ids blocking this one
@@ -29,13 +31,20 @@ export function ActionItemRow({
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0 flex-1">
           <p className="font-medium">{action.title}</p>
-          <div className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-muted-foreground">
+          {action.description && <p className="mt-0.5 text-sm text-muted-foreground">{action.description}</p>}
+          <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-muted-foreground">
             <span className="flex items-center gap-1.5"><AppIcon name="profile" size={14} /><AssigneeChip assignee={owner} /></span>
             {action.deadline && (
               <span className={`flex items-center gap-1 ${overdue ? "text-destructive-text" : ""}`}>
                 <AppIcon name="calendar" size={14} />
                 {faDate(action.deadline)}
                 {overdue && dLeft !== null && ` (${toFa(Math.abs(dLeft))} روز تأخیر)`}
+              </span>
+            )}
+            {decision && (
+              <span className="flex items-center gap-1">
+                <AppIcon name="decision" size={14} />
+                برخاسته از تصمیم
               </span>
             )}
             {meetingHref && (
