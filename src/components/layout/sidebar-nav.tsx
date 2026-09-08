@@ -12,11 +12,12 @@ interface NavItem {
   match: (path: string) => boolean;
 }
 
+// Order communicates the mental model: Overview → Core work → People → History.
 const items: NavItem[] = [
   { href: "/", label: "داشبورد", icon: "dashboard", match: (p) => p === "/" },
   { href: "/projects", label: "پروژه‌ها", icon: "projects", match: (p) => p.startsWith("/projects") },
-  { href: "/people", label: "افراد و تیم‌ها", icon: "people", match: (p) => p.startsWith("/people") },
   { href: "/meetings", label: "جلسات", icon: "meetings", match: (p) => p.startsWith("/meetings") },
+  { href: "/people", label: "تیم و افراد", icon: "people", match: (p) => p.startsWith("/people") },
   { href: "/activity", label: "تاریخچه فعالیت", icon: "activity", match: (p) => p.startsWith("/activity") },
 ];
 
