@@ -189,20 +189,48 @@ export function MeetingDetail({
           )}
 
           <Card>
-            <CardHeader><CardTitle className="flex items-center gap-2 text-sm"><AppIcon name="approval" size={16} />تأییدها و امضاها</CardTitle></CardHeader>
+            <CardHeader><CardTitle className="flex items-center gap-2 text-sm"><AppIcon name="approval" size={16} />تأییدها و بازخوردها</CardTitle></CardHeader>
             <CardContent className="space-y-3">
               {signatures.length === 0 ? (
-                <p className="text-sm text-muted-foreground">هنوز درخواست امضایی ایجاد نشده است.</p>
+                <p className="text-sm text-muted-foreground">هنوز درخواست بازبینی‌ای ایجاد نشده است.</p>
               ) : (
-                signatures.map((s) => (
-                  <div key={s.id} className="flex items-center justify-between gap-2">
-                    <div className="min-w-0">
-                      <p className="truncate text-sm">{s.approverName}</p>
-                      {s.signedAt && <p className="text-xs text-muted-foreground">{faDate(s.signedAt)}</p>}
+                signatures.map((s) => {
+                  const hasFeedback = (s.decisionFeedback?.length ?? 0) > 0 || !!s.generalFeedback;
+                  return (
+                    <div key={s.id} className="rounded-md border border-border/70 p-3">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-medium">{s.approverName}</p>
+                          {s.signedAt && <p className="text-xs text-muted-foreground">{faDate(s.signedAt)}</p>}
+                        </div>
+                        <ApprovalBadge value={s.status} />
+                      </div>
+
+                      {hasFeedback && (
+                        <div className="mt-3 space-y-2.5 border-t border-border/70 pt-3">
+                          {s.decisionFeedback?.map((f, i) => {
+                            const decision = decisions.find((d) => d.id === f.decisionId);
+                            return (
+                              <div key={i} className="rounded-md bg-muted/50 p-2.5">
+                                <p className="flex items-start gap-1.5 text-xs font-medium">
+                                  <AppIcon name="decision" size={14} className="mt-0.5 shrink-0 text-primary" />
+                                  {decision?.text ?? "تصمیم حذف‌شده"}
+                                </p>
+                                <p className="mt-1 text-sm leading-6 text-foreground-alt">{f.feedback}</p>
+                              </div>
+                            );
+                          })}
+                          {s.generalFeedback && (
+                            <div>
+                              <p className="text-xs text-muted-foreground">توضیح تکمیلی</p>
+                              <p className="mt-0.5 text-sm leading-6 text-foreground-alt">{s.generalFeedback}</p>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
-                    <ApprovalBadge value={s.status} />
-                  </div>
-                ))
+                  );
+                })
               )}
             </CardContent>
           </Card>

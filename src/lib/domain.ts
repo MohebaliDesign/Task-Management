@@ -309,6 +309,19 @@ export interface Comment {
   createdAt: string;
 }
 
+/** A reviewer's disagreement note tied to one specific Decision (by id). */
+export interface DecisionFeedback {
+  decisionId: string;
+  feedback: string;
+}
+
+/**
+ * The canonical reviewer/approval artifact. It doubles as the "review response":
+ * `status` records approve vs. changes-requested; when a reviewer submits
+ * structured disagreement, `generalFeedback` and `decisionFeedback` carry the
+ * detail so the PM sees exactly which decisions are contested. Both are
+ * optional so existing signatures (and the approve path) stay unchanged.
+ */
 export interface Signature {
   id: string;
   meetingId: string;
@@ -319,6 +332,10 @@ export interface Signature {
   comment: string;
   signedAt: string | null;
   revision: number; // meeting revision the signature attests to
+  /** Optional free-text note about the meeting overall (changes-requested path). */
+  generalFeedback?: string;
+  /** Optional per-decision disagreement notes (changes-requested path). */
+  decisionFeedback?: DecisionFeedback[];
 }
 
 /**

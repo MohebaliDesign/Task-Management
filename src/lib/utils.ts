@@ -30,6 +30,18 @@ export function makeId(prefix: string): string {
 }
 
 /**
+ * Name of the per-meeting cookie that remembers a reviewer's own identity on
+ * the shared, unauthenticated /review route — set by submitReviewResponse,
+ * read by the review page. Scoped per meeting so it never implies identity on
+ * a different meeting's review link. Shared here (not in actions.ts/queries.ts)
+ * so both the write side (Server Action) and the read side (Server Component)
+ * derive the exact same cookie name.
+ */
+export function reviewerCookieName(meetingId: string): string {
+  return `mrv_${meetingId}`;
+}
+
+/**
  * Format an ISO date to a Persian (Jalali) date string using Intl.
  * Falls back gracefully if the runtime lacks the calendar.
  */

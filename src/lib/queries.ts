@@ -182,6 +182,18 @@ export function getComments(meetingId: string): Comment[] {
 export function getSignatures(meetingId: string): Signature[] {
   return readDb().signatures.filter((s) => s.meetingId === meetingId);
 }
+
+/**
+ * A single reviewer's own signature for a meeting — the ONLY signature shape
+ * the shared, unauthenticated reviewer route may read. `getSignatures` above
+ * returns every reviewer's state and must stay PM-only (Meeting Detail); the
+ * reviewer route reads through this instead so another participant's
+ * approval/feedback state is never fetched for the page, let alone rendered.
+ */
+export function getOwnSignature(meetingId: string, reviewerId: string | null | undefined): Signature | undefined {
+  if (!reviewerId) return undefined;
+  return readDb().signatures.find((s) => s.meetingId === meetingId && s.approverId === reviewerId);
+}
 export function getProjectApproval(projectId: string): ProjectApproval | undefined {
   return readDb().projectApprovals.find((a) => a.projectId === projectId);
 }

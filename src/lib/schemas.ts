@@ -236,6 +236,36 @@ export const signMeetingSchema = z.object({
   comment: z.string().trim().max(600).optional().default(""),
 });
 
+// ── Reviewer / signatory response (read-only reviewer route) ────────────────
+const decisionFeedbackSchema = z.object({
+  decisionId: req("شناسهٔ تصمیم لازم است"),
+  feedback: req("برای این تصمیم، دلیل یا پیشنهاد اصلاح را بنویسید.").max(1000),
+});
+
+/**
+ * One structured response from a reviewer. `approved` requires an explicit
+ * acknowledgement; `feedback_submitted` requires at least one piece of
+ * substantive feedback (per-decision or general) so a disagreement is never
+ * recorded empty.
+ */
+export const submitReviewResponseSchema = z
+  .object({
+    meetingId: req("شناسهٔ جلسه لازم است"),
+    reviewerId: req("لطفاً مشخص کنید که به‌عنوان کدام شرکت‌کننده پاسخ می‌دهید."),
+    decision: z.enum(["approved", "feedback_submitted"]),
+    acknowledged: z.string().optional().default("").transform((s) => s === "true"),
+    generalFeedback: z.string().trim().max(1000).optional().default(""),
+    decisionFeedbackJson: jsonArray(decisionFeedbackSchema),
+  })
+  .superRefine((v, ctx) => {
+    if (v.decision === "approved" && !v.acknowledged) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["acknowledged"], message: "برای امضا، تأیید بررسی محتوا لازم است." });
+    }
+    if (v.decision === "feedback_submitted" && v.decisionFeedbackJson.length === 0 && v.generalFeedback.length === 0) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["decisionFeedbackJson"], message: "حداقل یک تصمیم را انتخاب کنید یا توضیح تکمیلی بنویسید." });
+    }
+  });
+
 // ── Meeting Spaces (organization meetings, independent of a project) ───────
 export const createMeetingSpaceSchema = z.object({
   name: req("نام دستهٔ جلسات را وارد کنید").max(80, "نام دستهٔ جلسات طولانی است"),
