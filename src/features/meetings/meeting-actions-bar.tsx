@@ -33,10 +33,21 @@ export function MeetingActionsBar({
   const router = useRouter();
   const [pending, startTransition] = React.useTransition();
 
+  const reviewPath = `/review/meeting/${reviewToken}`;
+
+  function reviewUrl() {
+    return `${window.location.origin}${reviewPath}`;
+  }
+
   function copyLink() {
-    const url = `${window.location.origin}/review/meeting/${reviewToken}`;
+    const url = reviewUrl();
     navigator.clipboard?.writeText(url).then(
-      () => toast.success("پیوند بازبینی کپی شد.", { description: url }),
+      () =>
+        toast.success("پیوند بازبینی کپی شد", {
+          // Show the URL and give the PM a one-click way to preview it.
+          description: url,
+          action: { label: "باز کردن پیوند", onClick: () => window.open(url, "_blank", "noopener,noreferrer") },
+        }),
       () => toast.error("کپی پیوند ممکن نشد."),
     );
   }
@@ -56,8 +67,16 @@ export function MeetingActionsBar({
   return (
     <div className="flex flex-wrap items-center gap-2">
       <Button variant="outline" size="sm" onClick={copyLink}>
-        <AppIcon name="link" size={16} />
-        پیوند بازبینی
+        <AppIcon name="copy" size={16} />
+        کپی پیوند بازبینی
+      </Button>
+
+      <Button asChild variant="ghost" size="sm">
+        {/* Opens the reviewer experience in a new tab so the PM can preview/test it. */}
+        <a href={reviewPath} target="_blank" rel="noopener noreferrer">
+          <AppIcon name="link" size={16} />
+          باز کردن پیوند
+        </a>
       </Button>
 
       {!readOnly && status === "draft" && (
