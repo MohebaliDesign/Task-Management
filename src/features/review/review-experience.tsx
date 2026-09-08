@@ -12,36 +12,61 @@ import {
   Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription,
 } from "@/components/ui/dialog";
 import { AppIcon } from "@/components/icon";
+import { BrandMark } from "@/components/layout/brand-mark";
+import { ThemeToggle } from "@/components/layout/theme-toggle";
+import { ReviewActionBar } from "./review-action-bar";
 import { submitReviewResponse } from "@/lib/actions";
+import { cn } from "@/lib/utils";
+import type { ApprovalStatus } from "@/lib/domain";
 
 export interface ReviewParticipant {
   id: string;
   name: string;
-  /** Whether this participant has already recorded a response. */
-  responded: boolean;
 }
 export interface ReviewDecision {
   id: string;
   text: string;
   description?: string;
 }
+/**
+ * This reviewer's OWN recorded outcome only — never other reviewers' data.
+ * `signedAtLabel` is pre-formatted server-side (avoids running the Persian
+ * calendar formatter in the client bundle just for one string).
+ */
+export interface OwnReviewState {
+  status: ApprovalStatus;
+  signedAtLabel: string | null;
+}
 
 type DoneKind = "approved" | "feedback" | null;
 
 /**
- * The reviewer decision area for the read-only review page: two clearly
- * distinct actions (approve/sign vs. request changes), each opening its own
- * flow, plus the resulting success state. All meeting data stays read-only —
- * this component only records the reviewer's response.
+ * The full reviewer shell: minimal header, a sticky review-action bar that
+ * hands off to the final action section, the two response dialogs, and the
+ * read-only meeting content (passed as `children`, server-rendered).
+ *
+ * Privacy: this component only ever knows about ONE reviewer's state
+ * (`ownState`, resolved server-side from a per-meeting identity cookie — see
+ * lib/actions.ts + lib/queries.ts#getOwnSignature). It never receives or
+ * renders any other participant's approval/feedback status, count, or name
+ * paired with a status — that visibility stays on the PM Meeting Detail page.
  */
-export function ReviewPanel({
+export function ReviewExperience({
   meetingId,
   participants,
   decisions,
+  ownState,
+  meetingApproved,
+  children,
 }: {
   meetingId: string;
   participants: ReviewParticipant[];
   decisions: ReviewDecision[];
+  /** Non-null once THIS reviewer (identified via cookie) has already responded. */
+  ownState: OwnReviewState | null;
+  /** The meeting record's own overall status — not a per-reviewer signal. */
+  meetingApproved: boolean;
+  children: React.ReactNode;
 }) {
   const router = useRouter();
   const [pending, startTransition] = React.useTransition();
@@ -59,13 +84,33 @@ export function ReviewPanel({
   const [generalFeedback, setGeneralFeedback] = React.useState("");
   const [errors, setErrors] = React.useState<Record<string, string>>({});
 
-  function reset() {
-    setReviewerId("");
-    setAcknowledged(false);
-    setSelected({});
-    setDecFeedback({});
-    setGeneralFeedback("");
+  // ── Sticky ⟷ final-section handoff ────────────────────────────────────────
+  // There IS an active decision to make only when this reviewer hasn't
+  // already responded and the meeting itself isn't already closed out.
+  const hasActiveFlow = !ownState && !meetingApproved && !done;
+  const finalRef = React.useRef<HTMLDivElement>(null);
+  const [finalVisible, setFinalVisible] = React.useState(false);
+
+  React.useEffect(() => {
+    const el = finalRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      (entries) => setFinalVisible(entries[0]?.isIntersecting ?? false),
+      { threshold: 0.2 },
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  const showSticky = hasActiveFlow && !finalVisible;
+
+  function openApprove() {
     setErrors({});
+    setApproveOpen(true);
+  }
+  function openFeedback() {
+    setErrors({});
+    setFeedbackOpen(true);
   }
 
   function submitApprove() {
@@ -134,8 +179,6 @@ export function ReviewPanel({
     });
   }
 
-  if (done) return <ReviewSuccess kind={done} />;
-
   const identityField = (idPrefix: string) => (
     <div className="space-y-1.5">
       <Label htmlFor={`${idPrefix}-reviewer`}>شما کدام شرکت‌کننده هستید؟</Label>
@@ -145,9 +188,8 @@ export function ReviewPanel({
         </SelectTrigger>
         <SelectContent>
           {participants.map((p) => (
-            <SelectItem key={p.id} value={p.id} disabled={p.responded}>
+            <SelectItem key={p.id} value={p.id}>
               {p.name}
-              {p.responded ? " — پاسخ ثبت‌شده" : ""}
             </SelectItem>
           ))}
         </SelectContent>
@@ -160,29 +202,86 @@ export function ReviewPanel({
   );
 
   return (
-    <div id="review-actions" className="scroll-mt-20 rounded-xl border border-border bg-card p-5 sm:p-6">
-      <h2 className="text-lg font-semibold">نظر شما درباره نتیجه جلسه</h2>
-      <p className="mt-1.5 text-sm leading-7 text-muted-foreground">
-        اگر محتوای جلسه، تصمیم‌ها و اقدامات ثبت‌شده مورد تأیید شماست، آن را تأیید کنید. در غیر این صورت می‌توانید مواردی
-        را که نیاز به اصلاح دارند مشخص کنید.
-      </p>
+    <div className="min-h-screen bg-muted/30">
+      {/* ── Minimal header + sticky top action row (desktop/tablet) ─────── */}
+      <div className="sticky top-0 z-20 border-b border-border bg-background/95 backdrop-blur">
+        <div className="mx-auto flex max-w-2xl items-center justify-between px-4 py-3">
+          <BrandMark />
+          <div className="flex items-center gap-2">
+            <span className="hidden text-sm text-muted-foreground sm:inline">بازبینی جلسه</span>
+            <ThemeToggle />
+          </div>
+        </div>
 
-      <div className="mt-5 flex flex-col gap-3 sm:flex-row">
-        <Button className="flex-1" onClick={() => { setErrors({}); setApproveOpen(true); }}>
-          <AppIcon name="verify" size={18} />
-          تأیید و امضا
-        </Button>
-        <Button
-          variant="outline"
-          className="flex-1 border-warning/40 text-warning hover:bg-warning-subtle hover:text-warning"
-          onClick={() => { setErrors({}); setFeedbackOpen(true); }}
-        >
-          <AppIcon name="edit" size={18} />
-          نیاز به اصلاح دارد
-        </Button>
+        {hasActiveFlow && (
+          <div
+            className={cn(
+              "hidden overflow-hidden transition-[max-height,opacity] duration-200 ease-out motion-reduce:transition-none sm:block",
+              showSticky ? "max-h-16 opacity-100" : "max-h-0 opacity-0",
+            )}
+            aria-hidden={!showSticky}
+          >
+            <div className="border-t border-border">
+              <div className="mx-auto flex max-w-2xl justify-end px-4 py-2.5">
+                <ReviewActionBar
+                  onApprove={openApprove}
+                  onFeedback={openFeedback}
+                  layout="row"
+                  size="sm"
+                  interactive={showSticky}
+                />
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* ── Approve & sign ─────────────────────────────────────────────── */}
+      {/* ── Page content ──────────────────────────────────────────────── */}
+      <div className="px-4">
+        <main className="mx-auto max-w-2xl space-y-8 py-8 pb-10 sm:pb-8">
+          {children}
+
+          {/* Final action section — the natural end of the review flow. */}
+          <div ref={finalRef} className="scroll-mt-24">
+            {done ? (
+              <ReviewSuccess kind={done} />
+            ) : ownState ? (
+              <OwnStateCard state={ownState} />
+            ) : meetingApproved ? (
+              <div className="rounded-xl border border-border bg-card p-6 text-center text-sm text-muted-foreground">
+                این جلسه تأیید نهایی شده است و امکان ثبت پاسخ تازه وجود ندارد.
+              </div>
+            ) : (
+              <div className="rounded-xl border border-border bg-card p-5 sm:p-6">
+                <h2 className="text-lg font-semibold">نظر شما درباره نتیجه جلسه</h2>
+                <p className="mt-1.5 text-sm leading-7 text-muted-foreground">
+                  اگر محتوای ثبت‌شده مورد تأیید شماست، آن را تأیید کنید. اگر موردی نیاز به اصلاح دارد، می‌توانید بازخورد
+                  خود را ثبت کنید.
+                </p>
+                <ReviewActionBar onApprove={openApprove} onFeedback={openFeedback} layout="responsive" className="mt-5" />
+              </div>
+            )}
+          </div>
+        </main>
+      </div>
+
+      {/* ── Sticky bottom action bar (mobile — thumb reachability) ──────── */}
+      {hasActiveFlow && (
+        <div
+          className={cn(
+            "fixed inset-x-0 bottom-0 z-20 border-t border-border bg-background/95 backdrop-blur transition-transform duration-200 ease-out motion-reduce:transition-none sm:hidden",
+            showSticky ? "translate-y-0" : "translate-y-full",
+          )}
+          style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+          aria-hidden={!showSticky}
+        >
+          <div className="px-4 py-3">
+            <ReviewActionBar onApprove={openApprove} onFeedback={openFeedback} layout="row" interactive={showSticky} />
+          </div>
+        </div>
+      )}
+
+      {/* ── Approve & sign ────────────────────────────────────────────── */}
       <Dialog open={approveOpen} onOpenChange={(o) => { setApproveOpen(o); if (!o) setErrors({}); }}>
         <DialogContent className="max-w-md">
           <DialogHeader>
@@ -219,7 +318,7 @@ export function ReviewPanel({
         </DialogContent>
       </Dialog>
 
-      {/* ── Request changes (structured disagreement) ──────────────────── */}
+      {/* ── Request changes (structured disagreement) ────────────────────── */}
       <Dialog open={feedbackOpen} onOpenChange={(o) => { setFeedbackOpen(o); if (!o) setErrors({}); }}>
         <DialogContent className="flex max-h-[100dvh] w-full max-w-2xl flex-col gap-0 overflow-hidden rounded-none p-0 sm:max-h-[88vh] sm:rounded-lg">
           <DialogHeader className="border-b border-border p-5 sm:p-6">
@@ -303,15 +402,42 @@ export function ReviewPanel({
   );
 }
 
+/** This reviewer's own recorded outcome — never any other reviewer's state. */
+function OwnStateCard({ state }: { state: OwnReviewState }) {
+  const approved = state.status === "approved";
+  return (
+    <div className="rounded-xl border border-border bg-card p-6 text-center">
+      <span
+        className={cn(
+          "mx-auto flex h-12 w-12 items-center justify-center rounded-full",
+          approved ? "bg-success-subtle text-success" : "bg-accent text-primary",
+        )}
+      >
+        <AppIcon name={approved ? "verify" : "comment"} size={24} variant="Bold" />
+      </span>
+      <h2 className="mt-3 text-base font-semibold">
+        {approved ? "این جلسه را تأیید کرده‌اید" : "بازخورد شما ثبت شده است"}
+      </h2>
+      <p className="mx-auto mt-1.5 max-w-md text-sm leading-7 text-muted-foreground">
+        {approved
+          ? state.signedAtLabel
+            ? `این جلسه را در ${state.signedAtLabel} تأیید کرده‌اید.`
+            : "این جلسه را تأیید کرده‌اید."
+          : "بازخورد شما برای این جلسه ثبت شده است."}
+      </p>
+    </div>
+  );
+}
+
 function ReviewSuccess({ kind }: { kind: "approved" | "feedback" }) {
   const approved = kind === "approved";
   return (
     <div className="rounded-xl border border-border bg-card p-8 text-center">
       <span
-        className={
-          "mx-auto flex h-14 w-14 items-center justify-center rounded-full " +
-          (approved ? "bg-success-subtle text-success" : "bg-accent text-primary")
-        }
+        className={cn(
+          "mx-auto flex h-14 w-14 items-center justify-center rounded-full",
+          approved ? "bg-success-subtle text-success" : "bg-accent text-primary",
+        )}
       >
         <AppIcon name={approved ? "verify" : "comment"} size={28} variant="Bold" />
       </span>

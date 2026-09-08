@@ -1,8 +1,9 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { cookies } from "next/headers";
 import { mutate, readDb } from "./db";
-import { makeId } from "./utils";
+import { makeId, reviewerCookieName } from "./utils";
 import type {
   ActionItem,
   Activity,
@@ -756,6 +757,10 @@ export async function submitReviewResponse(_prev: unknown, formData: FormData): 
 
   let touched: { id: string; projectId: string | null; spaceId: string | null } | null = null;
   let failure: ReviewResponseResult | null = null;
+  // True once the submitted reviewerId is confirmed to be a real participant
+  // — covers both the success path and the "already reviewed" failure below,
+  // which is exactly when it's safe to remember this device's identity.
+  let identityConfirmed = false;
 
   mutate((db) => {
     const m = db.meetings.find((x) => x.id === v.meetingId);
@@ -771,6 +776,7 @@ export async function submitReviewResponse(_prev: unknown, formData: FormData): 
       failure = { ok: false, error: "شما در فهرست شرکت‌کنندگان این جلسه نیستید.", fieldErrors: { reviewerId: "این شخص شرکت‌کنندهٔ جلسه نیست." } };
       return;
     }
+    identityConfirmed = true;
 
     const existing = db.signatures.find((s) => s.meetingId === m.id && s.approverId === v.reviewerId);
     if (existing && existing.status !== "pending") {
@@ -832,6 +838,20 @@ export async function submitReviewResponse(_prev: unknown, formData: FormData): 
 
     touched = { id: m.id, projectId: m.projectId, spaceId: m.spaceId };
   });
+
+  // Remember this device's identity for this meeting once confirmed as a real
+  // participant — including the "already reviewed" case — so a reload of the
+  // shared review link recognizes the SAME reviewer without ever exposing
+  // anyone else's identity or state (cookie is scoped to this meeting only,
+  // never sent to or readable from another reviewer's device).
+  if (identityConfirmed) {
+    cookies().set(reviewerCookieName(v.meetingId), v.reviewerId, {
+      path: "/",
+      maxAge: 60 * 60 * 24 * 180, // long-lived local convenience — not an auth session
+      sameSite: "lax",
+      httpOnly: true, // read only by the server component that renders this reviewer's own state
+    });
+  }
 
   if (failure) return failure;
   if (touched) {
