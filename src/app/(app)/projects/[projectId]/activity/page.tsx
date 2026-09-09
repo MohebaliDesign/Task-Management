@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { SectionHeader } from "@/components/domain/page-header";
 import { EmptyState } from "@/components/domain/empty-state";
-import { ActivityTimeline } from "@/features/activity/activity-timeline";
+import { ActivityFeed } from "@/features/activity/activity-feed";
 import { getProject, getActivities } from "@/lib/queries";
 
 export default function ProjectActivityPage({ params }: { params: { projectId: string } }) {
@@ -19,7 +19,7 @@ export default function ProjectActivityPage({ params }: { params: { projectId: s
       {activities.length === 0 ? (
         <EmptyState icon="activity" title="تغییری ثبت نشده است" />
       ) : (
-        <ActivityTimeline activities={activities} />
+        <ActivityFeed activities={activities} showProjectContext={false} />
       )}
     </div>
   );
