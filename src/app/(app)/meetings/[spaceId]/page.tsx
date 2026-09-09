@@ -24,11 +24,14 @@ export default function MeetingSpaceDetailPage({ params }: { params: { spaceId: 
         title={space.name}
         description={space.description || "بدون توضیحات"}
         crumbs={[{ label: "جلسات", href: "/meetings" }, { label: "دسته‌های جلسات", href: "/meetings/spaces" }, { label: space.name }]}
+        description="سوابق جلسات ثبت‌شده در این دسته را مشاهده و مدیریت کنید."
+        icon="meetings"
+        crumbs={[{ label: "جلسات", href: "/meetings" }, { label: space.name }]}
         actions={
           <Button asChild>
             <Link href={`/meetings/${space.id}/new`}>
               <AppIcon name="add" size={18} />
-              ثبت جلسه
+              ثبت جلسه جدید
             </Link>
           </Button>
         }

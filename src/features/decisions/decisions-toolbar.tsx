@@ -12,8 +12,8 @@ import { riskLevelLabels } from "@/lib/labels";
 const ALL = "all";
 
 /**
- * Same URL-searchParams-driven pattern as ProjectsFilterBar: state lives in
- * the URL (shareable, works with server rendering) rather than client state,
+ * Same URL-searchParams-driven pattern as the shared list controls: state lives
+ * in the URL (shareable, works with server rendering) rather than client state,
  * so the page component just reads searchParams and filters server-side.
  */
 export function DecisionsToolbar({ resultCount }: { resultCount: number }) {

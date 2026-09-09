@@ -14,6 +14,7 @@ interface NavItem {
   match: (path: string) => boolean;
 }
 
+// Order communicates the mental model: Overview → Core work → People → History.
 const items: NavItem[] = [
   { href: "/", label: "داشبورد", icon: "dashboard", match: (p) => p === "/" },
   { href: "/projects", label: "پروژه‌ها", icon: "projects", match: (p) => p.startsWith("/projects") },

@@ -1,8 +1,9 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { cookies } from "next/headers";
 import { mutate, readDb } from "./db";
-import { makeId } from "./utils";
+import { makeId, reviewerCookieName } from "./utils";
 import type {
   ActionItem,
   Activity,
@@ -29,6 +30,7 @@ import {
   createPersonSchema,
   createProjectSchema,
   signMeetingSchema,
+  submitReviewResponseSchema,
   updateActionStatusSchema,
   updateActionStatusWithNoteSchema,
   updateBlockerStatusSchema,
@@ -732,6 +734,128 @@ export async function signMeeting(_prev: unknown, formData: FormData): Promise<A
   if (touched) {
     revalidateMeetingPaths(touched);
     revalidatePath(`/review/meeting/${v.meetingId}`);
+  }
+  return { ok: true };
+}
+
+/**
+ * The reviewer/signatory response from the read-only /review route.
+ * Reuses the canonical Signature artifact: a reviewer identifies themselves
+ * from the meeting participants, and either approves (signs) or submits
+ * structured, per-decision disagreement feedback — never both. A signature is
+ * created on demand if one doesn't already exist for that participant, so any
+ * invited participant can respond, not only pre-seeded team leads.
+ */
+export type ReviewResponseResult =
+  | { ok: true }
+  | { ok: false; error: string; fieldErrors?: Record<string, string>; alreadyReviewed?: boolean };
+
+export async function submitReviewResponse(_prev: unknown, formData: FormData): Promise<ReviewResponseResult> {
+  const parsed = submitReviewResponseSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { ok: false, error: "لطفاً موارد لازم را کامل کنید.", fieldErrors: fieldErrorsFrom(parsed.error) };
+  const v = parsed.data;
+
+  let touched: { id: string; projectId: string | null; spaceId: string | null } | null = null;
+  let failure: ReviewResponseResult | null = null;
+  // True once the submitted reviewerId is confirmed to be a real participant
+  // — covers both the success path and the "already reviewed" failure below,
+  // which is exactly when it's safe to remember this device's identity.
+  let identityConfirmed = false;
+
+  mutate((db) => {
+    const m = db.meetings.find((x) => x.id === v.meetingId);
+    if (!m) {
+      failure = { ok: false, error: "جلسه یافت نشد." };
+      return;
+    }
+    // Identity must be an actual participant of this meeting (read-only route,
+    // no auth — the smallest honest identity model, see OPEN_PRODUCT_DECISIONS).
+    const isParticipant = m.participants.some((p) => p.personId === v.reviewerId);
+    const person = db.people.find((p) => p.id === v.reviewerId);
+    if (!isParticipant || !person) {
+      failure = { ok: false, error: "شما در فهرست شرکت‌کنندگان این جلسه نیستید.", fieldErrors: { reviewerId: "این شخص شرکت‌کنندهٔ جلسه نیست." } };
+      return;
+    }
+    identityConfirmed = true;
+
+    const existing = db.signatures.find((s) => s.meetingId === m.id && s.approverId === v.reviewerId);
+    if (existing && existing.status !== "pending") {
+      failure = { ok: false, error: "شما پیش‌تر پاسخ خود را برای این جلسه ثبت کرده‌اید.", alreadyReviewed: true };
+      return;
+    }
+
+    // Only keep per-decision feedback that maps to a real decision of this meeting.
+    const meetingDecisionIds = new Set(db.decisions.filter((d) => d.meetingId === m.id).map((d) => d.id));
+    const decisionFeedback = v.decisionFeedbackJson.filter((f) => meetingDecisionIds.has(f.decisionId));
+
+    const isApprove = v.decision === "approved";
+    let target = existing;
+    if (!target) {
+      target = {
+        id: makeId("sig"),
+        meetingId: m.id,
+        approverId: person.id,
+        approverName: person.name,
+        role: person.role,
+        status: "pending",
+        comment: "",
+        signedAt: null,
+        revision: m.revision,
+      };
+      db.signatures.push(target);
+    }
+
+    target.status = v.decision;
+    target.approverName = person.name;
+    target.role = person.role;
+    target.signedAt = isApprove ? nowIso() : null;
+    target.comment = isApprove ? "" : v.generalFeedback;
+    target.generalFeedback = isApprove ? "" : v.generalFeedback;
+    target.decisionFeedback = isApprove ? [] : decisionFeedback;
+    target.revision = m.revision;
+
+    if (m.projectId) {
+      pushActivity(db, {
+        projectId: m.projectId,
+        meetingId: m.id,
+        type: isApprove ? "signature_added" : "comment_added",
+        actorId: person.id,
+        actorName: person.name,
+        entityLabel: `بازبینی «${m.title}»`,
+        previousValue: "در انتظار بازبینی",
+        newValue: isApprove ? "تأیید و امضا شد" : "بازخورد ثبت شد",
+      });
+    }
+
+    // A meeting the PM sent for signatures becomes approved only when every
+    // required signature is approved. We never auto-approve a draft.
+    const sigs = db.signatures.filter((x) => x.meetingId === m.id);
+    if (m.status === "awaiting_signatures" && allSignaturesApproved(sigs)) {
+      m.status = "approved";
+      m.updatedAt = nowIso();
+      if (m.projectId) pushActivity(db, { projectId: m.projectId, meetingId: m.id, type: "meeting_approved", entityLabel: m.title, previousValue: "در انتظار امضا", newValue: "تأییدشده" });
+    }
+
+    touched = { id: m.id, projectId: m.projectId, spaceId: m.spaceId };
+  });
+
+  // Remember this device's identity for this meeting once confirmed as a real
+  // participant — including the "already reviewed" case — so a reload of the
+  // shared review link recognizes the SAME reviewer without ever exposing
+  // anyone else's identity or state (cookie is scoped to this meeting only,
+  // never sent to or readable from another reviewer's device).
+  if (identityConfirmed) {
+    cookies().set(reviewerCookieName(v.meetingId), v.reviewerId, {
+      path: "/",
+      maxAge: 60 * 60 * 24 * 180, // long-lived local convenience — not an auth session
+      sameSite: "lax",
+      httpOnly: true, // read only by the server component that renders this reviewer's own state
+    });
+  }
+
+  if (failure) return failure;
+  if (touched) {
+    revalidateMeetingPaths(touched);
   }
   return { ok: true };
 }
