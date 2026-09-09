@@ -11,9 +11,12 @@ import { cn } from "@/lib/utils";
 import type { Person } from "@/lib/domain";
 
 /**
- * Desktop navigation rail — a strong Primary Blue surface, clearly separated
- * from the white Header/Main Content. Collapses to an icon-only rail that
- * keeps active state and exposes tooltips for every item. Mobile uses its own
+ * Desktop navigation rail — a white surface, same as the Top Bar, separated
+ * from Main Content only by a subtle left border (`border-e`, which is the
+ * left edge in this RTL shell). Selected nav uses a subtle Primary-tinted
+ * background with Primary Blue text/icon; the brand mark is the shell's one
+ * deliberate Primary Blue accent. Collapses to an icon-only rail that keeps
+ * active state and exposes tooltips for every item. Mobile uses its own
  * Sheet-based drawer (mobile-nav.tsx) and never collapses.
  */
 export function Sidebar({ operator }: { operator: Person | undefined }) {

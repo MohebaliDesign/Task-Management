@@ -31,6 +31,7 @@ const config: Config = {
         ring: "hsl(var(--ring))",
         "ring-error": "hsl(var(--ring-error))",
         background: "hsl(var(--background))",
+        "background-subtle": "hsl(var(--background-subtle))",
         foreground: "hsl(var(--foreground))",
         "foreground-alt": "hsl(var(--foreground-alt))",
         primary: {

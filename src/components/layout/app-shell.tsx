@@ -8,15 +8,18 @@ import { TOPBAR_HEADING_ID, TOPBAR_ACTIONS_ID } from "./page-topbar";
 import { getPerson } from "@/lib/queries";
 
 /**
- * The authenticated PM/PO application shell: a strong Primary Blue navigation
- * rail on desktop (collapsible), a slide-in drawer on mobile, and exactly ONE
- * white sticky Top Bar. The Top Bar carries the persistent global chrome
- * (mobile menu trigger, Theme toggle) plus — via the `#app-topbar-heading` /
- * `#app-topbar-actions` slots — each page's own title/subtitle/CTAs
- * (PageTopBar portals into them). There is no second header row: on pages
- * that don't call PageTopBar the two slots are simply empty and the bar
- * shows only its global chrome. Reviewer/closure routes use their own
- * minimal shell (they must not expose app navigation).
+ * The authenticated PM/PO application shell: a white navigation rail on
+ * desktop (collapsible), a slide-in drawer on mobile, and exactly ONE white
+ * sticky Top Bar — Sidebar and Top Bar belong to the same clean surface,
+ * separated from each other and from Main Content only by a subtle border
+ * (never a color block). Main Content itself uses `bg-background-subtle`, an
+ * extremely light neutral distinct from the white shell and white Cards. The
+ * Top Bar carries the persistent global chrome (mobile menu trigger, Theme
+ * toggle) plus — via the `#app-topbar-heading` / `#app-topbar-actions` slots —
+ * each page's own title/subtitle/CTAs (PageTopBar portals into them). There
+ * is no second header row: on pages that don't call PageTopBar the two slots
+ * are simply empty and the bar shows only its global chrome. Reviewer/closure
+ * routes use their own minimal shell (they must not expose app navigation).
  */
 export function AppShell({ children }: { children: ReactNode }) {
   const operator = getPerson("p_sara");
@@ -40,7 +43,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               </div>
             </div>
           </header>
-          <main className="flex-1 bg-background px-4 py-6 lg:px-8 lg:py-8">
+          <main className="flex-1 bg-background-subtle px-4 py-6 lg:px-8 lg:py-8">
             <div className="mx-auto w-full max-w-6xl">{children}</div>
           </main>
         </div>

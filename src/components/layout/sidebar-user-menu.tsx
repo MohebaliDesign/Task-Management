@@ -27,10 +27,9 @@ import type { Person } from "@/lib/domain";
  * just leaves the app shell and lands on a minimal signed-out screen outside
  * the (app) route group. See final report for this limitation.
  *
- * Identity is composed manually here (not via the shared PersonChip) because
- * PersonChip's role line hardcodes `text-muted-foreground`, which has no
- * contrast against the sidebar's solid Primary Blue surface — the sidebar
- * needs its own foreground tokens instead.
+ * Identity is composed manually here (not via the shared PersonChip) so its
+ * text consistently uses the sidebar's own foreground tokens rather than
+ * PersonChip's hardcoded `text-muted-foreground`.
  */
 export function SidebarUserMenu({ operator, collapsed }: { operator: Person | undefined; collapsed: boolean }) {
   const router = useRouter();
@@ -61,7 +60,7 @@ export function SidebarUserMenu({ operator, collapsed }: { operator: Person | un
           <PersonAvatar person={operator} className="h-8 w-8 shrink-0" />
           <span className="flex min-w-0 flex-col leading-tight">
             <span className="truncate text-sm font-medium text-sidebar-foreground">{operator.name}</span>
-            <span className="truncate text-xs text-sidebar-muted/80">{roleLabels[operator.role]}</span>
+            <span className="truncate text-xs text-sidebar-muted">{roleLabels[operator.role]}</span>
           </span>
         </div>
       )}
@@ -75,7 +74,7 @@ export function SidebarUserMenu({ operator, collapsed }: { operator: Person | un
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="mx-auto text-sidebar-foreground hover:bg-destructive hover:text-destructive-foreground"
+                  className="mx-auto text-destructive-text hover:bg-destructive-subtle hover:text-destructive-text"
                   aria-label="خروج از حساب"
                 >
                   <AppIcon name="logout" size={18} />
@@ -89,7 +88,7 @@ export function SidebarUserMenu({ operator, collapsed }: { operator: Person | un
             <Button
               type="button"
               variant="ghost"
-              className="justify-start gap-3 px-2 text-sidebar-foreground hover:bg-destructive hover:text-destructive-foreground"
+              className="justify-start gap-3 px-2 text-destructive-text hover:bg-destructive-subtle hover:text-destructive-text"
             >
               <AppIcon name="logout" size={18} />
               خروج از حساب
