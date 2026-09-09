@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { PersonAvatar, PersonChip } from "@/components/domain/person";
+import { PersonAvatar } from "@/components/domain/person";
 import { AppIcon } from "@/components/icon";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -21,11 +21,16 @@ import { roleLabels } from "@/lib/labels";
 import type { Person } from "@/lib/domain";
 
 /**
- * Bottom-of-sidebar identity + logout (items #22-26). The product has no
- * finalized authentication yet (PROJECT_CONTEXT.md boundaries), so "logout"
- * is the smallest realistic prototype behavior: it never invents a real
- * session, it just leaves the app shell and lands on a minimal signed-out
- * screen outside the (app) route group. See final report for this limitation.
+ * Bottom-of-sidebar identity + logout. The product has no finalized
+ * authentication yet (PROJECT_CONTEXT.md boundaries), so "logout" is the
+ * smallest realistic prototype behavior: it never invents a real session, it
+ * just leaves the app shell and lands on a minimal signed-out screen outside
+ * the (app) route group. See final report for this limitation.
+ *
+ * Identity is composed manually here (not via the shared PersonChip) because
+ * PersonChip's role line hardcodes `text-muted-foreground`, which has no
+ * contrast against the sidebar's solid Primary Blue surface — the sidebar
+ * needs its own foreground tokens instead.
  */
 export function SidebarUserMenu({ operator, collapsed }: { operator: Person | undefined; collapsed: boolean }) {
   const router = useRouter();
@@ -52,8 +57,12 @@ export function SidebarUserMenu({ operator, collapsed }: { operator: Person | un
           </TooltipContent>
         </Tooltip>
       ) : (
-        <div className="rounded-lg px-1 py-1.5">
-          <PersonChip person={operator} showRole />
+        <div className="flex items-center gap-2 rounded-lg px-1 py-1.5">
+          <PersonAvatar person={operator} className="h-8 w-8 shrink-0" />
+          <span className="flex min-w-0 flex-col leading-tight">
+            <span className="truncate text-sm font-medium text-sidebar-foreground">{operator.name}</span>
+            <span className="truncate text-xs text-sidebar-muted/80">{roleLabels[operator.role]}</span>
+          </span>
         </div>
       )}
 
@@ -66,7 +75,7 @@ export function SidebarUserMenu({ operator, collapsed }: { operator: Person | un
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="mx-auto text-destructive-text hover:bg-destructive-subtle hover:text-destructive-text"
+                  className="mx-auto text-sidebar-foreground hover:bg-destructive hover:text-destructive-foreground"
                   aria-label="خروج از حساب"
                 >
                   <AppIcon name="logout" size={18} />
@@ -80,7 +89,7 @@ export function SidebarUserMenu({ operator, collapsed }: { operator: Person | un
             <Button
               type="button"
               variant="ghost"
-              className="justify-start gap-3 px-2 text-destructive-text hover:bg-destructive-subtle hover:text-destructive-text"
+              className="justify-start gap-3 px-2 text-sidebar-foreground hover:bg-destructive hover:text-destructive-foreground"
             >
               <AppIcon name="logout" size={18} />
               خروج از حساب

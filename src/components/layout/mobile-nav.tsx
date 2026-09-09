@@ -27,14 +27,14 @@ export function MobileNav({ operator }: { operator: Person | undefined }) {
           <AppIcon name="menu" size={22} />
         </Button>
       </SheetTrigger>
-      <SheetContent side="end" className="flex w-72 flex-col bg-background">
+      <SheetContent side="end" className="flex w-72 flex-col border-sidebar-border bg-sidebar text-sidebar-foreground">
         <SheetHeader className="mb-6">
           <SheetTitle className="text-start">
             <BrandMark />
           </SheetTitle>
         </SheetHeader>
         <SidebarNav forceExpanded />
-        <div className="mt-auto border-t border-border pt-3">
+        <div className="mt-auto border-t border-sidebar-border pt-3">
           <SidebarUserMenu operator={operator} collapsed={false} />
         </div>
       </SheetContent>

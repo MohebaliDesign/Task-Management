@@ -43,11 +43,11 @@ export function SidebarNav({ forceExpanded = false }: { forceExpanded?: boolean 
             aria-current={active ? "page" : undefined}
             aria-label={isCollapsed ? item.label : undefined}
             className={cn(
-              "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring",
+              "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar",
               isCollapsed && "justify-center px-0",
               active
-                ? "bg-primary/10 text-primary"
-                : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+                ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-2xs"
+                : "text-sidebar-foreground/85 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
             )}
           >
             <AppIcon name={item.icon} size={20} variant={active ? "Bold" : "Linear"} className="shrink-0" />

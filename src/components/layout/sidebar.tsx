@@ -11,12 +11,31 @@ import { cn } from "@/lib/utils";
 import type { Person } from "@/lib/domain";
 
 /**
- * Desktop navigation rail. Collapses to an icon-only rail (width 4.5rem) that
- * keeps active state and exposes tooltips for every item — see items #17-20.
- * Mobile uses its own Sheet-based drawer (mobile-nav.tsx) and never collapses.
+ * Desktop navigation rail — a strong Primary Blue surface, clearly separated
+ * from the white Header/Main Content. Collapses to an icon-only rail that
+ * keeps active state and exposes tooltips for every item. Mobile uses its own
+ * Sheet-based drawer (mobile-nav.tsx) and never collapses.
  */
 export function Sidebar({ operator }: { operator: Person | undefined }) {
   const { collapsed, toggle } = useSidebarCollapse();
+
+  const toggleButton = (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          onClick={toggle}
+          aria-label={collapsed ? "بازکردن نوار کناری" : "جمع‌کردن نوار کناری"}
+          className="shrink-0 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-sidebar-ring focus-visible:ring-offset-sidebar"
+        >
+          <AppIcon name="sidebarToggle" size={20} />
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent side="left">{collapsed ? "بازکردن نوار کناری" : "جمع‌کردن نوار کناری"}</TooltipContent>
+    </Tooltip>
+  );
 
   return (
     <aside
@@ -25,38 +44,23 @@ export function Sidebar({ operator }: { operator: Person | undefined }) {
         collapsed ? "w-[4.5rem] items-center px-2" : "w-64",
       )}
     >
-      <div className={cn("mb-6 flex items-center gap-2", collapsed ? "flex-col" : "justify-between px-1")}>
-        {collapsed ? (
-          <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-2xs">
-            <AppIcon name="verify" size={20} variant="Bold" />
-          </span>
-        ) : (
+      {/* Header row: logo(+title) opposite the collapse control when expanded; logo above the expand control when collapsed — items #9-11. */}
+      {collapsed ? (
+        <div className="mb-6 flex flex-col items-center gap-3">
+          <BrandMark iconOnly />
+          {toggleButton}
+        </div>
+      ) : (
+        <div className="mb-6 flex items-center justify-between gap-2 px-1">
           <BrandMark />
-        )}
-      </div>
+          {toggleButton}
+        </div>
+      )}
 
       <SidebarNav />
 
-      <div className="mt-auto flex flex-col gap-2 pt-4">
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              onClick={toggle}
-              aria-label={collapsed ? "بازکردن نوار کناری" : "جمع‌کردن نوار کناری"}
-              className={cn("text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground", collapsed ? "mx-auto" : "self-end")}
-            >
-              <AppIcon name={collapsed ? "expandSidebar" : "collapseSidebar"} size={18} />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent side="left">{collapsed ? "بازکردن نوار کناری" : "جمع‌کردن نوار کناری"}</TooltipContent>
-        </Tooltip>
-
-        <div className="border-t border-sidebar-border pt-2">
-          <SidebarUserMenu operator={operator} collapsed={collapsed} />
-        </div>
+      <div className="mt-auto border-t border-sidebar-border pt-3">
+        <SidebarUserMenu operator={operator} collapsed={collapsed} />
       </div>
     </aside>
   );
