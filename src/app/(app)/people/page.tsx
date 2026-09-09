@@ -62,7 +62,6 @@ export default function PeoplePage({
       <PageTopBar
         title="تیم و افراد"
         description="افراد و تیم‌های درگیر در پروژه‌ها و جلسات را مدیریت کنید."
-        icon="people"
         actions={
           <>
             <AddTeamDialog people={allPeople} />

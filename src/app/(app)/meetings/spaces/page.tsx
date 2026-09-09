@@ -22,7 +22,6 @@ export default function MeetingSpacesPage() {
             ? `${toFa(spaces.length)} دستهٔ جلسات ثبت شده است. هر دسته می‌تواند چند جلسهٔ سازمانی مستقل از پروژه را دربر بگیرد.`
             : "دسته‌های جلسات، جلسات سازمانی مستقل از پروژه‌ها را گروه‌بندی می‌کنند."
         }
-        icon="meetings"
         crumbs={[{ label: "جلسات", href: "/meetings" }, { label: "دسته‌های جلسات" }]}
         actions={
           <Button asChild>

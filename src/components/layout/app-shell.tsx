@@ -2,18 +2,21 @@ import type { ReactNode } from "react";
 import { Sidebar } from "./sidebar";
 import { MobileNav } from "./mobile-nav";
 import { ThemeToggle } from "./theme-toggle";
-import { BrandMark } from "./brand-mark";
+import { Separator } from "@/components/ui/separator";
 import { SidebarCollapseProvider } from "./sidebar-collapse-context";
-import { TOPBAR_ROW_ID } from "./page-topbar";
+import { TOPBAR_HEADING_ID, TOPBAR_ACTIONS_ID } from "./page-topbar";
 import { getPerson } from "@/lib/queries";
 
 /**
- * The authenticated PM/PO application shell: a persistent, primary-tinted
- * navigation rail on desktop (collapsible, item #17), a slide-in drawer on
- * mobile, and a white sticky Top Bar that carries both the global chrome
- * (mobile menu, theme toggle) and — via `#app-topbar-row` — each page's own
- * title/subtitle/actions (items #1-16). Reviewer/closure routes use their own
- * minimal shell (they must not expose app navigation — IA §18).
+ * The authenticated PM/PO application shell: a strong Primary Blue navigation
+ * rail on desktop (collapsible), a slide-in drawer on mobile, and exactly ONE
+ * white sticky Top Bar. The Top Bar carries the persistent global chrome
+ * (mobile menu trigger, Theme toggle) plus — via the `#app-topbar-heading` /
+ * `#app-topbar-actions` slots — each page's own title/subtitle/CTAs
+ * (PageTopBar portals into them). There is no second header row: on pages
+ * that don't call PageTopBar the two slots are simply empty and the bar
+ * shows only its global chrome. Reviewer/closure routes use their own
+ * minimal shell (they must not expose app navigation).
  */
 export function AppShell({ children }: { children: ReactNode }) {
   const operator = getPerson("p_sara");
@@ -25,19 +28,17 @@ export function AppShell({ children }: { children: ReactNode }) {
         {/* Main column */}
         <div className="flex min-h-screen min-w-0 flex-col">
           <header className="sticky top-0 z-30 border-b border-border bg-background">
-            <div className="flex h-14 items-center justify-between gap-3 px-4 lg:px-6">
-              <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 py-3 lg:px-6">
+              <div className="flex min-w-0 items-center gap-3">
                 <MobileNav operator={operator} />
-                <span className="lg:hidden">
-                  <BrandMark />
-                </span>
+                <div id={TOPBAR_HEADING_ID} className="min-w-0 empty:hidden" />
               </div>
-              <div className="flex items-center gap-1">
+              <div className="flex shrink-0 items-center gap-3">
+                <div id={TOPBAR_ACTIONS_ID} className="flex flex-wrap items-center justify-end gap-2 empty:hidden" />
+                <Separator orientation="vertical" className="h-6" />
                 <ThemeToggle />
               </div>
             </div>
-            {/* Per-page title/subtitle/CTAs portal here — see page-topbar.tsx. Empty on pages that keep their own in-content header (item #78). */}
-            <div id={TOPBAR_ROW_ID} className="border-t border-border px-4 py-3 empty:hidden empty:border-0 empty:p-0 lg:px-6" />
           </header>
           <main className="flex-1 bg-background px-4 py-6 lg:px-8 lg:py-8">
             <div className="mx-auto w-full max-w-6xl">{children}</div>

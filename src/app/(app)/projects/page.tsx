@@ -9,7 +9,6 @@ import { ProjectTable } from "@/features/projects/project-table";
 import { ProjectsFilterBar } from "@/features/projects/filter-bar";
 import { ViewSwitcher, type ViewMode } from "@/components/domain/view-switcher";
 import { getProjects } from "@/lib/queries";
-import { toFa } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "پروژه‌ها" };
 
@@ -39,8 +38,7 @@ export default function ProjectsPage({ searchParams }: { searchParams: SearchPar
     <>
       <PageTopBar
         title="پروژه‌ها"
-        description={`${toFa(all.length)} پروژه ثبت شده است. برای مشاهدهٔ جزئیات، پروژه‌ای را باز کنید.`}
-        icon="projects"
+        description="پروژه‌ها و وضعیت فعلی آن‌ها را مدیریت کنید."
         actions={
           <Button asChild>
             <Link href="/projects/new">

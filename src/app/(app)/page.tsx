@@ -27,7 +27,6 @@ export default function DashboardPage() {
       <PageTopBar
         title="داشبورد"
         description="نمای کلی پروژه‌های فعال، سلامت آن‌ها و مواردی که نیازمند توجه شماست."
-        icon="dashboard"
         actions={
           <>
             <Button asChild variant="outline">

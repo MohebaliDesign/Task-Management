@@ -3,10 +3,10 @@
 import * as React from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
-import { AppIcon, type IconName } from "@/components/icon";
-import { cn } from "@/lib/utils";
+import { AppIcon } from "@/components/icon";
 
-export const TOPBAR_ROW_ID = "app-topbar-row";
+export const TOPBAR_HEADING_ID = "app-topbar-heading";
+export const TOPBAR_ACTIONS_ID = "app-topbar-actions";
 
 export interface TopBarCrumb {
   label: string;
@@ -14,72 +14,61 @@ export interface TopBarCrumb {
 }
 
 /**
- * Page-level orientation (title/subtitle/CTAs) rendered into the persistent
- * app Top Bar instead of duplicated inside page content — items #8-13.
- *
- * Implemented as a portal into a slot the AppShell always renders
- * (`#app-topbar-row`, see app-shell.tsx). The slot is empty by default
- * (`empty:hidden`) so pages that don't use PageTopBar — detail pages with
- * their own rich header, forms with breadcrumbs — leave the Top Bar showing
- * only its persistent chrome, exactly as item #78 requires ("do not move
- * deeply nested section headings into the global Top Bar").
+ * Page-level orientation (title/subtitle/CTAs), portaled into the ONE global
+ * Top Bar the AppShell always renders — never a second header. Two stable
+ * slots (`#app-topbar-heading`, `#app-topbar-actions`) live inside the
+ * existing chrome row in app-shell.tsx; this only ever fills them in, it
+ * never adds its own wrapper/border/height. Pages that don't call this
+ * (detail pages with their own rich header, forms with breadcrumbs) simply
+ * leave both slots empty.
  */
 export function PageTopBar({
   title,
   description,
-  icon,
   crumbs,
   actions,
 }: {
   title: string;
   description?: string;
-  icon?: IconName;
   crumbs?: TopBarCrumb[];
   actions?: React.ReactNode;
 }) {
-  const [target, setTarget] = React.useState<HTMLElement | null>(null);
+  const [mounted, setMounted] = React.useState(false);
+  React.useEffect(() => setMounted(true), []);
 
-  React.useEffect(() => {
-    setTarget(document.getElementById(TOPBAR_ROW_ID));
-  }, []);
+  if (!mounted) return null;
+  const headingEl = document.getElementById(TOPBAR_HEADING_ID);
+  const actionsEl = document.getElementById(TOPBAR_ACTIONS_ID);
+  if (!headingEl || !actionsEl) return null;
 
-  if (!target) return null;
-
-  return createPortal(
-    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-      <div className="min-w-0">
-        {crumbs && crumbs.length > 0 && (
-          <nav aria-label="مسیر" className="mb-1">
-            <ol className="flex flex-wrap items-center gap-1 text-xs text-muted-foreground">
-              {crumbs.map((c, i) => (
-                <li key={i} className="flex items-center gap-1">
-                  {c.href ? (
-                    <Link href={c.href} className="rounded-sm hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-                      {c.label}
-                    </Link>
-                  ) : (
-                    <span className="text-foreground">{c.label}</span>
-                  )}
-                  {i < crumbs.length - 1 && <AppIcon name="chevronLeft" size={12} className="opacity-50" />}
-                </li>
-              ))}
-            </ol>
-          </nav>
-        )}
-        <div className="flex items-center gap-2.5">
-          {icon && (
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent text-accent-foreground">
-              <AppIcon name={icon} size={20} />
-            </span>
+  return (
+    <>
+      {createPortal(
+        <div className="min-w-0">
+          {crumbs && crumbs.length > 0 && (
+            <nav aria-label="مسیر" className="mb-1">
+              <ol className="flex flex-wrap items-center gap-1 text-xs text-muted-foreground">
+                {crumbs.map((c, i) => (
+                  <li key={i} className="flex items-center gap-1">
+                    {c.href ? (
+                      <Link href={c.href} className="rounded-sm hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                        {c.label}
+                      </Link>
+                    ) : (
+                      <span className="text-foreground">{c.label}</span>
+                    )}
+                    {i < crumbs.length - 1 && <AppIcon name="chevronLeft" size={12} className="opacity-50" />}
+                  </li>
+                ))}
+              </ol>
+            </nav>
           )}
-          <div className="min-w-0">
-            <h1 className="truncate text-lg font-semibold tracking-tight sm:text-xl">{title}</h1>
-            {description && <p className="mt-0.5 max-w-2xl truncate text-xs text-muted-foreground sm:text-sm">{description}</p>}
-          </div>
-        </div>
-      </div>
-      {actions && <div className={cn("flex shrink-0 flex-wrap items-center gap-2")}>{actions}</div>}
-    </div>,
-    target,
+          <h1 className="truncate text-lg font-semibold tracking-tight sm:text-xl">{title}</h1>
+          {description && <p className="mt-0.5 max-w-2xl truncate text-xs text-muted-foreground sm:text-sm">{description}</p>}
+        </div>,
+        headingEl,
+      )}
+      {actions && createPortal(<>{actions}</>, actionsEl)}
+    </>
   );
 }

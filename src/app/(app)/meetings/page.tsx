@@ -9,7 +9,6 @@ import { MeetingTable } from "@/features/meetings/meeting-table";
 import { MeetingsFilterBar, type ContextOption } from "@/features/meetings/meetings-filter-bar";
 import { ViewSwitcher, type ViewMode } from "@/components/domain/view-switcher";
 import { getAllMeetings, getProjects, getMeetingSpaces } from "@/lib/queries";
-import { toFa } from "@/lib/utils";
 import type { MeetingStatus } from "@/lib/domain";
 
 export const metadata: Metadata = { title: "جلسات" };
@@ -54,8 +53,7 @@ export default function AllMeetingsPage({ searchParams }: { searchParams: Search
     <>
       <PageTopBar
         title="جلسات"
-        description={`${toFa(all.length)} جلسه در پروژه‌ها و دسته‌های جلسات ثبت شده است.`}
-        icon="meetings"
+        description="دسته‌های جلسات سازمانی و سوابق آن‌ها را مدیریت کنید."
         actions={
           <Button asChild variant="outline">
             <Link href="/meetings/spaces">
