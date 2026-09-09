@@ -85,6 +85,7 @@ const config: Config = {
           "primary-foreground": "hsl(var(--sidebar-primary-foreground))",
           border: "hsl(var(--sidebar-border))",
           muted: "hsl(var(--sidebar-muted))",
+          ring: "hsl(var(--sidebar-ring))",
         },
       },
       borderRadius: {

@@ -39,4 +39,10 @@ These are the only places the literal token was adjusted, each for usability/acc
 
 5. **Font** — `Vazir FD‑WOL` → **Vazirmatn** (same lineage, open‑source, self‑hosted). See `OPEN_PRODUCT_DECISIONS.md`.
 
+6. **`--sidebar` / `--sidebar-accent` / `--sidebar-border` / `--sidebar-primary`** — the DS export ships no dedicated "navigation surface" token (no `surface-brand-subtle` / `primary-subtle`), only a near-neutral `sidebar` triplet copied from the base neutral ramp. Per the app-shell refinement brief, these four `--sidebar*` variables were retinted to a very low-lightness/low-saturation tint of the company **primary hue (226°)** instead of neutral gray, so the persistent navigation rail reads as a distinct, brand-reinforcing surface once Header and Main Content both moved to plain white — while staying calm enough for daily use and passing contrast in both themes. `--sidebar-primary` now equals `--primary`, used for the selected nav item. No new variable name was introduced; only the existing `--sidebar*` values were re-authored.
+
+7. **`--sidebar-ring`** — referenced by `focus-visible:ring-sidebar-ring` in `brand-mark.tsx`/`sidebar-nav.tsx` but never defined, so those focus rings silently no-oped. Added, mirroring `--ring` (brand primary), so keyboard focus inside the sidebar is visible — same rationale as deviation 3 above.
+
+8. **`w-[4.5rem]`** (`sidebar.tsx`, collapsed rail width) — the only arbitrary-value exception introduced by the app-shell refinement. The Tailwind scale's nearest steps (`w-16`/`w-20`) are either too tight or too loose for a centered 20px icon plus padding; `4.5rem` was measured to keep the icon rail visually balanced. Not a color/spacing/radius/shadow token, so it doesn't compete with the Design System — spacing-scale tokens (`p-*`, `gap-*`, etc.) are used everywhere else in the new shell components. Table column `min-w-[…]` utilities elsewhere (People/Teams tables) are the same kind of layout-only sizing hint, not design tokens.
+
 Everything else is a faithful 1:1 mapping of the exported company tokens.

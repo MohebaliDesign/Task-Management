@@ -53,6 +53,11 @@ import {
   Copy,
   Element3,
   RowVertical,
+  Logout,
+  ArrowLeft3,
+  ArrowRight3,
+  ProfileRemove,
+  Menu,
 } from "iconsax-react";
 
 /**
@@ -117,6 +122,11 @@ export const icons = {
   copy: Copy,
   grid: Element3,
   table: RowVertical,
+  logout: Logout,
+  collapseSidebar: ArrowRight3,
+  expandSidebar: ArrowLeft3,
+  personRemove: ProfileRemove,
+  menu: Menu,
 } satisfies Record<string, IconsaxComponent>;
 
 export type IconName = keyof typeof icons;

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { PageHeader } from "@/components/domain/page-header";
+import { PageTopBar } from "@/components/layout/page-topbar";
 import { Button } from "@/components/ui/button";
 import { AppIcon } from "@/components/icon";
 import { EmptyState } from "@/components/domain/empty-state";
@@ -15,7 +15,7 @@ export default function MeetingSpacesPage() {
 
   return (
     <>
-      <PageHeader
+      <PageTopBar
         title="دسته‌های جلسات"
         description={
           spaces.length > 0

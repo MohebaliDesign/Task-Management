@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { PageHeader } from "@/components/domain/page-header";
+import { PageTopBar } from "@/components/layout/page-topbar";
 import { Button } from "@/components/ui/button";
 import { AppIcon } from "@/components/icon";
 import { EmptyState } from "@/components/domain/empty-state";
@@ -52,7 +52,7 @@ export default function AllMeetingsPage({ searchParams }: { searchParams: Search
 
   return (
     <>
-      <PageHeader
+      <PageTopBar
         title="جلسات"
         description={`${toFa(all.length)} جلسه در پروژه‌ها و دسته‌های جلسات ثبت شده است.`}
         icon="meetings"
