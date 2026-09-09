@@ -74,27 +74,3 @@ export function activityTitle(a: ActivityType, entityLabel: string): string {
     case "person_added": return `${name || "فرد جدید"} به فهرست افراد افزوده شد`;
   }
 }
-
-/** Event-type filter groups shown in the toolbar (item #48) — only categories with real data in the enum. */
-export const ACTIVITY_FILTER_GROUPS = {
-  projects: ["project_created", "project_updated", "health_changed", "deadline_changed", "milestone_updated", "project_closed"],
-  meetings: ["meeting_created", "meeting_updated", "meeting_submitted", "meeting_approved"],
-  decisions: ["decision_added"],
-  actions: ["action_added", "action_status_changed", "action_owner_changed"],
-  blockers: ["blocker_added", "blocker_status_changed", "risk_added", "dependency_added"],
-  reviews: ["signature_added", "ceo_approval", "comment_added"],
-  people: ["person_added"],
-} satisfies Record<string, ActivityType[]>;
-
-export type ActivityFilterGroup = keyof typeof ACTIVITY_FILTER_GROUPS | "all";
-
-export const activityFilterGroupLabels: Record<ActivityFilterGroup, string> = {
-  all: "همهٔ فعالیت‌ها",
-  projects: "پروژه‌ها",
-  meetings: "جلسات",
-  decisions: "تصمیمات",
-  actions: "اقدامات",
-  blockers: "موانع",
-  reviews: "بازبینی و امضا",
-  people: "افراد",
-};

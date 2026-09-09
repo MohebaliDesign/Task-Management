@@ -3,16 +3,18 @@ import { AppIcon } from "@/components/icon";
 import { StatusPill } from "@/components/domain/status";
 import { PersonAvatar } from "@/components/domain/person";
 import { toneClasses } from "@/lib/labels";
-import { faTime } from "@/lib/utils";
+import { cn, faTime } from "@/lib/utils";
 import { getPerson, getProject, getMeeting } from "@/lib/queries";
 import { activityMeta, activityTitle, isStatusTransition } from "./activity-meta";
 import { resolveActivityTarget } from "./activity-target";
 import type { Activity } from "@/lib/domain";
 
 /**
- * One compact governance event row (items #49-62): icon + title first, then
- * a single secondary line carrying context/actor/time, and the status
- * transition/description only when they add information. Never a tall card.
+ * One governance event row. Hierarchy top to bottom: Title (dominant) →
+ * status transition / short diff (quiet, only when real) → Context
+ * breadcrumb (quiet) → Actor + Time group, with the "مشاهده جزئیات" action
+ * aligned consistently at the end of that same row. Never a card — a
+ * lightweight row with generous vertical breathing room instead.
  */
 export function ActivityItem({ activity, showProjectContext = true }: { activity: Activity; showProjectContext?: boolean }) {
   const meta = activityMeta[activity.type];
@@ -24,13 +26,13 @@ export function ActivityItem({ activity, showProjectContext = true }: { activity
   const hasFreeformDiff = !showTransition && !!(activity.previousValue || activity.newValue);
 
   return (
-    <li className="flex gap-3 py-3">
-      <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border ${toneClasses[meta.tone]}`}>
+    <li className="flex gap-3 py-4">
+      <span className={cn("mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full", toneClasses[meta.tone], "border-transparent")}>
         <AppIcon name={meta.icon} size={15} />
       </span>
 
-      <div className="min-w-0 flex-1 space-y-1">
-        <p className="text-sm font-medium leading-snug text-foreground">{activityTitle(activity.type, activity.entityLabel)}</p>
+      <div className="min-w-0 flex-1 space-y-2">
+        <p className="text-sm font-semibold leading-snug text-foreground">{activityTitle(activity.type, activity.entityLabel)}</p>
 
         {showTransition && (
           <div className="flex flex-wrap items-center gap-1.5">
@@ -40,36 +42,40 @@ export function ActivityItem({ activity, showProjectContext = true }: { activity
           </div>
         )}
         {hasFreeformDiff && (
-          <p className="text-xs text-muted-foreground">
+          <p className="line-clamp-2 text-xs text-muted-foreground">
             {activity.previousValue && <span className="line-through">{activity.previousValue}</span>}
             {activity.previousValue && activity.newValue && <span className="mx-1">←</span>}
-            {activity.newValue && <span className="text-foreground">{activity.newValue}</span>}
+            {activity.newValue && <span className="text-foreground/80">{activity.newValue}</span>}
           </p>
         )}
 
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
-          {actor && (
-            <span className="inline-flex items-center gap-1.5">
-              <PersonAvatar person={actor} className="h-5 w-5" />
-              {actor.name}
-            </span>
-          )}
-          {project && (
-            <Link href={`/projects/${project.id}`} className="inline-flex items-center gap-1 hover:text-foreground">
-              <AppIcon name="projects" size={12} />
-              {project.name}
-            </Link>
-          )}
-          {meeting && (
-            <span className="inline-flex items-center gap-1">
-              <AppIcon name="meetings" size={12} />
-              {meeting.title}
-            </span>
-          )}
-          <span className="ltr">{faTime(activity.createdAt)}</span>
+        {(project || meeting) && (
+          <p className="flex min-w-0 items-center gap-1 text-xs text-muted-foreground">
+            {project && (
+              <Link href={`/projects/${project.id}`} className="truncate hover:text-foreground">
+                {project.name}
+              </Link>
+            )}
+            {project && meeting && <AppIcon name="chevronLeft" size={10} className="shrink-0 opacity-60" />}
+            {meeting && <span className="truncate">{meeting.title}</span>}
+          </p>
+        )}
+
+        <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
+          <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            {actor && (
+              <>
+                <PersonAvatar person={actor} className="h-5 w-5" />
+                <span>{actor.name}</span>
+                <span aria-hidden="true">·</span>
+              </>
+            )}
+            <span className="ltr">{faTime(activity.createdAt)}</span>
+          </p>
           {href && (
-            <Link href={href} className="ms-auto shrink-0 font-medium text-primary hover:underline">
+            <Link href={href} className="flex shrink-0 items-center gap-1 text-xs font-medium text-primary hover:underline">
               مشاهده جزئیات
+              <AppIcon name="chevronLeft" size={14} />
             </Link>
           )}
         </div>
