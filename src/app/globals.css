@@ -23,16 +23,21 @@
     --radius-xl: 0.75rem; /* 12px */
     --radius-2xl: 1rem; /* 16px */
 
-    /* shadows — Algonet "shadows" tokens (black, applied at DS opacities) */
-    --shadow-2xs: 0 1px 2px 0 hsl(0 0% 0% / 0.01);
-    --shadow-xs: 0 2px 4px 0 hsl(0 0% 0% / 0.02);
-    --shadow-sm: 0 2px 8px 0 hsl(0 0% 0% / 0.03);
-    --shadow-md: 0 4px 10px -2px hsl(0 0% 0% / 0.05);
-    --shadow-lg: 0 8px 16px -4px hsl(0 0% 0% / 0.08);
-    --shadow-xl: 0 12px 20px -6px hsl(0 0% 0% / 0.10);
+    /* shadows — Algonet "shadows" tokens (black, applied at DS opacities).
+       Soft ambient elevation: low opacity, wide/diffused blur, minimal offset,
+       a negative spread so edges never look like a hard drop shadow. */
+    --shadow-2xs: 0 1px 2px 0 hsl(0 0% 0% / 0.02);
+    --shadow-xs: 0 1px 3px 0 hsl(0 0% 0% / 0.02);
+    --shadow-sm: 0 2px 10px -2px hsl(0 0% 0% / 0.04);
+    --shadow-md: 0 6px 16px -4px hsl(0 0% 0% / 0.05);
+    --shadow-lg: 0 10px 24px -8px hsl(0 0% 0% / 0.06);
+    --shadow-xl: 0 16px 32px -12px hsl(0 0% 0% / 0.08);
 
     /* colors — light (semantic colors / shadcn.tokens.json) */
     --background: 0 0% 100%;
+    /* Main Content workspace — extremely close to white, just enough to read as a
+       distinct layer from the white Sidebar/Header/Cards (item #9-10). */
+    --background-subtle: 0 0% 98%;
     --foreground: 0 0% 0%;
     --foreground-alt: 0 0% 25.1%;
     --primary: 226 100% 62.7%;
@@ -56,7 +61,7 @@
     --warning: 32 94.6% 43.7%;
     --warning-foreground: 0 0% 100%;
     --warning-subtle: 48 100% 96.1%;
-    --border: 0 0% 89.8%;
+    --border: 0 0% 92%;
     --input: 0 0% 89.8%;
     --ring: 226 100% 62.7%;
     --ring-error: 0 93.5% 81.8%;
@@ -64,19 +69,28 @@
     --card-foreground: 0 0% 3.9%;
     --popover: 0 0% 100%;
     --popover-foreground: 0 0% 3.9%;
-    --sidebar: 0 0% 98%;
+    /* Sidebar — a white surface again, belonging to the same clean shell as the
+       Top Bar (item #1). Selected nav reuses a subtle primary tint + primary
+       text (sidebar-primary/-foreground); everything else maps straight to the
+       app's own neutral tokens (border/accent/muted) — see mapping doc #6. */
+    --sidebar: 0 0% 100%;
     --sidebar-foreground: 0 0% 25.1%;
     --sidebar-accent: 0 0% 96.1%;
     --sidebar-accent-foreground: 0 0% 9%;
-    --sidebar-primary: 0 0% 9%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-border: 0 0% 89.8%;
+    --sidebar-primary: 226 100% 95.5%;
+    --sidebar-primary-foreground: 226 100% 62.7%;
+    --sidebar-border: 0 0% 92%;
     --sidebar-muted: 0 0% 45.1%;
+    --sidebar-ring: 226 100% 62.7%;
   }
 
   .dark {
     /* colors — dark (semantic colors / shadcn-dark.tokens.json) */
     --background: 0 0% 3.9%;
+    /* Slightly lighter than --background so Main Content still reads as a
+       distinct third layer from Sidebar/Header, mirroring the light-theme
+       hierarchy (item #23). */
+    --background-subtle: 0 0% 5.5%;
     --foreground: 0 0% 98%;
     --foreground-alt: 0 0% 83.1%;
     --primary: 226 100% 62.7%;
@@ -100,7 +114,7 @@
     --warning: 38 92.1% 50.2%;
     --warning-foreground: 43 100% 5.5%;
     --warning-subtle: 38 79.2% 9.4%;
-    --border: 0 0% 25.1%;
+    --border: 0 0% 20%;
     --input: 0 0% 25.1%;
     --ring: 226 100% 69.4%;
     --ring-error: 359 40.6% 30.4%;
@@ -108,14 +122,27 @@
     --card-foreground: 0 0% 100%;
     --popover: 0 0% 9%;
     --popover-foreground: 0 0% 98%;
+    /* Sidebar — matches --background exactly (same dark neutral shell as the
+       Top Bar); separation comes from the border only, same as light mode. */
     --sidebar: 0 0% 3.9%;
     --sidebar-foreground: 0 0% 83.1%;
     --sidebar-accent: 0 0% 9%;
     --sidebar-accent-foreground: 0 0% 96.1%;
-    --sidebar-primary: 0 0% 98%;
-    --sidebar-primary-foreground: 0 0% 9%;
-    --sidebar-border: 0 0% 14.9%;
-    --sidebar-muted: 0 0% 45.1%;
+    --sidebar-primary: 226 45% 16%;
+    --sidebar-primary-foreground: 226 100% 69.4%;
+    --sidebar-border: 0 0% 20%;
+    --sidebar-muted: 0 0% 63.9%;
+    --sidebar-ring: 226 100% 69.4%;
+
+    /* A black shadow at light-mode opacities is invisible against a near-black
+       page — same soft/diffused geometry, higher opacity so elevation still
+       reads against dark surfaces (item #23). */
+    --shadow-2xs: 0 1px 2px 0 hsl(0 0% 0% / 0.12);
+    --shadow-xs: 0 1px 3px 0 hsl(0 0% 0% / 0.16);
+    --shadow-sm: 0 2px 10px -2px hsl(0 0% 0% / 0.24);
+    --shadow-md: 0 6px 16px -4px hsl(0 0% 0% / 0.32);
+    --shadow-lg: 0 10px 24px -8px hsl(0 0% 0% / 0.4);
+    --shadow-xl: 0 16px 32px -12px hsl(0 0% 0% / 0.48);
   }
 }
 

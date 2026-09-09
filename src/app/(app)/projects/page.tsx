@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { PageHeader } from "@/components/domain/page-header";
+import { PageTopBar } from "@/components/layout/page-topbar";
 import { Button } from "@/components/ui/button";
 import { AppIcon } from "@/components/icon";
 import { EmptyState } from "@/components/domain/empty-state";
@@ -10,7 +10,6 @@ import { ProjectsToolbar } from "@/features/projects/projects-toolbar";
 import { ResponsiveDataView } from "@/components/domain/responsive-data-view";
 import { type ViewMode } from "@/components/domain/view-switcher";
 import { getProjects } from "@/lib/queries";
-import { toFa } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "پروژه‌ها" };
 
@@ -38,10 +37,9 @@ export default function ProjectsPage({ searchParams }: { searchParams: SearchPar
 
   return (
     <>
-      <PageHeader
+      <PageTopBar
         title="پروژه‌ها"
-        description={`${toFa(all.length)} پروژه ثبت شده است. برای مشاهدهٔ جزئیات، پروژه‌ای را باز کنید.`}
-        icon="projects"
+        description="پروژه‌ها و وضعیت فعلی آن‌ها را مدیریت کنید."
         actions={
           <Button asChild>
             <Link href="/projects/new">

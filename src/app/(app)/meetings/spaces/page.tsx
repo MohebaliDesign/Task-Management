@@ -1,10 +1,56 @@
-import { redirect } from "next/navigation";
+import Link from "next/link";
+import type { Metadata } from "next";
+import { PageTopBar } from "@/components/layout/page-topbar";
+import { Button } from "@/components/ui/button";
+import { AppIcon } from "@/components/icon";
+import { EmptyState } from "@/components/domain/empty-state";
+import { MeetingSpaceCard } from "@/features/meeting-spaces/meeting-space-card";
+import { getMeetingSpaces } from "@/lib/queries";
+import { toFa } from "@/lib/utils";
 
-/**
- * The Meeting Categories list now lives at the top-level «/meetings» route, so
- * the old «/meetings/spaces» path just forwards there. Kept so any existing
- * links/bookmarks don't 404.
- */
-export default function MeetingSpacesRedirect() {
-  redirect("/meetings");
+export const metadata: Metadata = { title: "دسته‌های جلسات" };
+
+export default function MeetingSpacesPage() {
+  const spaces = getMeetingSpaces();
+
+  return (
+    <>
+      <PageTopBar
+        title="دسته‌های جلسات"
+        description={
+          spaces.length > 0
+            ? `${toFa(spaces.length)} دستهٔ جلسات ثبت شده است. هر دسته می‌تواند چند جلسهٔ سازمانی مستقل از پروژه را دربر بگیرد.`
+            : "دسته‌های جلسات، جلسات سازمانی مستقل از پروژه‌ها را گروه‌بندی می‌کنند."
+        }
+        crumbs={[{ label: "جلسات", href: "/meetings" }, { label: "دسته‌های جلسات" }]}
+        actions={
+          <Button asChild>
+            <Link href="/meetings/new">
+              <AppIcon name="add" size={18} />
+              ایجاد دسته جلسات
+            </Link>
+          </Button>
+        }
+      />
+
+      {spaces.length === 0 ? (
+        <EmptyState
+          icon="meetings"
+          title="هنوز دسته‌ای از جلسات ثبت نشده است"
+          description="یک دسته بسازید (مثلاً «جلسات داخلی سازمان») تا بتوانید جلسات سازمانی مستقل از پروژه را در آن ثبت کنید."
+          action={
+            <Button asChild size="sm">
+              <Link href="/meetings/new">ایجاد دسته جلسات</Link>
+            </Button>
+          }
+        />
+      ) : (
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          {spaces.map((s) => (
+            <MeetingSpaceCard key={s.id} space={s} />
+          ))}
+        </div>
+      )}
+    </>
+  );
 }

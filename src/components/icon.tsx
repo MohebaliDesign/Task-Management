@@ -53,6 +53,9 @@ import {
   Copy,
   Element3,
   RowVertical,
+  Logout,
+  SidebarRight,
+  HambergerMenu,
 } from "iconsax-react";
 
 /**
@@ -117,6 +120,10 @@ export const icons = {
   copy: Copy,
   grid: Element3,
   table: RowVertical,
+  logout: Logout,
+  /** Iconsax's dedicated "docked panel" icon for the sidebar toggle — our nav rail is docked right, so this is used for both collapse and expand (state is carried by the tooltip/aria-label, not a different icon). */
+  sidebarToggle: SidebarRight,
+  menu: HambergerMenu,
 } satisfies Record<string, IconsaxComponent>;
 
 export type IconName = keyof typeof icons;

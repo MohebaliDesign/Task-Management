@@ -5,13 +5,15 @@ import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AppIcon } from "@/components/icon";
+import { ViewSwitcher, type ViewMode } from "@/components/domain/view-switcher";
 import { ROLE } from "@/lib/domain";
 import { roleLabels } from "@/lib/labels";
+import { toFa } from "@/lib/utils";
 import type { Team } from "@/lib/domain";
 
 const ALL = "all";
 
-export function PeopleToolbar({ teams, resultCount }: { teams: Team[]; resultCount: number }) {
+export function PeopleToolbar({ teams, resultCount, view }: { teams: Team[]; resultCount: number; view: ViewMode }) {
   const router = useRouter();
   const pathname = usePathname();
   const params = useSearchParams();
@@ -44,7 +46,7 @@ export function PeopleToolbar({ teams, resultCount }: { teams: Team[]; resultCou
         <span className="pointer-events-none absolute inset-y-0 start-3 flex items-center text-muted-foreground">
           <AppIcon name="search" size={16} />
         </span>
-        <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="جست‌وجوی نام، نقش یا تیم…" className="ps-9" aria-label="جست‌وجوی فرد" />
+        <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="جست‌وجو در افراد" className="ps-9" aria-label="جست‌وجو در افراد" />
       </div>
 
       <Select value={role} onValueChange={(v) => update("role", v)}>
@@ -82,7 +84,9 @@ export function PeopleToolbar({ teams, resultCount }: { teams: Team[]; resultCou
         </button>
       )}
 
-      <span className="text-xs text-muted-foreground">{resultCount} نفر</span>
+      <span className="text-xs text-muted-foreground sm:me-auto">{toFa(resultCount)} نفر</span>
+
+      <ViewSwitcher value={view} />
     </div>
   );
 }

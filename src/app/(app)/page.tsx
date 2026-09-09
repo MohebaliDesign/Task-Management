@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { PageHeader, SectionHeader } from "@/components/domain/page-header";
+import { SectionHeader } from "@/components/domain/page-header";
+import { PageTopBar } from "@/components/layout/page-topbar";
 import { MetricTile } from "@/features/shared/metric-tile";
 import { ProjectCard } from "@/features/projects/project-card";
 import { MeetingSpaceCard } from "@/features/meeting-spaces/meeting-space-card";
@@ -23,7 +24,7 @@ export default function DashboardPage() {
 
   return (
     <>
-      <PageHeader
+      <PageTopBar
         title="داشبورد"
         description="نمای کلی پروژه‌های فعال، سلامت آن‌ها و مواردی که نیازمند توجه شماست."
         actions={

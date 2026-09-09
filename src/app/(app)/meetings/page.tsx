@@ -1,16 +1,15 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { PageHeader } from "@/components/domain/page-header";
+import { PageTopBar } from "@/components/layout/page-topbar";
 import { Button } from "@/components/ui/button";
 import { AppIcon } from "@/components/icon";
 import { EmptyState } from "@/components/domain/empty-state";
-import { MeetingSpaceCard } from "@/features/meeting-spaces/meeting-space-card";
-import { MeetingCategoryTable } from "@/features/meeting-spaces/meeting-category-table";
-import { MeetingCategoriesToolbar } from "@/features/meeting-spaces/meeting-categories-toolbar";
-import { ResponsiveDataView } from "@/components/domain/responsive-data-view";
-import { type ViewMode } from "@/components/domain/view-switcher";
-import type { FilterOption } from "@/components/domain/filter-control";
-import { getMeetingSpaces, getPerson } from "@/lib/queries";
+import { MeetingCard } from "@/features/meetings/meeting-card";
+import { MeetingTable } from "@/features/meetings/meeting-table";
+import { MeetingsFilterBar, type ContextOption } from "@/features/meetings/meetings-filter-bar";
+import { ViewSwitcher, type ViewMode } from "@/components/domain/view-switcher";
+import { getAllMeetings, getProjects, getMeetingSpaces } from "@/lib/queries";
+import type { MeetingStatus } from "@/lib/domain";
 
 export const metadata: Metadata = { title: "دسته‌های جلسات" };
 
@@ -47,10 +46,9 @@ export default function MeetingsPage({ searchParams }: { searchParams: SearchPar
 
   return (
     <>
-      <PageHeader
-        title="دسته‌های جلسات"
-        description="دسته‌های جلسات سازمانی را مدیریت کنید و به سوابق جلسات هر دسته دسترسی داشته باشید."
-        icon="meetings"
+      <PageTopBar
+        title="جلسات"
+        description="دسته‌های جلسات سازمانی و سوابق آن‌ها را مدیریت کنید."
         actions={
           <Button asChild>
             <Link href="/meetings/new">

@@ -1,19 +1,20 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Card } from "@/components/ui/card";
-import { PageHeader } from "@/components/domain/page-header";
 import { EmptyState } from "@/components/domain/empty-state";
 import { AppIcon } from "@/components/icon";
+import { PageTopBar } from "@/components/layout/page-topbar";
+import type { ViewMode } from "@/components/domain/view-switcher";
 import { CreatePersonDialog } from "@/features/people/create-person-dialog";
 import { AddTeamDialog } from "@/features/people/add-team-dialog";
 import { PeopleTable } from "@/features/people/people-table";
 import { PeopleToolbar } from "@/features/people/people-toolbar";
+import { PersonCard } from "@/features/people/person-card";
 import { TeamsView } from "@/features/people/teams-view";
 import { getPeople, getTeams, getTeamsForPerson, getTeamMembers, getTeamPmPo } from "@/lib/queries";
 import { roleLabels } from "@/lib/labels";
 import { cn } from "@/lib/utils";
 
-export const metadata: Metadata = { title: "افراد و تیم‌ها" };
+export const metadata: Metadata = { title: "تیم و افراد" };
 
 const TABS = [
   { key: "people", label: "افراد" },
@@ -23,11 +24,12 @@ const TABS = [
 export default function PeoplePage({
   searchParams,
 }: {
-  searchParams: { q?: string; role?: string; team?: string; sort?: string; tab?: string };
+  searchParams: { q?: string; role?: string; team?: string; sort?: string; tab?: string; view?: string };
 }) {
   const allPeople = getPeople();
   const teams = getTeams();
   const tab = searchParams.tab === "teams" ? "teams" : "people";
+  const view: ViewMode = searchParams.view === "table" ? "table" : "card";
 
   const q = (searchParams.q ?? "").trim();
   let people = allPeople;
@@ -57,10 +59,9 @@ export default function PeoplePage({
 
   return (
     <div>
-      <PageHeader
-        title="افراد و تیم‌ها"
-        description="فهرست همهٔ افراد و تیم‌های سازمان، برای مسئول‌کردن اقدامات و موانع."
-        icon="people"
+      <PageTopBar
+        title="تیم و افراد"
+        description="افراد و تیم‌های درگیر در پروژه‌ها و جلسات را مدیریت کنید."
         actions={
           <>
             <AddTeamDialog people={allPeople} />
@@ -90,19 +91,32 @@ export default function PeoplePage({
         teams.length === 0 ? (
           <EmptyState icon="people" title="تیمی ثبت نشده است" description="نخستین تیم سازمان را ثبت کنید." action={<AddTeamDialog people={allPeople} />} />
         ) : (
-          <TeamsView rows={teamRows} />
+          <TeamsView rows={teamRows} view={view} />
         )
       ) : allPeople.length === 0 ? (
         <EmptyState icon="people" title="فردی ثبت نشده است" description="نخستین فرد سازمان را ثبت کنید." action={<CreatePersonDialog teams={teams} />} />
       ) : (
         <>
-          <PeopleToolbar teams={teams} resultCount={people.length} />
+          <PeopleToolbar teams={teams} resultCount={people.length} view={view} />
           {people.length === 0 ? (
             <EmptyState icon="search" title="فردی با این مشخصات پیدا نشد" description="فیلترها یا عبارت جست‌وجو را تغییر دهید." />
+          ) : view === "table" ? (
+            <>
+              <div className="hidden lg:block">
+                <PeopleTable people={people} />
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2 lg:hidden">
+                {people.map((p) => (
+                  <PersonCard key={p.id} person={p} />
+                ))}
+              </div>
+            </>
           ) : (
-            <Card className="overflow-hidden">
-              <PeopleTable people={people} />
-            </Card>
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+              {people.map((p) => (
+                <PersonCard key={p.id} person={p} />
+              ))}
+            </div>
           )}
         </>
       )}

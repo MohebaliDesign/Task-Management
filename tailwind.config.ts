@@ -31,6 +31,7 @@ const config: Config = {
         ring: "hsl(var(--ring))",
         "ring-error": "hsl(var(--ring-error))",
         background: "hsl(var(--background))",
+        "background-subtle": "hsl(var(--background-subtle))",
         foreground: "hsl(var(--foreground))",
         "foreground-alt": "hsl(var(--foreground-alt))",
         primary: {
@@ -85,6 +86,7 @@ const config: Config = {
           "primary-foreground": "hsl(var(--sidebar-primary-foreground))",
           border: "hsl(var(--sidebar-border))",
           muted: "hsl(var(--sidebar-muted))",
+          ring: "hsl(var(--sidebar-ring))",
         },
       },
       borderRadius: {

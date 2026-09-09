@@ -3,7 +3,8 @@ import { notFound } from "next/navigation";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { AppIcon } from "@/components/icon";
-import { PageHeader, SectionHeader } from "@/components/domain/page-header";
+import { SectionHeader } from "@/components/domain/page-header";
+import { PageTopBar } from "@/components/layout/page-topbar";
 import { EmptyState } from "@/components/domain/empty-state";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { MeetingList } from "@/features/meetings/meeting-list";
@@ -19,8 +20,10 @@ export default function MeetingSpaceDetailPage({ params }: { params: { spaceId: 
 
   return (
     <div>
-      <PageHeader
+      <PageTopBar
         title={space.name}
+        description={space.description || "بدون توضیحات"}
+        crumbs={[{ label: "جلسات", href: "/meetings" }, { label: "دسته‌های جلسات", href: "/meetings/spaces" }, { label: space.name }]}
         description="سوابق جلسات ثبت‌شده در این دسته را مشاهده و مدیریت کنید."
         icon="meetings"
         crumbs={[{ label: "جلسات", href: "/meetings" }, { label: space.name }]}
