@@ -1,7 +1,7 @@
 import "server-only";
 import fs from "node:fs";
 import path from "node:path";
-import type { ActionItem, Blocker, Database, Decision, Meeting, Project } from "./domain";
+import type { ActionItem, Blocker, Database, Decision, Meeting, Project, RiskLevel } from "./domain";
 import { buildSeed } from "./seed";
 
 /**
@@ -94,6 +94,28 @@ function normalizeMeeting(meeting: Meeting): Meeting {
   };
 }
 
+/**
+ * One pre-fix build persisted Persian display copy ("متوسط") into
+ * Decision.impact instead of the canonical RiskLevel key ("medium"). Those
+ * local rows survive pulls because data/db.json is gitignored, and any direct
+ * riskLevelLabels lookup then crashes. Translate only the known legacy values
+ * back to their canonical enum keys at the persistence boundary.
+ */
+function normalizeRiskLevel(value: unknown): RiskLevel {
+  switch (value) {
+    case "low":
+    case "کم":
+      return "low";
+    case "high":
+    case "زیاد":
+      return "high";
+    case "medium":
+    case "متوسط":
+    default:
+      return "medium";
+  }
+}
+
 function normalizeDecision(decision: Decision): Decision {
   return {
     ...decision,
@@ -101,6 +123,7 @@ function normalizeDecision(decision: Decision): Decision {
     meetingId: decision.meetingId ?? null,
     description: decision.description ?? "",
     area: decision.area ?? "عمومی",
+    impact: normalizeRiskLevel(decision.impact),
   };
 }
 
