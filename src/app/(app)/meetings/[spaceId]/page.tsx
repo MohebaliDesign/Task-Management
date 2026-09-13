@@ -15,6 +15,7 @@ import { getMeetingSpace, getSpaceMeetings, getPerson } from "@/lib/queries";
 export default function MeetingSpaceDetailPage({ params }: { params: { spaceId: string } }) {
   const space = getMeetingSpace(params.spaceId);
   if (!space) notFound();
+
   const meetings = getSpaceMeetings(space.id);
   const owner = getPerson(space.ownerId);
 
@@ -22,10 +23,7 @@ export default function MeetingSpaceDetailPage({ params }: { params: { spaceId: 
     <div>
       <PageTopBar
         title={space.name}
-        description={space.description || "بدون توضیحات"}
-        crumbs={[{ label: "جلسات", href: "/meetings" }, { label: "دسته‌های جلسات", href: "/meetings/spaces" }, { label: space.name }]}
-        description="سوابق جلسات ثبت‌شده در این دسته را مشاهده و مدیریت کنید."
-        icon="meetings"
+        description={space.description || "سوابق جلسات ثبت‌شده در این دسته را مشاهده و مدیریت کنید."}
         crumbs={[{ label: "جلسات", href: "/meetings" }, { label: space.name }]}
         actions={
           <Button asChild>
