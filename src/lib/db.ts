@@ -1,7 +1,7 @@
 import "server-only";
 import fs from "node:fs";
 import path from "node:path";
-import type { Database } from "./domain";
+import type { ActionItem, Blocker, Database, Decision, Meeting, Project, RiskLevel } from "./domain";
 import { buildSeed } from "./seed";
 
 /**
@@ -32,22 +32,144 @@ function seedIfMissing() {
 }
 
 /**
+ * Local db.json is intentionally ignored by git and survives pulls/checkouts.
+ * That means a developer can run a newer application against a snapshot written
+ * by an older schema. Top-level collection defaults alone are not enough when a
+ * later release adds nested arrays/nullable fields to an existing Project or
+ * Meeting: pages calling `.length`, `.map`, or spreading those fields would then
+ * crash at runtime.
+ *
+ * These normalizers only provide backwards-compatible structural defaults. They
+ * do not invent new business decisions or replace valid persisted values.
+ */
+function normalizeProject(project: Project): Project {
+  const health = project.health ?? "on_track";
+  return {
+    ...project,
+    previousVersionId: project.previousVersionId ?? null,
+    phases: project.phases ?? [],
+    poId: project.poId ?? null,
+    targetDate: project.targetDate ?? null,
+    deliveryDate: project.deliveryDate ?? null,
+    closedDate: project.closedDate ?? null,
+    statusSummary: project.statusSummary ?? "",
+    currentFocus: project.currentFocus ?? "",
+    nextMilestone: project.nextMilestone ?? "",
+    executiveSummary: project.executiveSummary ?? "",
+    healthCheck:
+      project.healthCheck ?? {
+        scope: health,
+        timeline: health,
+        resources: health,
+        quality: health,
+        dependencies: health,
+        risks: health,
+        budget: health,
+      },
+    metrics: project.metrics ?? [],
+    milestones: project.milestones ?? [],
+    workstreams: project.workstreams ?? [],
+    teamIds: project.teamIds ?? [],
+    resources: project.resources ?? [],
+    finalResult: project.finalResult ?? null,
+  };
+}
+
+function normalizeMeeting(meeting: Meeting): Meeting {
+  const summary = meeting.summary ?? "";
+  return {
+    ...meeting,
+    projectId: meeting.projectId ?? null,
+    spaceId: meeting.spaceId ?? null,
+    location: meeting.location ?? "",
+    revision: meeting.revision ?? 1,
+    source: meeting.source ?? "manual",
+    participants: meeting.participants ?? [],
+    agenda: meeting.agenda ?? [],
+    discussion: meeting.discussion ?? "",
+    summary,
+    summaryPoints: meeting.summaryPoints ?? (summary ? [summary] : []),
+    nextSteps: meeting.nextSteps ?? [],
+    reviewToken: meeting.reviewToken ?? `review_${meeting.id}`,
+  };
+}
+
+/**
+ * One pre-fix build persisted Persian display copy ("متوسط") into
+ * Decision.impact instead of the canonical RiskLevel key ("medium"). Those
+ * local rows survive pulls because data/db.json is gitignored, and any direct
+ * riskLevelLabels lookup then crashes. Translate only the known legacy values
+ * back to their canonical enum keys at the persistence boundary.
+ */
+function normalizeRiskLevel(value: unknown): RiskLevel {
+  switch (value) {
+    case "low":
+    case "کم":
+      return "low";
+    case "high":
+    case "زیاد":
+      return "high";
+    case "medium":
+    case "متوسط":
+    default:
+      return "medium";
+  }
+}
+
+function normalizeDecision(decision: Decision): Decision {
+  return {
+    ...decision,
+    projectId: decision.projectId ?? null,
+    meetingId: decision.meetingId ?? null,
+    description: decision.description ?? "",
+    area: decision.area ?? "عمومی",
+    impact: normalizeRiskLevel(decision.impact),
+  };
+}
+
+function normalizeAction(action: ActionItem): ActionItem {
+  return {
+    ...action,
+    projectId: action.projectId ?? null,
+    meetingId: action.meetingId ?? null,
+    description: action.description ?? "",
+    ownerId: action.ownerId ?? null,
+    deadline: action.deadline ?? null,
+    relatedDecisionId: action.relatedDecisionId ?? null,
+    completedAt: action.completedAt ?? null,
+    note: action.note ?? "",
+  };
+}
+
+function normalizeBlocker(blocker: Blocker): Blocker {
+  return {
+    ...blocker,
+    projectId: blocker.projectId ?? null,
+    meetingId: blocker.meetingId ?? null,
+    description: blocker.description ?? "",
+    ownerId: blocker.ownerId ?? null,
+    resolvedDate: blocker.resolvedDate ?? null,
+    note: blocker.note ?? "",
+  };
+}
+
+/**
  * A db.json on disk from before a schema change (a new top-level collection
  * added to `Database`) won't have that key at all — `seedIfMissing` only
- * covers a file that's missing entirely. Backfill any absent collection with
- * an empty array so older local snapshots don't crash every reader of it.
+ * covers a file that's missing entirely. Backfill absent collections and
+ * normalize legacy nested entity shapes before any query sees them.
  */
 function withCollectionDefaults(db: Partial<Database>): Database {
   return {
     people: db.people ?? [],
     teams: db.teams ?? [],
-    projects: db.projects ?? [],
-    meetings: db.meetings ?? [],
-    decisions: db.decisions ?? [],
-    actions: db.actions ?? [],
+    projects: (db.projects ?? []).map(normalizeProject),
+    meetings: (db.meetings ?? []).map(normalizeMeeting),
+    decisions: (db.decisions ?? []).map(normalizeDecision),
+    actions: (db.actions ?? []).map(normalizeAction),
     dependencies: db.dependencies ?? [],
     risks: db.risks ?? [],
-    blockers: db.blockers ?? [],
+    blockers: (db.blockers ?? []).map(normalizeBlocker),
     comments: db.comments ?? [],
     signatures: db.signatures ?? [],
     projectApprovals: db.projectApprovals ?? [],

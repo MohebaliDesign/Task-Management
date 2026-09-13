@@ -29,6 +29,19 @@ import type {
   MilestoneStatus,
 } from "@/lib/domain";
 
+type StatusEntry = { label: string; tone: Tone };
+const UNKNOWN_STATUS: StatusEntry = { label: "نامشخص", tone: "neutral" };
+
+/**
+ * Persisted local db.json survives git pulls and can contain an enum value from
+ * an older application build. A missing label mapping should never take down an
+ * entire project/meeting page; render a neutral, explicit fallback instead.
+ * Current valid values still resolve through the canonical label maps below.
+ */
+function resolveStatusEntry<T extends string>(map: Record<T, StatusEntry>, value: T): StatusEntry {
+  return map[value] ?? UNKNOWN_STATUS;
+}
+
 /**
  * StatusPill — the single visual language for every state in the app.
  * Always renders a text label plus (optionally) a colored dot; color is never
@@ -74,27 +87,27 @@ export function HealthBadge({
   value: ProjectHealth;
   className?: string;
 }) {
-  const e = healthLabels[value];
+  const e = resolveStatusEntry(healthLabels, value);
   return <StatusPill label={e.label} tone={e.tone} className={className} />;
 }
 
 export function LifecycleBadge({ value }: { value: ProjectLifecycle }) {
-  const e = lifecycleLabels[value];
+  const e = resolveStatusEntry(lifecycleLabels, value);
   return <StatusPill label={e.label} tone={e.tone} />;
 }
 
 export function PhaseBadge({ value }: { value: ProjectPhase }) {
-  const e = phaseLabels[value];
+  const e = resolveStatusEntry(phaseLabels, value);
   return <StatusPill label={e.label} tone={e.tone} dot={false} />;
 }
 
 export function PriorityBadge({ value }: { value: Priority }) {
-  const e = priorityLabels[value];
+  const e = resolveStatusEntry(priorityLabels, value);
   return <StatusPill label={e.label} tone={e.tone} />;
 }
 
 export function MeetingStatusBadge({ value }: { value: MeetingStatus }) {
-  const e = meetingStatusLabels[value];
+  const e = resolveStatusEntry(meetingStatusLabels, value);
   return <StatusPill label={e.label} tone={e.tone} />;
 }
 
@@ -113,17 +126,17 @@ export function StatusDot({ label, tone, className }: { label: string; tone: Ton
 }
 
 export function ActionStatusBadge({ value }: { value: ActionStatus }) {
-  const e = actionStatusLabels[value];
+  const e = resolveStatusEntry(actionStatusLabels, value);
   return <StatusPill label={e.label} tone={e.tone} />;
 }
 
 export function ActionStatusDot({ value, className }: { value: ActionStatus; className?: string }) {
-  const e = actionStatusLabels[value];
+  const e = resolveStatusEntry(actionStatusLabels, value);
   return <StatusDot label={e.label} tone={e.tone} className={className} />;
 }
 
 export function ApprovalBadge({ value }: { value: ApprovalStatus }) {
-  const e = approvalStatusLabels[value];
+  const e = resolveStatusEntry(approvalStatusLabels, value);
   return <StatusPill label={e.label} tone={e.tone} />;
 }
 
@@ -134,7 +147,7 @@ export function RiskLevelBadge({
   value: RiskLevel;
   prefix?: string;
 }) {
-  const e = riskLevelLabels[value];
+  const e = resolveStatusEntry(riskLevelLabels, value);
 
   return (
     <StatusPill
@@ -146,21 +159,21 @@ export function RiskLevelBadge({
 }
 
 export function RiskStatusBadge({ value }: { value: RiskStatus }) {
-  const e = riskStatusLabels[value];
+  const e = resolveStatusEntry(riskStatusLabels, value);
   return <StatusPill label={e.label} tone={e.tone} />;
 }
 
 export function BlockerStatusBadge({ value }: { value: BlockerStatus }) {
-  const e = blockerStatusLabels[value];
+  const e = resolveStatusEntry(blockerStatusLabels, value);
   return <StatusPill label={e.label} tone={e.tone} />;
 }
 
 export function BlockerStatusDot({ value, className }: { value: BlockerStatus; className?: string }) {
-  const e = blockerStatusLabels[value];
+  const e = resolveStatusEntry(blockerStatusLabels, value);
   return <StatusDot label={e.label} tone={e.tone} className={className} />;
 }
 
 export function MilestoneStatusBadge({ value }: { value: MilestoneStatus }) {
-  const e = milestoneStatusLabels[value];
+  const e = resolveStatusEntry(milestoneStatusLabels, value);
   return <StatusPill label={e.label} tone={e.tone} />;
 }
