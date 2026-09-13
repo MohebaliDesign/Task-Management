@@ -4,12 +4,13 @@ import { PageTopBar } from "@/components/layout/page-topbar";
 import { Button } from "@/components/ui/button";
 import { AppIcon } from "@/components/icon";
 import { EmptyState } from "@/components/domain/empty-state";
-import { MeetingCard } from "@/features/meetings/meeting-card";
-import { MeetingTable } from "@/features/meetings/meeting-table";
-import { MeetingsFilterBar, type ContextOption } from "@/features/meetings/meetings-filter-bar";
-import { ViewSwitcher, type ViewMode } from "@/components/domain/view-switcher";
-import { getAllMeetings, getProjects, getMeetingSpaces } from "@/lib/queries";
-import type { MeetingStatus } from "@/lib/domain";
+import { ResponsiveDataView } from "@/components/domain/responsive-data-view";
+import { type FilterOption } from "@/components/domain/filter-control";
+import { type ViewMode } from "@/components/domain/view-switcher";
+import { MeetingCategoriesToolbar } from "@/features/meeting-spaces/meeting-categories-toolbar";
+import { MeetingCategoryTable } from "@/features/meeting-spaces/meeting-category-table";
+import { MeetingSpaceCard } from "@/features/meeting-spaces/meeting-space-card";
+import { getMeetingSpaces, getPerson } from "@/lib/queries";
 
 export const metadata: Metadata = { title: "دسته‌های جلسات" };
 
@@ -21,26 +22,26 @@ interface SearchParams {
 }
 
 /**
- * The global «جلسات» area lists Meeting *Categories* (دسته‌های جلسات), never
- * individual meetings — those live one level deeper, inside a category
- * (/meetings/[spaceId]). This keeps organizational meetings, which are
- * independent of projects, grouped by the space they belong to.
+ * The global «جلسات» area lists Meeting Categories, never individual meetings.
+ * Individual meeting records live one level deeper inside a category
+ * (/meetings/[spaceId]). This keeps organization-wide recurring meetings
+ * separate from project-owned meetings while reusing the same Meeting entity.
  */
 export default function MeetingsPage({ searchParams }: { searchParams: SearchParams }) {
   const all = getMeetingSpaces();
 
-  // Owner filter options — only owners that actually own a category.
-  const ownerOptions: FilterOption[] = Array.from(new Set(all.map((s) => s.ownerId)))
+  const ownerOptions: FilterOption[] = Array.from(new Set(all.map((space) => space.ownerId)))
     .map((id) => getPerson(id))
-    .filter((p): p is NonNullable<typeof p> => !!p)
-    .map((p) => ({ value: p.id, label: p.name }));
+    .filter((person): person is NonNullable<typeof person> => !!person)
+    .map((person) => ({ value: person.id, label: person.name }));
 
   const q = (searchParams.q ?? "").trim();
-  const filtered = all.filter((s) => {
-    if (q && !`${s.name} ${s.description}`.includes(q)) return false;
-    if (searchParams.owner && s.ownerId !== searchParams.owner) return false;
+  const filtered = all.filter((space) => {
+    if (q && !`${space.name} ${space.description}`.includes(q)) return false;
+    if (searchParams.owner && space.ownerId !== searchParams.owner) return false;
     return true;
   });
+
   if (searchParams.sort === "oldest") filtered.reverse();
   const view: ViewMode = searchParams.view === "table" ? "table" : "card";
 
@@ -85,8 +86,8 @@ export default function MeetingsPage({ searchParams }: { searchParams: SearchPar
               table={<MeetingCategoryTable spaces={filtered} />}
               cards={
                 <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-                  {filtered.map((s) => (
-                    <MeetingSpaceCard key={s.id} space={s} />
+                  {filtered.map((space) => (
+                    <MeetingSpaceCard key={space.id} space={space} />
                   ))}
                 </div>
               }
